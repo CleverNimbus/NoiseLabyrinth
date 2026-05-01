@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {
+    "editor.fontSize": 12,
+    "workbench.tree.renderIndentGuides": "always",
+    "files.enableTrash": false,
+    "git.confirmSync": false,
+    "workbench.activityBar.location": "top",
+    "git.ignoreLimitWarning": true,
+    "locale": "en-US",
+    "workbench.editor.wrapTabs": true,
+    "workbench.tree.indent": 12,
+    "explorer.confirmDelete": false,
+    "explorer.incrementalNaming": "smart",
+  },
+}

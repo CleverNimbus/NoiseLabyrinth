@@ -1,0 +1,44 @@
+import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
+import 'package:noiselabyrinth_core/models/configs/metadata_config.dart';
+import 'package:noiselabyrinth_core/models/configs/mix_config.dart';
+import 'package:noiselabyrinth_core/models/configs/render_config.dart';
+
+class GenerationConfig {
+  final MetadataConfig metadata;
+  final RenderConfig render;
+  final MixConfig mix;
+  final List<LayerConfig> layers;
+
+  const GenerationConfig({
+    required this.metadata,
+    required this.render,
+    required this.mix,
+    required this.layers,
+  });
+
+  factory GenerationConfig.fromJson(Map<String, dynamic> json) {
+    return GenerationConfig(
+      metadata: MetadataConfig.fromJson(
+        json['metadata'] as Map<String, dynamic>? ?? <String, dynamic>{},
+      ),
+      render: RenderConfig.fromJson(
+        json['render'] as Map<String, dynamic>? ?? <String, dynamic>{},
+      ),
+      mix: MixConfig.fromJson(
+        json['mix'] as Map<String, dynamic>? ?? <String, dynamic>{},
+      ),
+      layers: (json['layers'] as List<dynamic>? ?? const <dynamic>[])
+          .map((e) => LayerConfig.fromJson(e as Map<String, dynamic>))
+          .toList(growable: false),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'metadata': metadata.toJson(),
+      'render': render.toJson(),
+      'mix': mix.toJson(),
+      'layers': layers.map((e) => e.toJson()).toList(),
+    };
+  }
+}

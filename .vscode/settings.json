@@ -1,0 +1,26 @@
+{
+  "files.exclude": {
+    "_site/**": true,
+    "**/.venv": true,
+    "**/.ipynb_checkpoints": true,
+    "**/__pycache__": true
+  },
+  "search.exclude": {
+    "**/.cache": true,
+    "**/build": true,
+    "**/managed_components": true,
+    "**/.venv": true,
+    "**/.ipynb_checkpoints": true,
+    "**/__pycache__": true
+  },
+  "editor.fontSize": 12,
+  "editor.formatOnSave": true,
+  "editor.insertSpaces": true,
+  "editor.rulers": [120],
+  "editor.tabSize": 4,
+  "git.enableSmartCommit": true,
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "rewrap.autoWrap.enabled": true
+}
