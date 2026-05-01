@@ -2,11 +2,6 @@ import 'package:noiselabyrinth_core/models/configs/band_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class SourceConfig {
-  final SourceType type;
-  final NoiseConfig? noiseConfig;
-  final ImpulseConfig? impulseConfig;
-  final SineConfig? sineConfig;
-
   const SourceConfig({
     required this.type,
     this.noiseConfig,
@@ -28,11 +23,13 @@ class SourceConfig {
               json['impulseConfig'] as Map<String, dynamic>,
             )
           : null,
-      sineConfig: json['sineConfig'] != null
-          ? SineConfig.fromJson(json['sineConfig'] as Map<String, dynamic>)
-          : null,
+      sineConfig: json['sineConfig'] != null ? SineConfig.fromJson(json['sineConfig'] as Map<String, dynamic>) : null,
     );
   }
+  final SourceType type;
+  final NoiseConfig? noiseConfig;
+  final ImpulseConfig? impulseConfig;
+  final SineConfig? sineConfig;
 
   Map<String, dynamic> toJson() {
     return {
@@ -45,9 +42,6 @@ class SourceConfig {
 }
 
 class NoiseConfig {
-  final NoiseColor color;
-  final BandConfig band;
-
   const NoiseConfig({required this.color, required this.band});
 
   factory NoiseConfig.fromJson(Map<String, dynamic> json) {
@@ -61,6 +55,8 @@ class NoiseConfig {
       ),
     );
   }
+  final NoiseColor color;
+  final BandConfig band;
 
   Map<String, dynamic> toJson() {
     return {'color': color.name, 'band': band.toJson()};
@@ -68,9 +64,6 @@ class NoiseConfig {
 }
 
 class SineConfig {
-  final int frequencyHz;
-  final double phase;
-
   const SineConfig({this.frequencyHz = 100, this.phase = 0.0});
 
   factory SineConfig.fromJson(Map<String, dynamic> json) {
@@ -79,6 +72,8 @@ class SineConfig {
       phase: (json['phase'] as num?)?.toDouble() ?? 0.0,
     );
   }
+  final int frequencyHz;
+  final double phase;
 
   Map<String, dynamic> toJson() {
     return {'frequencyHz': frequencyHz, 'phase': phase};
@@ -86,9 +81,6 @@ class SineConfig {
 }
 
 class ImpulseConfig {
-  final double density;
-  final double randomness;
-
   const ImpulseConfig({this.density = 0.2, this.randomness = 0.5});
 
   factory ImpulseConfig.fromJson(Map<String, dynamic> json) {
@@ -97,6 +89,8 @@ class ImpulseConfig {
       randomness: (json['randomness'] as num?)?.toDouble() ?? 0.5,
     );
   }
+  final double density;
+  final double randomness;
 
   Map<String, dynamic> toJson() {
     return {'density': density, 'randomness': randomness};

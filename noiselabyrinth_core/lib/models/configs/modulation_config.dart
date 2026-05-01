@@ -1,16 +1,6 @@
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class ModulationConfig {
-  final String id;
-  final ModulationType type;
-  final double amount;
-  final LfoConfig? lfoConfig;
-  final RandomConfig? randomConfig;
-  final DriftConfig? driftConfig;
-  final EnvelopeConfig? envelopeConfig;
-  final BurstConfig? burstConfig;
-  final List<ModulationTargetConfig> targets;
-
   const ModulationConfig({
     required this.id,
     required this.type,
@@ -30,9 +20,7 @@ class ModulationConfig {
       id: json['id'] as String? ?? '',
       type: parsedType,
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      lfoConfig: json['lfoConfig'] != null
-          ? LfoConfig.fromJson(json['lfoConfig'] as Map<String, dynamic>)
-          : null,
+      lfoConfig: json['lfoConfig'] != null ? LfoConfig.fromJson(json['lfoConfig'] as Map<String, dynamic>) : null,
       randomConfig: json['randomConfig'] != null
           ? RandomConfig.fromJson(json['randomConfig'] as Map<String, dynamic>)
           : null,
@@ -58,6 +46,15 @@ class ModulationConfig {
           const <ModulationTargetConfig>[],
     );
   }
+  final String id;
+  final ModulationType type;
+  final double amount;
+  final LfoConfig? lfoConfig;
+  final RandomConfig? randomConfig;
+  final DriftConfig? driftConfig;
+  final EnvelopeConfig? envelopeConfig;
+  final BurstConfig? burstConfig;
+  final List<ModulationTargetConfig> targets;
 
   Map<String, dynamic> toJson() {
     return {
@@ -91,12 +88,6 @@ class ModulationConfig {
 }
 
 class ModulationTargetConfig {
-  final String path;
-  final double amount;
-  final ModulationApplyMode mode;
-  final double? minValue;
-  final double? maxValue;
-
   const ModulationTargetConfig({
     required this.path,
     this.amount = 1.0,
@@ -120,6 +111,11 @@ class ModulationTargetConfig {
       maxValue: (json['maxValue'] as num?)?.toDouble(),
     );
   }
+  final String path;
+  final double amount;
+  final ModulationApplyMode mode;
+  final double? minValue;
+  final double? maxValue;
 
   Map<String, dynamic> toJson() {
     return {
@@ -133,10 +129,6 @@ class ModulationTargetConfig {
 }
 
 class LfoConfig {
-  final LFOType type;
-  final double frequency;
-  final double depth;
-
   const LfoConfig({
     this.type = LFOType.sine,
     this.frequency = 1.0,
@@ -153,6 +145,9 @@ class LfoConfig {
       depth: (json['depth'] as num?)?.toDouble() ?? 1.0,
     );
   }
+  final LFOType type;
+  final double frequency;
+  final double depth;
 
   Map<String, dynamic> toJson() {
     return {'type': type.name, 'frequency': frequency, 'depth': depth};
@@ -160,9 +155,6 @@ class LfoConfig {
 }
 
 class RandomConfig {
-  final double rateHz;
-  final double smooth;
-
   const RandomConfig({this.rateHz = 0.05, this.smooth = 0.9});
 
   factory RandomConfig.fromJson(Map<String, dynamic> json) {
@@ -171,6 +163,8 @@ class RandomConfig {
       smooth: (json['smooth'] as num?)?.toDouble() ?? 0.9,
     );
   }
+  final double rateHz;
+  final double smooth;
 
   Map<String, dynamic> toJson() {
     return {'rateHz': rateHz, 'smooth': smooth};
@@ -178,9 +172,6 @@ class RandomConfig {
 }
 
 class DriftConfig {
-  final double speed;
-  final double range;
-
   const DriftConfig({this.speed = 0.01, this.range = 1.0});
 
   factory DriftConfig.fromJson(Map<String, dynamic> json) {
@@ -189,6 +180,8 @@ class DriftConfig {
       range: (json['range'] as num?)?.toDouble() ?? 1.0,
     );
   }
+  final double speed;
+  final double range;
 
   Map<String, dynamic> toJson() {
     return {'speed': speed, 'range': range};
@@ -196,11 +189,6 @@ class DriftConfig {
 }
 
 class EnvelopeConfig {
-  final int attackMs;
-  final int decayMs;
-  final double sustain;
-  final int releaseMs;
-
   const EnvelopeConfig({
     this.attackMs = 50,
     this.decayMs = 200,
@@ -216,6 +204,10 @@ class EnvelopeConfig {
       releaseMs: json['releaseMs'] as int? ?? 300,
     );
   }
+  final int attackMs;
+  final int decayMs;
+  final double sustain;
+  final int releaseMs;
 
   Map<String, dynamic> toJson() {
     return {
@@ -228,15 +220,6 @@ class EnvelopeConfig {
 }
 
 class BurstConfig {
-  final int durationMs;
-  final double intensity;
-  final double randomness;
-  final int attackMs;
-  final int releaseMs;
-  final int clusterMin;
-  final int clusterMax;
-  final int clusterSpreadMs;
-
   const BurstConfig({
     this.durationMs = 120,
     this.intensity = 1.0,
@@ -260,6 +243,14 @@ class BurstConfig {
       clusterSpreadMs: json['clusterSpreadMs'] as int? ?? 0,
     );
   }
+  final int durationMs;
+  final double intensity;
+  final double randomness;
+  final int attackMs;
+  final int releaseMs;
+  final int clusterMin;
+  final int clusterMax;
+  final int clusterSpreadMs;
 
   Map<String, dynamic> toJson() {
     return {

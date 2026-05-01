@@ -1,0 +1,5 @@
+tags:
+  smoke:
+    description: Structural and wiring checks (non-crash, setup, serialization paths).
+  quality:
+    description: DSP quality gates (signal, spectral, temporal, and scheduler behavior).

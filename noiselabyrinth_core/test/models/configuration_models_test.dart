@@ -2,6 +2,33 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
+Map<String, dynamic> _baseValidConfigJson() {
+  return <String, dynamic>{
+    'metadata': <String, dynamic>{'name': 'Base Valid Patch'},
+    'render': <String, dynamic>{
+      'durationMinutes': 1,
+      'sampleRate': 44100,
+      'bitRate': 192,
+      'format': 'wav',
+    },
+    'mix': <String, dynamic>{'mix': 1.0},
+    'layers': <Map<String, dynamic>>[
+      <String, dynamic>{
+        'id': 'layer-a',
+        'gain': 1.0,
+        'pan': 0.0,
+        'source': <String, dynamic>{
+          'type': 'noise',
+          'noiseConfig': <String, dynamic>{
+            'color': 'white',
+            'band': <String, dynamic>{'low': 20, 'high': 18000},
+          },
+        },
+      },
+    ],
+  };
+}
+
 void main() {
   group('configuration models', () {
     test('MetadataConfig serializes and deserializes safely', () {
@@ -25,7 +52,7 @@ void main() {
       expect(restored.durationMinutes, 120);
       expect(restored.sampleRate, 44100);
       expect(restored.bitRate, 192);
-      expect(restored.format, RenderFormat.wav);
+      expect(restored.format, RenderFormat.mp3);
 
       expect(
         const RenderConfig(
@@ -37,7 +64,7 @@ void main() {
           'durationMinutes': 10,
           'sampleRate': 48000,
           'bitRate': 256,
-          'format': 'wav',
+          'format': 'mp3',
         },
       );
     });
@@ -45,7 +72,6 @@ void main() {
     test('RenderConfig round-trips mp3 format', () {
       const config = RenderConfig(
         durationMinutes: 5,
-        sampleRate: 44100,
         bitRate: 128,
         format: RenderFormat.mp3,
       );
@@ -54,13 +80,46 @@ void main() {
       expect(restored.bitRate, 128);
     });
 
+    test('MixConfig supports optional dither config with defaults', () {
+      final defaults = MixConfig.fromJson(<String, dynamic>{});
+      expect(defaults.mix, closeTo(1.0, 1e-9));
+      expect(defaults.dither.enabled, isFalse);
+      expect(defaults.dither.type, DitherType.tpdf);
+      expect(defaults.dither.bitDepth, 16);
+      expect(defaults.dither.amount, closeTo(1.0, 1e-9));
+      expect(defaults.normalization.enabled, isFalse);
+      expect(defaults.normalization.targetDb, closeTo(-1.0, 1e-9));
+
+      const configured = MixConfig(
+        mix: 0.85,
+        dither: DitherConfig(
+          enabled: true,
+          bitDepth: 24,
+          amount: 0.5,
+        ),
+        normalization: NormalizationConfig(
+          enabled: true,
+          targetDb: -6,
+        ),
+      );
+
+      final restored = MixConfig.fromJson(configured.toJson());
+      expect(restored.mix, closeTo(0.85, 1e-9));
+      expect(restored.dither.enabled, isTrue);
+      expect(restored.dither.type, DitherType.tpdf);
+      expect(restored.dither.bitDepth, 24);
+      expect(restored.dither.amount, closeTo(0.5, 1e-9));
+      expect(restored.normalization.enabled, isTrue);
+      expect(restored.normalization.targetDb, closeTo(-6.0, 1e-9));
+    });
+
     test(
-      'RenderConfig fromJson falls back to wav for unknown format string',
+      'RenderConfig fromJson falls back to mp3 for unknown format string',
       () {
         final config = RenderConfig.fromJson(<String, dynamic>{
           'format': 'ogg',
         });
-        expect(config.format, RenderFormat.wav);
+        expect(config.format, RenderFormat.mp3);
       },
     );
 
@@ -74,8 +133,8 @@ void main() {
             path: 'layers[layer-a].processors[gain-1].gain',
             amount: 0.5,
             mode: ModulationApplyMode.multiplicative,
-            minValue: 0.0,
-            maxValue: 1.0,
+            minValue: 0,
+            maxValue: 1,
           ),
         ],
       );
@@ -172,7 +231,6 @@ void main() {
           biquadMode: BiquadMode.highpass,
           frequency: 900,
           q: 1.2,
-          gainDb: 0.0,
           resonant: true,
         ),
       );
@@ -195,8 +253,7 @@ void main() {
         biquad: BiquadConfig(
           biquadMode: BiquadMode.bandpass,
           frequency: 1400,
-          q: 4.0,
-          gainDb: 0.0,
+          q: 4,
           resonant: true,
         ),
       );
@@ -207,8 +264,7 @@ void main() {
           biquadMode: BiquadMode.peak,
           frequency: 900,
           q: 2.5,
-          gainDb: 6.0,
-          resonant: false,
+          gainDb: 6,
         ),
       );
 
@@ -365,8 +421,7 @@ void main() {
           }),
           throwsA(
             isA<ConfigValidationException>().having(
-              (error) =>
-                  error.issues.any((issue) => issue.path.endsWith('.path')),
+              (error) => error.issues.any((issue) => issue.path.endsWith('.path')),
               'path issue',
               isTrue,
             ),
@@ -409,8 +464,7 @@ void main() {
         }),
         throwsA(
           isA<ConfigValidationException>().having(
-            (error) =>
-                error.issues.any((issue) => issue.path.endsWith('.gain.gain')),
+            (error) => error.issues.any((issue) => issue.path.endsWith('.gain.gain')),
             'gain issue',
             isTrue,
           ),
@@ -466,8 +520,7 @@ void main() {
           }),
           throwsA(
             isA<ConfigValidationException>().having(
-              (error) =>
-                  error.issues.any((issue) => issue.path.contains('.targets[')),
+              (error) => error.issues.any((issue) => issue.path.contains('.targets[')),
               'target bounds issue',
               isTrue,
             ),
@@ -519,8 +572,7 @@ void main() {
                     },
                     'targets': <Map<String, dynamic>>[
                       <String, dynamic>{
-                        'path':
-                            'layers[layer-a].processors[gain-1].config.gain',
+                        'path': 'layers[layer-a].processors[gain-1].config.gain',
                       },
                     ],
                   },
@@ -530,8 +582,7 @@ void main() {
           }),
           throwsA(
             isA<ConfigValidationException>().having(
-              (error) =>
-                  error.issues.any((issue) => issue.path.endsWith('.path')),
+              (error) => error.issues.any((issue) => issue.path.endsWith('.path')),
               'path issue',
               isTrue,
             ),
@@ -539,5 +590,192 @@ void main() {
         );
       },
     );
+
+    test('GenerationConfigParser parseJsonString rejects non-object root', () {
+      const parser = GenerationConfigParser();
+
+      expect(
+        () => parser.parseJsonString('[]'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('GenerationConfigParser rejects duplicate layer ids', () {
+      const parser = GenerationConfigParser();
+
+      final json = _baseValidConfigJson();
+      json['layers'] = <Map<String, dynamic>>[
+        (json['layers'] as List<Map<String, dynamic>>).first,
+        <String, dynamic>{
+          'id': 'layer-a',
+          'source': <String, dynamic>{
+            'type': 'sine',
+            'sineConfig': <String, dynamic>{'frequencyHz': 110, 'phase': 0},
+          },
+        },
+      ];
+
+      expect(
+        () => parser.parseJsonMap(json),
+        throwsA(
+          isA<ConfigValidationException>().having(
+            (error) => error.issues.any((issue) => issue.message.contains('must be unique')),
+            'duplicate layer issue',
+            isTrue,
+          ),
+        ),
+      );
+    });
+
+    test(
+      'GenerationConfigParser rejects duplicate processor and modulation ids in a layer',
+      () {
+        const parser = GenerationConfigParser();
+
+        final json = _baseValidConfigJson();
+        final layers = json['layers'] as List<Map<String, dynamic>>;
+        layers[0]['processors'] = <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'gain-1',
+            'type': 'gain',
+            'gain': <String, dynamic>{'gain': 1.0},
+          },
+          <String, dynamic>{
+            'id': 'gain-1',
+            'type': 'gain',
+            'gain': <String, dynamic>{'gain': 0.5},
+          },
+        ];
+        layers[0]['modulations'] = <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'mod-1',
+            'type': 'lfo',
+            'amount': 1.0,
+            'lfoConfig': <String, dynamic>{'frequency': 1.0, 'depth': 1.0},
+            'targets': <Map<String, dynamic>>[
+              <String, dynamic>{'path': 'layers[layer-a].gain'},
+            ],
+          },
+          <String, dynamic>{
+            'id': 'mod-1',
+            'type': 'lfo',
+            'amount': 1.0,
+            'lfoConfig': <String, dynamic>{'frequency': 0.5, 'depth': 0.6},
+            'targets': <Map<String, dynamic>>[
+              <String, dynamic>{'path': 'layers[layer-a].pan'},
+            ],
+          },
+        ];
+
+        expect(
+          () => parser.parseJsonMap(json),
+          throwsA(
+            isA<ConfigValidationException>().having(
+              (error) => error.issues.where((issue) => issue.message.contains('must be unique inside a layer')).length,
+              'duplicate processor/modulation issues',
+              greaterThanOrEqualTo(2),
+            ),
+          ),
+        );
+      },
+    );
+
+    test('GenerationConfigParser rejects event action modulator references that do not exist', () {
+      const parser = GenerationConfigParser();
+
+      final json = _baseValidConfigJson();
+      final layer = (json['layers'] as List<Map<String, dynamic>>).first;
+      layer['modulations'] = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'mod-existing',
+          'type': 'lfo',
+          'amount': 1.0,
+          'lfoConfig': <String, dynamic>{'frequency': 1.0, 'depth': 1.0},
+          'targets': <Map<String, dynamic>>[
+            <String, dynamic>{'path': 'layers[layer-a].gain'},
+          ],
+        },
+      ];
+      layer['events'] = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'event-1',
+          'trigger': <String, dynamic>{'type': 'periodic', 'rate': 1.0},
+          'actions': <Map<String, dynamic>>[
+            <String, dynamic>{'modulatorId': 'missing-mod', 'mode': 'trigger'},
+          ],
+        },
+      ];
+
+      expect(
+        () => parser.parseJsonMap(json),
+        throwsA(
+          isA<ConfigValidationException>().having(
+            (error) => error.issues.any(
+              (issue) => issue.path.endsWith('.modulatorId') && issue.message.contains('does not exist'),
+            ),
+            'unknown modulator reference issue',
+            isTrue,
+          ),
+        ),
+      );
+    });
+
+    test('GenerationConfigParser validates modulation-type specific numeric ranges', () {
+      const parser = GenerationConfigParser();
+
+      final json = _baseValidConfigJson();
+      final layer = (json['layers'] as List<Map<String, dynamic>>).first;
+      layer['modulations'] = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'mod-random-bad',
+          'type': 'random',
+          'randomConfig': <String, dynamic>{'rateHz': 0, 'smooth': 1.5},
+          'targets': <Map<String, dynamic>>[
+            <String, dynamic>{'path': 'layers[layer-a].gain'},
+          ],
+        },
+        <String, dynamic>{
+          'id': 'mod-env-bad',
+          'type': 'envelope',
+          'envelopeConfig': <String, dynamic>{
+            'attackMs': -1,
+            'decayMs': -1,
+            'releaseMs': -1,
+            'sustain': 1.5,
+          },
+          'targets': <Map<String, dynamic>>[
+            <String, dynamic>{'path': 'layers[layer-a].pan'},
+          ],
+        },
+        <String, dynamic>{
+          'id': 'mod-burst-bad',
+          'type': 'burst',
+          'burstConfig': <String, dynamic>{
+            'durationMs': 0,
+            'intensity': 2.0,
+            'randomness': -1.0,
+            'attackMs': -1,
+            'releaseMs': 0,
+            'clusterMin': 0,
+            'clusterMax': -1,
+            'clusterSpreadMs': -1,
+          },
+          'targets': <Map<String, dynamic>>[
+            <String, dynamic>{'path': 'layers[layer-a].gain'},
+          ],
+        },
+      ];
+
+      expect(
+        () => parser.parseJsonMap(json),
+        throwsA(
+          isA<ConfigValidationException>().having(
+            (error) => error.issues.length,
+            'issues.length',
+            greaterThanOrEqualTo(10),
+          ),
+        ),
+      );
+    });
   });
 }

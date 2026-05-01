@@ -1,34 +1,57 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
+const _smokeTag = <String>['smoke'];
+const _qualityTag = <String>['quality'];
+
 void main() {
-  group('modulators', () {
+  group('modulators smoke', () {
     test(
       'LfoSineModulator fills control buffer through Modulator interface',
       () {
         final Modulator modulator = LfoSineModulator(
-          sampleRate: 44100,
-          frequency: 2.0,
-          depth: 1.0,
+          sampleRate: 1000,
+          frequency: 5,
+          depth: 1,
         );
 
-        final buffer = Float32List(64);
-        modulator.process(64, buffer);
+        final buffer = Float32List(1000);
+        modulator.process(1000, buffer);
 
         final allZero = buffer.every((sample) => sample == 0.0);
         expect(allZero, isFalse);
-      },
-    );
 
+        final peak = buffer.reduce((a, b) => a.abs() > b.abs() ? a : b).abs();
+        final mean = buffer.reduce((a, b) => a + b) / buffer.length;
+        final rms = math.sqrt(
+          buffer.fold<double>(0, (sum, v) => sum + v * v) / buffer.length,
+        );
+        var zeroCrossings = 0;
+        for (var i = 1; i < buffer.length; i++) {
+          if ((buffer[i - 1] <= 0 && buffer[i] > 0) || (buffer[i - 1] >= 0 && buffer[i] < 0)) {
+            zeroCrossings++;
+          }
+        }
+
+        expect(peak, closeTo(1.0, 0.05));
+        expect(mean.abs(), lessThan(0.05));
+        expect(rms, closeTo(math.sqrt(0.5), 0.06));
+        expect(zeroCrossings, closeTo(10, 2));
+      },
+      tags: _smokeTag,
+    );
+  });
+
+  group('modulators quality', () {
     test(
       'SmoothRandomModulator produces smooth, non-constant control values',
       () {
         final random = SmoothRandomModulator(
           sampleRate: 44100,
-          rateHz: 3.0,
+          rateHz: 3,
           smooth: 0.95,
         );
 
@@ -39,14 +62,20 @@ void main() {
         expect(allEqual, isFalse);
 
         var maxDelta = 0.0;
+        var lag1 = 0.0;
+        var energy = 0.0;
         for (var i = 1; i < buffer.length; i++) {
           final delta = (buffer[i] - buffer[i - 1]).abs();
           if (delta > maxDelta) {
             maxDelta = delta;
           }
+          lag1 += buffer[i] * buffer[i - 1];
+          energy += buffer[i] * buffer[i];
         }
-        expect(maxDelta, lessThan(0.5));
+        expect(maxDelta, lessThan(0.2));
+        expect(lag1 / (energy + 1e-12), greaterThan(0.7));
       },
+      tags: _qualityTag,
     );
 
     test('AdsrEnvelopeModulator follows ADSR shape and reset', () {
@@ -69,19 +98,22 @@ void main() {
       expect(attackDecay[5], greaterThan(0.3));
       expect(attackDecay[10], greaterThan(0.8));
       expect(attackDecay.last, closeTo(0.4, 0.08));
+      expect(attackDecay[10], greaterThanOrEqualTo(attackDecay[9]));
+      expect(attackDecay[30], lessThanOrEqualTo(attackDecay[20]));
 
       envelope.reset();
       final released = Float32List(40);
       envelope.process(40, released);
       expect(released.last, closeTo(0.0, 1e-6));
-    });
+      expect(released[0], lessThanOrEqualTo(0.4));
+    }, tags: _qualityTag);
 
     test('BurstModulator creates short-lived triggered windows', () {
       final burst = BurstModulator(
         sampleRate: 1000,
         durationMs: 20,
-        intensity: 1.0,
-        randomness: 0.0,
+        intensity: 1,
+        randomness: 0,
         attackMs: 0,
         releaseMs: 20,
         clusterMin: 1,
@@ -108,31 +140,30 @@ void main() {
       expect(active.first, closeTo(1.0, 1e-9));
       expect(active[15], greaterThan(0.0));
       expect(active.last, closeTo(0.0, 1e-9));
+      expect(active.where((s) => s > 0.0).length, lessThanOrEqualTo(20));
 
       burst.reset();
       final resetBuffer = Float32List(10);
       burst.process(10, resetBuffer);
       expect(resetBuffer.every((sample) => sample == 0.0), isTrue);
-    });
+    }, tags: _qualityTag);
 
     test('BurstModulator random intensity varies between triggers', () {
       final burst = BurstModulator(
         sampleRate: 1000,
         durationMs: 10,
-        intensity: 1.0,
-        randomness: 1.0,
+        intensity: 1,
+        randomness: 1,
         attackMs: 0,
         releaseMs: 10,
         clusterMin: 1,
         clusterMax: 1,
         clusterSpreadMs: 0,
-      );
-
-      burst.trigger();
+      )..trigger();
       final first = Float32List(10);
-      burst.process(10, first);
-
-      burst.trigger();
+      burst
+        ..process(10, first)
+        ..trigger();
       final second = Float32List(10);
       burst.process(10, second);
 
@@ -141,22 +172,21 @@ void main() {
       expect(first.first, lessThanOrEqualTo(1.0));
       expect(second.first, greaterThanOrEqualTo(0.0));
       expect(second.first, lessThanOrEqualTo(1.0));
-    });
+      expect((first.first - second.first).abs(), greaterThan(0.05));
+    }, tags: _qualityTag);
 
     test('BurstModulator supports clustered trigger behavior', () {
       final burst = BurstModulator(
         sampleRate: 1000,
         durationMs: 40,
-        intensity: 1.0,
-        randomness: 0.0,
+        intensity: 1,
+        randomness: 0,
         attackMs: 0,
         releaseMs: 40,
         clusterMin: 3,
         clusterMax: 3,
         clusterSpreadMs: 30,
-      );
-
-      burst.trigger();
+      )..trigger();
       final buffer = Float32List(120);
       burst.process(120, buffer);
 
@@ -164,10 +194,11 @@ void main() {
       expect(nonZeroCount, greaterThan(50));
       expect(buffer.take(10).any((sample) => sample > 0.0), isTrue);
       expect(buffer.skip(25).take(25).any((sample) => sample > 0.0), isTrue);
-    });
+      expect(buffer.skip(55).take(35).any((sample) => sample > 0.0), isTrue);
+    }, tags: _qualityTag);
 
     test('DriftModulator stays bounded and evolves over time', () {
-      final drift = DriftModulator(sampleRate: 1000, speed: 30.0, range: 0.25);
+      final drift = DriftModulator(sampleRate: 1000, speed: 30, range: 0.25);
 
       final buffer = Float32List(256);
       drift.process(256, buffer);
@@ -180,14 +211,19 @@ void main() {
       final unique = buffer.toSet().length;
       expect(unique, greaterThan(8));
 
+      var avgDelta = 0.0;
+      for (var i = 1; i < buffer.length; i++) {
+        avgDelta += (buffer[i] - buffer[i - 1]).abs();
+      }
+      avgDelta /= buffer.length - 1;
+      expect(avgDelta, lessThan(0.03));
+
       drift.reset();
       final resetBuffer = Float32List(64);
       drift.process(64, resetBuffer);
-      final resetPeak = resetBuffer
-          .map((sample) => sample.abs())
-          .reduce((a, b) => a > b ? a : b);
+      final resetPeak = resetBuffer.map((sample) => sample.abs()).reduce((a, b) => a > b ? a : b);
       expect(resetPeak, lessThanOrEqualTo(0.25));
-    });
+    }, tags: _qualityTag);
   });
 
   group('modulators with events', () {

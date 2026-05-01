@@ -1,8 +1,11 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
+
+const _smokeTag = <String>['smoke'];
+const _qualityTag = <String>['quality'];
 
 void main() {
   group('audio engine', () {
@@ -62,6 +65,7 @@ void main() {
         expect(withScratch.layerBuffers('layer-a').scratch, isNotNull);
         expect(withScratch.layerBuffers('layer-a').scratch!.length, 128);
       },
+      tags: _smokeTag,
     );
 
     test('AudioEngine loop runs stubs without crashing', () {
@@ -104,7 +108,7 @@ void main() {
 
       expect(() => engine.processBlocks(10), returnsNormally);
       expect(engine.processedBlocks, 10);
-    });
+    }, tags: _smokeTag);
 
     test('engine mixes layers into master buffer', () {
       const parser = GenerationConfigParser();
@@ -149,9 +153,7 @@ void main() {
         graph: graph,
         sampleRate: 44100,
         blockSize: 32,
-      );
-
-      engine.processBlocks(1);
+      )..processBlocks(1);
 
       final layerA = engine.layerBuffers('layer-a').main;
       final layerB = engine.layerBuffers('layer-b').main;
@@ -165,6 +167,138 @@ void main() {
         expect(masterLeft[i], closeTo(expected, 1e-6));
         expect(masterRight[i], closeTo(expected, 1e-6));
       }
+    }, tags: _qualityTag);
+
+    test('engine applies optional master dithering when enabled', () {
+      const parser = GenerationConfigParser();
+      const graphBuilder = RuntimeGraphBuilder();
+
+      final baseJson = <String, dynamic>{
+        'metadata': <String, dynamic>{'name': 'Dither Patch'},
+        'render': <String, dynamic>{
+          'durationMinutes': 1,
+          'sampleRate': 44100,
+          'bitRate': 192,
+        },
+        'layers': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'layer-a',
+            'source': <String, dynamic>{
+              'type': 'sine',
+              'sineConfig': <String, dynamic>{'frequencyHz': 440, 'phase': 0.0},
+            },
+          },
+        ],
+      };
+
+      final noDitherConfig = parser.parseJsonMap(<String, dynamic>{
+        ...baseJson,
+        'mix': <String, dynamic>{'mix': 1.0},
+      });
+      final withDitherConfig = parser.parseJsonMap(<String, dynamic>{
+        ...baseJson,
+        'mix': <String, dynamic>{
+          'mix': 1.0,
+          'dither': <String, dynamic>{
+            'enabled': true,
+            'type': 'tpdf',
+            'bitDepth': 16,
+            'amount': 1.0,
+          },
+        },
+      });
+
+      final noDitherEngine = AudioEngine(
+        graph: graphBuilder.build(noDitherConfig),
+        sampleRate: 44100,
+        blockSize: 64,
+      )..processBlocks(1);
+
+      final ditherEngineA = AudioEngine(
+        graph: graphBuilder.build(withDitherConfig),
+        sampleRate: 44100,
+        blockSize: 64,
+      )..processBlocks(1);
+
+      final ditherEngineB = AudioEngine(
+        graph: graphBuilder.build(withDitherConfig),
+        sampleRate: 44100,
+        blockSize: 64,
+      )..processBlocks(1);
+
+      var changedByDither = false;
+      for (var i = 0; i < noDitherEngine.masterLeftBuffer.length; i++) {
+        if ((noDitherEngine.masterLeftBuffer[i] - ditherEngineA.masterLeftBuffer[i]).abs() > 1e-9) {
+          changedByDither = true;
+          break;
+        }
+      }
+
+      expect(changedByDither, isTrue);
+      expect(ditherEngineA.masterLeftBuffer, orderedEquals(ditherEngineB.masterLeftBuffer));
+      expect(ditherEngineA.masterRightBuffer, orderedEquals(ditherEngineB.masterRightBuffer));
+    }, tags: _qualityTag);
+
+    test('engine applies optional render normalization to target dBFS', () {
+      const parser = GenerationConfigParser();
+      const graphBuilder = RuntimeGraphBuilder();
+
+      final baseJson = <String, dynamic>{
+        'metadata': <String, dynamic>{'name': 'Normalization Patch'},
+        'render': <String, dynamic>{
+          'durationMinutes': 1,
+          'sampleRate': 44100,
+          'bitRate': 192,
+        },
+        'layers': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'layer-a',
+            'gain': 0.2,
+            'source': <String, dynamic>{
+              'type': 'sine',
+              'sineConfig': <String, dynamic>{'frequencyHz': 440, 'phase': 0.0},
+            },
+          },
+        ],
+      };
+
+      final noNormalizationConfig = parser.parseJsonMap(<String, dynamic>{
+        ...baseJson,
+        'mix': <String, dynamic>{'mix': 1.0},
+      });
+      final withNormalizationConfig = parser.parseJsonMap(<String, dynamic>{
+        ...baseJson,
+        'mix': <String, dynamic>{
+          'mix': 1.0,
+          'normalization': <String, dynamic>{
+            'enabled': true,
+            'targetDb': -6.0,
+          },
+        },
+      });
+
+      final noNormalizationEngine = AudioEngine(
+        graph: graphBuilder.build(noNormalizationConfig),
+        sampleRate: 44100,
+        blockSize: 128,
+      );
+      final withNormalizationEngine = AudioEngine(
+        graph: graphBuilder.build(withNormalizationConfig),
+        sampleRate: 44100,
+        blockSize: 128,
+      );
+
+      final withoutNormalization = noNormalizationEngine.renderStereoSamples(totalSamples: 4096);
+      final withNormalization = withNormalizationEngine.renderStereoSamples(totalSamples: 4096);
+
+      final rawPeak = withoutNormalization.left.map((s) => s.abs()).reduce((a, b) => a > b ? a : b);
+      final normalizedLeftPeak = withNormalization.left.map((s) => s.abs()).reduce((a, b) => a > b ? a : b);
+      final normalizedRightPeak = withNormalization.right.map((s) => s.abs()).reduce((a, b) => a > b ? a : b);
+      final normalizedPeak = normalizedLeftPeak > normalizedRightPeak ? normalizedLeftPeak : normalizedRightPeak;
+
+      final target = math.pow(10.0, -6.0 / 20.0).toDouble();
+      expect(normalizedPeak, closeTo(target, 1e-6));
+      expect((normalizedPeak - rawPeak).abs() > 1e-6, isTrue);
     });
 
     test('engine applies per-layer pan into stereo channels', () {
@@ -210,26 +344,25 @@ void main() {
         graph: graph,
         sampleRate: 44100,
         blockSize: 64,
-      );
-      engine.processBlocks(1);
+      )..processBlocks(1);
 
       final leftLayer = engine.layerBuffers('left-layer');
       final rightLayer = engine.layerBuffers('right-layer');
 
       final leftLayerLeftEnergy = leftLayer.left.fold<double>(
-        0.0,
+        0,
         (sum, s) => sum + s.abs(),
       );
       final leftLayerLeak = leftLayer.right.fold<double>(
-        0.0,
+        0,
         (sum, s) => sum + s.abs(),
       );
       final rightLayerLeftLeak = rightLayer.left.fold<double>(
-        0.0,
+        0,
         (sum, s) => sum + s.abs(),
       );
       final rightLayerRightEnergy = rightLayer.right.fold<double>(
-        0.0,
+        0,
         (sum, s) => sum + s.abs(),
       );
 
@@ -276,17 +409,13 @@ void main() {
       graph.masterMix.baseValue = 0.0;
       graph.masterMix.update();
       engine.processBlocks(1);
-      final silentPeak = engine.masterLeftBuffer
-          .map((sample) => sample.abs())
-          .reduce((a, b) => a > b ? a : b);
+      final silentPeak = engine.masterLeftBuffer.map((sample) => sample.abs()).reduce((a, b) => a > b ? a : b);
       expect(silentPeak, closeTo(0.0, 1e-9));
 
       graph.masterMix.baseValue = 1.0;
       graph.masterMix.update();
       engine.processBlocks(1);
-      final audiblePeak = engine.masterRightBuffer
-          .map((sample) => sample.abs())
-          .reduce((a, b) => a > b ? a : b);
+      final audiblePeak = engine.masterRightBuffer.map((sample) => sample.abs()).reduce((a, b) => a > b ? a : b);
       expect(audiblePeak, greaterThan(0.0));
     });
 
@@ -402,7 +531,8 @@ void main() {
 
       expect(peak, lessThanOrEqualTo(1.0));
       expect(engine.processedBlocks, greaterThan(0));
-    });
+      expect(peak, greaterThan(0.01));
+    }, tags: _qualityTag);
 
     test('engine applies modulation per block and evolves filtered sound', () {
       const parser = GenerationConfigParser();
@@ -497,10 +627,11 @@ void main() {
       final frequencyBlock2 = freqParam.finalValue;
 
       expect(frequencyBlock1, isNot(equals(frequencyBlock2)));
+      expect((frequencyBlock2 - frequencyBlock1).abs(), greaterThan(1.0));
 
       final samples = engine.renderSamples(totalSamples: 4096);
       final allZero = samples.every((sample) => sample == 0.0);
       expect(allZero, isFalse);
-    });
+    }, tags: _qualityTag);
   });
 }

@@ -1,9 +1,4 @@
 class MetadataConfig {
-  final String name;
-  final String description;
-  final List<String> tags;
-  final int version;
-
   const MetadataConfig({
     this.name = '',
     this.description = '',
@@ -19,6 +14,10 @@ class MetadataConfig {
       version: json['version'] as int? ?? 0,
     );
   }
+  final String name;
+  final String description;
+  final List<String> tags;
+  final int version;
 
   Map<String, dynamic> toJson() {
     return {

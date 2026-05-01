@@ -11,7 +11,9 @@
 # (the recommended set includes the core lints).
 # The core lints are also what is used by pub.dev for scoring packages.
 
-include: package:lints/recommended.yaml
+include:
+  - package:lints/recommended.yaml
+  - package:very_good_analysis/analysis_options.yaml
 
 # Uncomment the following section to specify additional rules.
 
@@ -28,3 +30,11 @@ include: package:lints/recommended.yaml
 
 # For additional information about configuring this file, see
 # https://dart.dev/guides/language/analysis-options
+
+formatter:
+  page_width: 120
+
+linter:
+  rules:
+    lines_longer_than_80_chars: false
+    public_member_api_docs: false

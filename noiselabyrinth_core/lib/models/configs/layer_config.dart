@@ -4,19 +4,11 @@ import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 
 class LayerConfig {
-  final String id;
-  final double gain;
-  final double pan;
-  final SourceConfig source;
-  final List<ProcessorConfig> processors;
-  final List<ModulationConfig> modulations;
-  final List<EventConfig> events;
-
   const LayerConfig({
     required this.id,
+    required this.source,
     this.gain = 1.0,
     this.pan = 0.0,
-    required this.source,
     this.processors = const [],
     this.modulations = const [],
     this.events = const [],
@@ -47,6 +39,13 @@ class LayerConfig {
           const <EventConfig>[],
     );
   }
+  final String id;
+  final double gain;
+  final double pan;
+  final SourceConfig source;
+  final List<ProcessorConfig> processors;
+  final List<ModulationConfig> modulations;
+  final List<EventConfig> events;
 
   Map<String, dynamic> toJson() {
     return {

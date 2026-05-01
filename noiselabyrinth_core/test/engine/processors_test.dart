@@ -5,16 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
+const _smokeTag = <String>['smoke'];
+const _qualityTag = <String>['quality'];
+
 void main() {
-  group('gain processor', () {
+  group('gain processor quality', () {
     test('gain processor scales buffer samples', () {
-      final gain = GainProcessorNode(id: 'gain-node', gain: 0.5);
-      gain.prepare(44100, 4);
+      final gain = GainProcessorNode(id: 'gain-node', gain: 0.5)..prepare(44100, 4);
       for (final parameter in gain.parameters.values) {
         parameter.update();
       }
 
-      final buffer = Float32List.fromList(<double>[1.0, -1.0, 0.5, -0.25]);
+      final buffer = Float32List.fromList(<double>[1, -1, 0.5, -0.25]);
       gain.process(buffer);
 
       expect(buffer[0], closeTo(0.5, 1e-9));
@@ -24,13 +26,12 @@ void main() {
     });
 
     test('gain processor supports negative gain for polarity inversion', () {
-      final gain = GainProcessorNode(id: 'gain-invert', gain: -1.0);
-      gain.prepare(44100, 3);
+      final gain = GainProcessorNode(id: 'gain-invert', gain: -1)..prepare(44100, 3);
       for (final parameter in gain.parameters.values) {
         parameter.update();
       }
 
-      final buffer = Float32List.fromList(<double>[0.3, -0.5, 1.0]);
+      final buffer = Float32List.fromList(<double>[0.3, -0.5, 1]);
       gain.process(buffer);
 
       expect(buffer[0], closeTo(-0.3, 1e-6));
@@ -39,13 +40,12 @@ void main() {
     });
 
     test('gain processor guards against non-finite finalValue', () {
-      final gain = GainProcessorNode(id: 'gain-safe', gain: 1.0);
-      gain.prepare(44100, 4);
+      final gain = GainProcessorNode(id: 'gain-safe', gain: 1)..prepare(44100, 4);
 
       gain.parameter('gain')!.baseValue = double.nan;
       gain.parameter('gain')!.update();
 
-      final buffer = Float32List.fromList(<double>[1.0, -1.0, 0.5, -0.5]);
+      final buffer = Float32List.fromList(<double>[1, -1, 0.5, -0.5]);
       gain.process(buffer);
 
       // Smoothed gain moves gradually toward the safety fallback target.
@@ -55,45 +55,43 @@ void main() {
       }
 
       for (var i = 0; i < 30; i++) {
-        final decay = Float32List.fromList(<double>[1.0]);
+        final decay = Float32List.fromList(<double>[1]);
         gain.process(decay);
       }
 
-      final settled = Float32List.fromList(<double>[1.0]);
+      final settled = Float32List.fromList(<double>[1]);
       gain.process(settled);
       expect(settled[0], lessThan(0.01));
-    });
+    }, tags: _qualityTag);
 
     test('gain processor reads finalValue and requires update cycle', () {
-      final gain = GainProcessorNode(id: 'gain-cycle', gain: 1.0);
-      gain.prepare(44100, 2);
+      final gain = GainProcessorNode(id: 'gain-cycle', gain: 1)..prepare(44100, 2);
       gain.parameter('gain')!.update(); // finalValue = 1.0
 
       gain.parameter('gain')!.baseValue = 0.25;
-      final noUpdate = Float32List.fromList(<double>[1.0, 1.0]);
+      final noUpdate = Float32List.fromList(<double>[1, 1]);
       gain.process(noUpdate);
       expect(noUpdate[0], closeTo(1.0, 1e-9));
 
       gain.parameter('gain')!.update(); // finalValue now reflects baseValue
-      final updated = Float32List.fromList(<double>[1.0, 1.0]);
+      final updated = Float32List.fromList(<double>[1, 1]);
       gain.process(updated);
       expect(updated[0], lessThan(1.0));
       expect(updated[0], greaterThan(0.25));
     });
 
     test('gain smoothing eases abrupt target changes', () {
-      final gain = GainProcessorNode(id: 'gain-smoothing', gain: 1.0);
-      gain.prepare(44100, 1);
+      final gain = GainProcessorNode(id: 'gain-smoothing', gain: 1)..prepare(44100, 1);
       gain.parameter('gain')!.update();
 
-      final first = Float32List.fromList(<double>[1.0]);
+      final first = Float32List.fromList(<double>[1]);
       gain.process(first);
       expect(first[0], closeTo(1.0, 1e-9));
 
       gain.parameter('gain')!.baseValue = 0.0;
       gain.parameter('gain')!.update();
 
-      final second = Float32List.fromList(<double>[1.0]);
+      final second = Float32List.fromList(<double>[1]);
       gain.process(second);
       expect(second[0], greaterThan(0.0));
       expect(second[0], lessThan(1.0));
@@ -101,17 +99,15 @@ void main() {
     });
   });
 
-  group('biquad processor', () {
+  group('biquad processor quality', () {
     test('low-pass biquad attenuates fast alternating signal', () {
       final biquad = BiquadProcessorNode(
         id: 'biquad-lp',
         mode: BiquadMode.lowpass,
         frequency: 300,
         q: 0.707,
-        gainDb: 0.0,
-      );
-
-      biquad.prepare(44100, 128);
+        gainDb: 0,
+      )..prepare(44100, 128);
       for (final parameter in biquad.parameters.values) {
         parameter.update();
       }
@@ -129,9 +125,9 @@ void main() {
       }
       final averageAbs = sumAbs / input.length;
 
-      expect(averageAbs, lessThan(0.6));
+      expect(averageAbs, lessThan(0.4));
       expect(biquad.coefficientUpdateCount, 1);
-    });
+    }, tags: _qualityTag);
 
     test('high-pass biquad attenuates DC content', () {
       final biquad = BiquadProcessorNode(
@@ -139,16 +135,14 @@ void main() {
         mode: BiquadMode.highpass,
         frequency: 600,
         q: 0.707,
-        gainDb: 0.0,
-      );
-
-      biquad.prepare(44100, 256);
+        gainDb: 0,
+      )..prepare(44100, 256);
       for (final parameter in biquad.parameters.values) {
         parameter.update();
       }
 
       final input = Float32List(256);
-      input.fillRange(0, input.length, 1.0);
+      input.fillRange(0, input.length, 1);
 
       biquad.process(input);
 
@@ -159,9 +153,9 @@ void main() {
       }
       final trailingAverageAbs = trailingAbs / (input.length - start);
 
-      expect(trailingAverageAbs, lessThan(0.01));
+      expect(trailingAverageAbs, lessThan(0.005));
       expect(biquad.coefficientUpdateCount, 1);
-    });
+    }, tags: _qualityTag);
 
     test('band-pass biquad emphasizes target frequency region', () {
       const sampleRate = 44100;
@@ -179,28 +173,28 @@ void main() {
         var sum = 0.0;
         final count = values.length - start;
         for (var i = start; i < values.length; i++) {
-          final v = values[i].toDouble();
+          final v = values[i];
           sum += v * v;
         }
         return math.sqrt(sum / count);
       }
 
-      final centerTone = sine(1200.0);
-      final lowTone = sine(80.0);
+      final centerTone = sine(1200);
+      final lowTone = sine(80);
 
       final centerFilter = BiquadProcessorNode(
         id: 'biquad-bp-center',
         mode: BiquadMode.bandpass,
         frequency: 1200,
-        q: 4.0,
-        gainDb: 0.0,
+        q: 4,
+        gainDb: 0,
       );
       final lowFilter = BiquadProcessorNode(
         id: 'biquad-bp-low',
         mode: BiquadMode.bandpass,
         frequency: 1200,
-        q: 4.0,
-        gainDb: 0.0,
+        q: 4,
+        gainDb: 0,
       );
 
       for (final filter in <BiquadProcessorNode>[centerFilter, lowFilter]) {
@@ -237,7 +231,7 @@ void main() {
         var sum = 0.0;
         final count = values.length - start;
         for (var i = start; i < values.length; i++) {
-          final v = values[i].toDouble();
+          final v = values[i];
           sum += v * v;
         }
         return math.sqrt(sum / count);
@@ -247,15 +241,15 @@ void main() {
         id: 'biquad-peak-boost',
         mode: BiquadMode.peak,
         frequency: 1200,
-        q: 2.0,
-        gainDb: 9.0,
+        q: 2,
+        gainDb: 9,
       );
       final cut = BiquadProcessorNode(
         id: 'biquad-peak-cut',
         mode: BiquadMode.peak,
         frequency: 1200,
-        q: 2.0,
-        gainDb: -9.0,
+        q: 2,
+        gainDb: -9,
       );
 
       for (final filter in <BiquadProcessorNode>[boost, cut]) {
@@ -265,8 +259,8 @@ void main() {
         }
       }
 
-      final boosted = sine(1200.0);
-      final cutSignal = sine(1200.0);
+      final boosted = sine(1200);
+      final cutSignal = sine(1200);
       boost.process(boosted);
       cut.process(cutSignal);
 
@@ -283,10 +277,8 @@ void main() {
         mode: BiquadMode.lowpass,
         frequency: 1000,
         q: 0.8,
-        gainDb: 0.0,
-      );
-
-      biquad.prepare(44100, 32);
+        gainDb: 0,
+      )..prepare(44100, 32);
       for (final parameter in biquad.parameters.values) {
         parameter.update();
       }
@@ -317,10 +309,8 @@ void main() {
         mode: BiquadMode.lowpass,
         frequency: 1200,
         q: 0.707,
-        gainDb: 0.0,
-      );
-
-      biquad.prepare(44100, 16);
+        gainDb: 0,
+      )..prepare(44100, 16);
       biquad.parameter('frequency')!.update();
       biquad.parameter('q')!.update();
       biquad.parameter('gainDb')!.update();
@@ -346,10 +336,8 @@ void main() {
         mode: BiquadMode.peak,
         frequency: 1000,
         q: 1.5,
-        gainDb: 0.0,
-      );
-
-      peak.prepare(44100, 32);
+        gainDb: 0,
+      )..prepare(44100, 32);
       for (final parameter in peak.parameters.values) {
         parameter.update();
       }
@@ -372,16 +360,15 @@ void main() {
         id: 'lp-non-res',
         mode: BiquadMode.lowpass,
         frequency: 1200,
-        q: 8.0,
-        gainDb: 0.0,
-        resonant: false,
+        q: 8,
+        gainDb: 0,
       );
       final lowpassResonant = BiquadProcessorNode(
         id: 'lp-res',
         mode: BiquadMode.lowpass,
         frequency: 1200,
-        q: 8.0,
-        gainDb: 0.0,
+        q: 8,
+        gainDb: 0,
         resonant: true,
       );
 
@@ -389,16 +376,15 @@ void main() {
         id: 'hp-non-res',
         mode: BiquadMode.highpass,
         frequency: 1200,
-        q: 8.0,
-        gainDb: 0.0,
-        resonant: false,
+        q: 8,
+        gainDb: 0,
       );
       final highpassResonant = BiquadProcessorNode(
         id: 'hp-res',
         mode: BiquadMode.highpass,
         frequency: 1200,
-        q: 8.0,
-        gainDb: 0.0,
+        q: 8,
+        gainDb: 0,
         resonant: true,
       );
 
@@ -463,7 +449,7 @@ void main() {
         var sum = 0.0;
         final count = values.length - start;
         for (var i = start; i < values.length; i++) {
-          final v = values[i].toDouble();
+          final v = values[i];
           sum += v * v;
         }
         return math.sqrt(sum / count);
@@ -473,34 +459,32 @@ void main() {
         id: 'bp-res',
         mode: BiquadMode.bandpass,
         frequency: 1200,
-        q: 8.0,
-        gainDb: 0.0,
+        q: 8,
+        gainDb: 0,
         resonant: true,
       );
       final bpNonResonant = BiquadProcessorNode(
         id: 'bp-non-res',
         mode: BiquadMode.bandpass,
         frequency: 1200,
-        q: 8.0,
-        gainDb: 0.0,
-        resonant: false,
+        q: 8,
+        gainDb: 0,
       );
 
       final peakResonant = BiquadProcessorNode(
         id: 'peak-res',
         mode: BiquadMode.peak,
         frequency: 1200,
-        q: 8.0,
-        gainDb: 9.0,
+        q: 8,
+        gainDb: 9,
         resonant: true,
       );
       final peakNonResonant = BiquadProcessorNode(
         id: 'peak-non-res',
         mode: BiquadMode.peak,
         frequency: 1200,
-        q: 8.0,
-        gainDb: 9.0,
-        resonant: false,
+        q: 8,
+        gainDb: 9,
       );
 
       for (final filter in <BiquadProcessorNode>[
@@ -515,15 +499,15 @@ void main() {
         }
       }
 
-      final bpOffCenterRes = sine(1500.0);
-      final bpOffCenterNonRes = sine(1500.0);
+      final bpOffCenterRes = sine(1500);
+      final bpOffCenterNonRes = sine(1500);
       bpResonant.process(bpOffCenterRes);
       bpNonResonant.process(bpOffCenterNonRes);
 
       // High-Q resonant bandpass is narrower, so off-center tone is rejected more.
       expect(rms(bpOffCenterRes, 1024), lessThan(rms(bpOffCenterNonRes, 1024)));
 
-      final nearBand = sine(1500.0);
+      final nearBand = sine(1500);
       final nearBandRes = Float32List.fromList(nearBand);
       final nearBandNonRes = Float32List.fromList(nearBand);
       peakResonant.process(nearBandRes);
@@ -538,14 +522,14 @@ void main() {
     });
   });
 
-  group('saturator processor', () {
+  group('saturator processor smoke', () {
     test(
       'saturator config serializes and deserializes with both curve types',
       () {
         const tanhConfig = ProcessorConfig(
           id: 'sat-1',
           type: ProcessorType.saturator,
-          saturator: SaturatorConfig(drive: 0.7, curve: SaturatorCurve.tanh),
+          saturator: SaturatorConfig(drive: 0.7),
         );
         final softJson = <String, dynamic>{
           'id': 'sat-2',
@@ -562,15 +546,15 @@ void main() {
         expect(softConfig.saturator!.drive, closeTo(0.4, 1e-6));
         expect(softConfig.saturator!.curve, SaturatorCurve.soft);
       },
+      tags: _smokeTag,
     );
 
     test('saturator drive=0 passes buffer unchanged', () {
       final sat = SaturatorProcessorNode(
         id: 'sat-bypass',
         curve: SaturatorCurve.tanh,
-        drive: 0.0,
-      );
-      sat.prepare(44100, 4);
+        drive: 0,
+      )..prepare(44100, 4);
       for (final p in sat.parameters.values) {
         p.update();
       }
@@ -590,9 +574,8 @@ void main() {
         final sat = SaturatorProcessorNode(
           id: 'sat-tanh',
           curve: SaturatorCurve.tanh,
-          drive: 1.0,
-        );
-        sat.prepare(44100, 4);
+          drive: 1,
+        )..prepare(44100, 4);
         for (final p in sat.parameters.values) {
           p.update();
         }
@@ -618,9 +601,8 @@ void main() {
       final sat = SaturatorProcessorNode(
         id: 'sat-soft',
         curve: SaturatorCurve.soft,
-        drive: 1.0,
-      );
-      sat.prepare(44100, 4);
+        drive: 1,
+      )..prepare(44100, 4);
       for (final p in sat.parameters.values) {
         p.update();
       }
@@ -642,9 +624,8 @@ void main() {
       final sat = SaturatorProcessorNode(
         id: 'sat-safe',
         curve: SaturatorCurve.tanh,
-        drive: 1.0,
-      );
-      sat.prepare(44100, 4);
+        drive: 1,
+      )..prepare(44100, 4);
       sat.parameter('drive')!.baseValue = double.nan;
       sat.parameter('drive')!.update();
 
@@ -657,7 +638,7 @@ void main() {
     });
   });
 
-  group('delay processor', () {
+  group('delay processor quality', () {
     test('delay config serializes and deserializes safely', () {
       const config = ProcessorConfig(
         id: 'delay-proc',
@@ -676,10 +657,9 @@ void main() {
       final delay = DelayProcessorNode(
         id: 'delay-dry',
         delayTimeMs: 10,
-        feedback: 0.0,
-        mix: 0.0,
-      );
-      delay.prepare(44100, 8);
+        feedback: 0,
+        mix: 0,
+      )..prepare(44100, 8);
       for (final p in delay.parameters.values) {
         p.update();
       }
@@ -709,8 +689,8 @@ void main() {
         final delay = DelayProcessorNode(
           id: 'delay-impulse',
           delayTimeMs: 10,
-          feedback: 0.0,
-          mix: 1.0,
+          feedback: 0,
+          mix: 1,
         );
         const blockSize = 512;
         delay.prepare(44100, blockSize);
@@ -747,17 +727,16 @@ void main() {
       }
 
       // Drive the delay with a constant signal for one block.
-      final block1 = Float32List(blockSize);
-      block1.fillRange(0, blockSize, 0.5);
+      final block1 = Float32List(blockSize)..fillRange(0, blockSize, 0.5);
       delay.process(block1);
 
       // Feed silence into the delay — energy should appear from feedback tails.
       final block2 = Float32List(blockSize);
       delay.process(block2);
-      final energy = block2.fold<double>(0.0, (sum, s) => sum + s * s);
+      final energy = block2.fold<double>(0, (sum, s) => sum + s * s);
 
-      expect(energy, greaterThan(0.0));
-    });
+      expect(energy, greaterThan(0.1));
+    }, tags: _qualityTag);
 
     test('delay guards against non-finite feedback parameter', () {
       final delay = DelayProcessorNode(
@@ -765,13 +744,11 @@ void main() {
         delayTimeMs: 10,
         feedback: 0.5,
         mix: 0.5,
-      );
-      delay.prepare(44100, 8);
+      )..prepare(44100, 8);
       delay.parameter('feedback')!.baseValue = double.nan;
       delay.parameter('feedback')!.update();
 
-      final buffer = Float32List(8);
-      buffer.fillRange(0, 8, 0.5);
+      final buffer = Float32List(8)..fillRange(0, 8, 0.5);
       delay.process(buffer);
 
       for (final s in buffer) {

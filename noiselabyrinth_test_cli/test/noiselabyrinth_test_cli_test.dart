@@ -6,11 +6,11 @@ void main() {
     expect(hardcodedProfiles, isNotEmpty);
 
     for (final profile in hardcodedProfiles) {
-      expect(profile.title, isNotEmpty);
-      expect(profile.config.metadata.name, isNotEmpty);
-      expect(profile.config.render.durationMinutes, greaterThan(0));
-      expect(profile.config.render.format.name, 'mp3');
-      expect(profile.config.layers, isNotEmpty);
+      expect(profile.metadata.name, isNotEmpty);
+      expect(profile.metadata.name, isNotEmpty);
+      expect(profile.render.durationMinutes, greaterThan(0));
+      expect(profile.render.format.name, 'mp3');
+      expect(profile.layers, isNotEmpty);
     }
   });
 

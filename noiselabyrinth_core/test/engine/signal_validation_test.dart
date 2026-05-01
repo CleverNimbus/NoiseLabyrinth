@@ -4,10 +4,12 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
+const _qualityTag = <String>['quality'];
+
 double _rms(Float32List data) {
   var sum = 0.0;
   for (final sample in data) {
-    final v = sample.toDouble();
+    final v = sample;
     sum += v * v;
   }
   return math.sqrt(sum / data.length);
@@ -67,9 +69,9 @@ void main() {
       final stereo = engine.renderStereoSamples(totalSamples: 8000);
 
       final leftRms = _rms(stereo.left);
-      expect(leftRms, closeTo(0.707, 0.08));
+      expect(leftRms, closeTo(0.707, 0.04));
       expect(_peakAbs(stereo.left), greaterThan(0.95));
-    });
+    }, tags: _qualityTag);
 
     test('clipping detection identifies overs after high gain', () {
       const parser = GenerationConfigParser();
@@ -110,11 +112,11 @@ void main() {
       );
       final stereo = engine.renderStereoSamples(totalSamples: 4000);
 
-      final clippedSamples = stereo.left
-          .where((sample) => sample.abs() > 1.0)
-          .length;
+      final clippedSamples = stereo.left.where((sample) => sample.abs() > 1.0).length;
+      final clippedRatio = clippedSamples / stereo.left.length;
       expect(clippedSamples, greaterThan(0));
-    });
+      expect(clippedRatio, greaterThan(0.2));
+    }, tags: _qualityTag);
 
     test(
       'spectral sanity: low-pass chain attenuates high-frequency content',
@@ -170,8 +172,9 @@ void main() {
         final highMag = _binMagnitude(mono, highBin);
 
         expect(lowMag, greaterThan(0.005));
-        expect(highMag, lessThan(lowMag * 0.5));
+        expect(highMag, lessThan(lowMag * 0.35));
       },
+      tags: _qualityTag,
     );
 
     test(
@@ -268,14 +271,13 @@ void main() {
           gainValues.add(graph.layers.single.gain.finalValue);
         }
 
-        final panSpread =
-            panValues.reduce((a, b) => a > b ? a : b) -
-            panValues.reduce((a, b) => a < b ? a : b);
+        final panSpread = panValues.reduce((a, b) => a > b ? a : b) - panValues.reduce((a, b) => a < b ? a : b);
         final gainPeak = gainValues.reduce((a, b) => a > b ? a : b);
 
-        expect(panSpread, greaterThan(0.05));
-        expect(gainPeak, greaterThan(0.25));
+        expect(panSpread, greaterThan(0.15));
+        expect(gainPeak, greaterThan(0.35));
       },
+      tags: _qualityTag,
     );
 
     test('multiplicative target mode respects min/max clamps', () {
@@ -352,9 +354,7 @@ void main() {
       final graph = builder.build(config);
       final engine = AudioEngine(graph: graph, sampleRate: 1000, blockSize: 10);
 
-      final gainParam =
-          (graph.layers.single.processors.single as GainProcessorNode)
-              .parameter('gain')!;
+      final gainParam = (graph.layers.single.processors.single as GainProcessorNode).parameter('gain')!;
       final observed = <double>[];
 
       for (var i = 0; i < 40; i++) {
@@ -367,6 +367,6 @@ void main() {
       expect(minGain, greaterThanOrEqualTo(0.0));
       expect(maxGain, lessThanOrEqualTo(1.0));
       expect(maxGain, greaterThan(0.5));
-    });
+    }, tags: _qualityTag);
   });
 }

@@ -9,5 +9,14 @@
     "github.github-vscode-theme",
     "actboy168.tasks",
     "dnut.rewrap-revived",
-  ],
+    "dart-code.flutter",
+    "dart-code.dart-code",
+    "donjayamanne.githistory",
+    "github.vscode-pull-request-github",
+    "trentrand.git-rebase-shortcuts",
+    "nick-rudenko.back-n-forth",
+    "eduardbar.dev-checkpoint",
+    "usernamehw.errorlens",
+    "flutterando.flutter-coverage"
+  ]
 }

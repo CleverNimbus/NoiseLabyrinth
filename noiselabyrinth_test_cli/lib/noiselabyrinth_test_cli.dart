@@ -1,14 +1,36 @@
 import 'dart:io';
 
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
+import 'package:noiselabyrinth_core/presets/tests.dart';
 import 'package:path/path.dart' as p;
 
-import 'profiles.dart';
-
-const List<CliProfile> hardcodedProfiles = <CliProfile>[
+List<GenerationConfig> hardcodedProfiles = <GenerationConfig>[
   pinkNoiseBed,
   stereoBandlimitedHiss,
   sineDroneWithDelay,
+  whiteNoiseProfile,
+  pinkNoiseProfile,
+  brownNoiseProfile,
+  bandlimitedNoiseProfile,
+  const GenerationsMerger().merge(
+    vibrantStyleProfile,
+    clarityPersonalityProfile,
+    <GenerationConfig>[
+      psychoacousticFeatureProfile,
+      activationEnergyProfile,
+      ambianceEnergyProfile,
+    ],
+  ),
+  brownNoiseDeepField,
+  whiteFullband,
+  brownLow,
+  bandpassMid,
+  sineReference,
+  biquadLowpassTest,
+  delayImpulseTest,
+  lfoGainTest,
+  randomFilterTest,
+  stormForestVivid,
 ];
 
 GenerationConfig forceMp3(GenerationConfig config) {
@@ -18,7 +40,6 @@ GenerationConfig forceMp3(GenerationConfig config) {
       durationMinutes: config.render.durationMinutes,
       sampleRate: config.render.sampleRate,
       bitRate: config.render.bitRate,
-      format: RenderFormat.mp3,
     ),
     mix: config.mix,
     layers: config.layers,

@@ -8,10 +8,17 @@ GenerationConfig _minimalConfig({
   RenderFormat format = RenderFormat.wav,
   int durationMinutes = 1,
   int sampleRate = 8000,
+  Map<String, dynamic>? source,
+  List<Map<String, dynamic>>? processors,
+  double layerGain = 1.0,
 }) {
   const parser = GenerationConfigParser();
   return parser.parseJsonMap(<String, dynamic>{
-    'metadata': <String, dynamic>{'name': 'Renderer Test'},
+    'metadata': <String, dynamic>{
+      'name': 'Renderer Test',
+      'description': '',
+      'tags': <String>[],
+    },
     'render': <String, dynamic>{
       'durationMinutes': durationMinutes,
       'sampleRate': sampleRate,
@@ -22,10 +29,14 @@ GenerationConfig _minimalConfig({
     'layers': <Map<String, dynamic>>[
       <String, dynamic>{
         'id': 'layer-a',
-        'source': <String, dynamic>{
-          'type': 'noise',
-          'noiseConfig': <String, dynamic>{'color': 'white'},
-        },
+        'gain': layerGain,
+        'source':
+            source ??
+            <String, dynamic>{
+              'type': 'noise',
+              'noiseConfig': <String, dynamic>{'color': 'white'},
+            },
+        'processors': ?processors,
       },
     ],
   });
@@ -57,14 +68,25 @@ void main() {
       expect(bd.getUint32(24, Endian.little), equals(8000));
 
       // Byte length = header(44) + samples * 4 bytes/frame
-      final totalSamples = 8000 * 1 * 60; // 1 minute
+      const totalSamples = 8000 * 1 * 60; // 1 minute
+      expect(bytes.length, equals(44 + totalSamples * 4));
+    });
+
+    test('renderWav respects very low sample rate in header and size', () {
+      final config = _minimalConfig(sampleRate: 64);
+      final bytes = Renderer.renderWav(config);
+
+      final bd = bytes.buffer.asByteData();
+      const totalSamples = 64 * 60;
+      expect(bd.getUint32(24, Endian.little), equals(64));
+      expect(bd.getUint32(40, Endian.little), equals(totalSamples * 4));
       expect(bytes.length, equals(44 + totalSamples * 4));
     });
 
     test(
       'render() with wav format delegates to renderWav synchronously',
       () async {
-        final config = _minimalConfig(format: RenderFormat.wav);
+        final config = _minimalConfig();
         final bytes = await Renderer.render(config);
         expect(bytes.length, greaterThan(44));
         // RIFF header confirms WAV
@@ -80,36 +102,76 @@ void main() {
       final sampleRegion = bytes.sublist(44, 44 + 64);
       expect(sampleRegion.any((b) => b != 0), isTrue);
     });
+
+    test('renderWav clamps overdriven float samples to PCM-16 limits', () {
+      final config = _minimalConfig(
+        sampleRate: 128,
+        source: <String, dynamic>{
+          'type': 'sine',
+          'sineConfig': <String, dynamic>{'frequencyHz': 32, 'phase': 0},
+        },
+        layerGain: 4,
+      );
+
+      final bytes = Renderer.renderWav(config);
+      final bd = bytes.buffer.asByteData();
+
+      var sawPositiveClip = false;
+      var sawNegativeClip = false;
+
+      for (var i = 44; i + 1 < bytes.length; i += 2) {
+        final sample = bd.getInt16(i, Endian.little);
+        if (sample == 32767) {
+          sawPositiveClip = true;
+        }
+        if (sample == -32767) {
+          sawNegativeClip = true;
+        }
+      }
+
+      expect(sawPositiveClip, isTrue);
+      expect(sawNegativeClip, isTrue);
+    });
+
+    test('render() wav path returns identical bytes as renderWav()', () async {
+      final config = _minimalConfig(
+        sampleRate: 256,
+        source: <String, dynamic>{
+          'type': 'sine',
+          'sineConfig': <String, dynamic>{'frequencyHz': 64, 'phase': 0},
+        },
+      );
+
+      final direct = Renderer.renderWav(config);
+      final viaDispatch = await Renderer.render(config);
+
+      expect(viaDispatch, orderedEquals(direct));
+    });
   });
 
   group('Renderer MP3', () {
-    test(
-      'renderMp3 returns non-empty bytes starting with ID3 or FF FB sync',
-      () async {
-        final config = _minimalConfig(
-          format: RenderFormat.mp3,
-          sampleRate: 8000,
-        );
-        final bytes = await Renderer.renderMp3(config);
-
-        expect(bytes, isA<Uint8List>());
-        expect(bytes.isNotEmpty, isTrue);
-      },
-      skip: 'requires libmp3lame.so native library at runtime',
-    );
-
     test(
       'render() with mp3 format returns bytes',
       () async {
         final config = _minimalConfig(
           format: RenderFormat.mp3,
-          sampleRate: 8000,
         );
         final bytes = await Renderer.render(config);
         expect(bytes.isNotEmpty, isTrue);
       },
-      skip: 'requires libmp3lame.so native library at runtime',
     );
+
+    test('render() mp3 path does not return a WAV RIFF header', () async {
+      final config = _minimalConfig(
+        format: RenderFormat.mp3,
+      );
+      final bytes = await Renderer.render(config);
+
+      if (bytes.length >= 4) {
+        final isRiff = bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46;
+        expect(isRiff, isFalse);
+      }
+    });
   });
 
   group('Renderer RenderFormat enum', () {
@@ -120,8 +182,8 @@ void main() {
       );
     });
 
-    test('RenderConfig default format is wav', () {
-      expect(const RenderConfig().format, RenderFormat.wav);
+    test('RenderConfig default format is mp3', () {
+      expect(const RenderConfig().format, RenderFormat.mp3);
     });
 
     test('RenderConfig toJson includes format name', () {

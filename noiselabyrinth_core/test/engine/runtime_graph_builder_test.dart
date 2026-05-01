@@ -237,8 +237,7 @@ void main() {
       final runtime = builder.build(config);
       expect(runtime.layers.single.processors.length, 2);
 
-      final bandpass =
-          runtime.layers.single.processors[0] as BiquadProcessorNode;
+      final bandpass = runtime.layers.single.processors[0] as BiquadProcessorNode;
       final peak = runtime.layers.single.processors[1] as BiquadProcessorNode;
 
       expect(bandpass.mode, BiquadMode.bandpass);

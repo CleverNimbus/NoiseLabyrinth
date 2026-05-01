@@ -1,9 +1,8 @@
 class Parameter {
-  double baseValue;
-  double modulationValue = 0.0;
-  double finalValue;
-
   Parameter(this.baseValue) : finalValue = baseValue;
+  double baseValue;
+  double modulationValue = 0;
+  double finalValue;
 
   void update() {
     finalValue = baseValue + modulationValue;

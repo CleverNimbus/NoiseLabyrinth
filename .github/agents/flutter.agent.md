@@ -14,7 +14,7 @@ NoiseLabyrinthFlutter is a Dart/Flutter monorepo for procedural noise and audio 
 - `noiselabyrinth_core` is the active package. It contains the runtime graph, audio engine, config models, modulation, event scheduling, DSP node stubs/implementations, WAV rendering, and tests.
 - `noiselabyrinth_ui` currently remains close to the default Flutter starter app. Treat UI work as early-stage integration work.
 - Dart SDK is `^3.11.5`.
-- Core dependencies currently include Flutter, `dart_lame`, and `scidart`.
+- Core dependencies currently include Flutter, `flutter_lame`, and `scidart`.
 - Linting uses `flutter_lints` through each package's `analysis_options.yaml`.
 
 ## Repository Layout

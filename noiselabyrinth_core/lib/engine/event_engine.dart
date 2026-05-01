@@ -4,38 +4,25 @@ import 'package:noiselabyrinth_core/engine/modulation_engine.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class RuntimeEventAction {
+  const RuntimeEventAction({required this.mode, required this.modulation});
   final ActionMode mode;
   final RuntimeModulationBinding modulation;
-
-  const RuntimeEventAction({required this.mode, required this.modulation});
 }
 
 class RuntimeEventBinding {
-  final String id;
-  final TriggerType type;
-  final double rate;
-  final List<RuntimeEventAction> actions;
-
   const RuntimeEventBinding({
     required this.id,
     required this.type,
     required this.rate,
     required this.actions,
   });
+  final String id;
+  final TriggerType type;
+  final double rate;
+  final List<RuntimeEventAction> actions;
 }
 
 class EventScheduler {
-  final List<RuntimeEventBinding> events;
-  final int sampleRate;
-  final int blockSize;
-
-  final int _seed;
-  int _rngState;
-  double _timeSeconds = 0.0;
-
-  final Map<String, double> _periodicAccumulators = <String, double>{};
-  final Map<String, double> _nextPoissonTimes = <String, double>{};
-
   EventScheduler({
     required this.events,
     required this.sampleRate,
@@ -43,6 +30,16 @@ class EventScheduler {
     int seed = 0x514E1D5B,
   }) : _seed = seed,
        _rngState = seed;
+  final List<RuntimeEventBinding> events;
+  final int sampleRate;
+  final int blockSize;
+
+  final int _seed;
+  int _rngState;
+  double _timeSeconds = 0;
+
+  final Map<String, double> _periodicAccumulators = <String, double>{};
+  final Map<String, double> _nextPoissonTimes = <String, double>{};
 
   double get currentTimeSeconds => _timeSeconds;
 
@@ -71,18 +68,14 @@ class EventScheduler {
             accumulator -= 1.0;
           }
           _periodicAccumulators[event.id] = accumulator;
-          break;
         case TriggerType.poisson:
-          var nextTime =
-              _nextPoissonTimes[event.id] ??
-              (_timeSeconds + _sampleExponentialInterval(rate));
+          var nextTime = _nextPoissonTimes[event.id] ?? (_timeSeconds + _sampleExponentialInterval(rate));
           while (nextTime <= endTime) {
             _triggerEvent(event);
             triggeredIds.add(event.id);
             nextTime += _sampleExponentialInterval(rate);
           }
           _nextPoissonTimes[event.id] = nextTime;
-          break;
         case TriggerType.random:
           final expectedEvents = rate * dt;
           final wholeEvents = expectedEvents.floor();
@@ -97,7 +90,6 @@ class EventScheduler {
             _triggerEvent(event);
             triggeredIds.add(event.id);
           }
-          break;
       }
     }
 
@@ -117,11 +109,9 @@ class EventScheduler {
       switch (action.mode) {
         case ActionMode.trigger:
           action.modulation.modulator.trigger();
-          break;
         case ActionMode.gate:
           // Gate action currently maps to reset semantics.
           action.modulation.modulator.reset();
-          break;
       }
     }
   }
@@ -132,14 +122,7 @@ class EventScheduler {
   }
 
   double _nextUnit01() {
-    _rngState = _xorshift32(_rngState);
+    _rngState = nextXorshift32(_rngState);
     return (_rngState & 0x7FFFFFFF) / 2147483647.0;
-  }
-
-  static int _xorshift32(int state) {
-    state ^= (state << 13) & 0xFFFFFFFF;
-    state ^= (state >> 17) & 0xFFFFFFFF;
-    state ^= (state << 5) & 0xFFFFFFFF;
-    return state & 0xFFFFFFFF;
   }
 }

@@ -1,23 +1,18 @@
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class RenderConfig {
-  final int durationMinutes;
-  final int sampleRate;
-  final int bitRate;
-  final RenderFormat format;
-
   const RenderConfig({
     this.durationMinutes = 120,
     this.sampleRate = 44100,
     this.bitRate = 192,
-    this.format = RenderFormat.wav,
+    this.format = RenderFormat.mp3,
   });
 
   factory RenderConfig.fromJson(Map<String, dynamic> json) {
-    final formatStr = json['format'] as String? ?? 'wav';
+    final formatStr = json['format'] as String? ?? 'mp3';
     final format = RenderFormat.values.firstWhere(
       (e) => e.name == formatStr,
-      orElse: () => RenderFormat.wav,
+      orElse: () => RenderFormat.mp3,
     );
     return RenderConfig(
       durationMinutes: json['durationMinutes'] as int? ?? 120,
@@ -26,6 +21,10 @@ class RenderConfig {
       format: format,
     );
   }
+  final int durationMinutes;
+  final int sampleRate;
+  final int bitRate;
+  final RenderFormat format;
 
   Map<String, dynamic> toJson() {
     return {

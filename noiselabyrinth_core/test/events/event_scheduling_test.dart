@@ -3,8 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 import '../test_helpers/modulators_test_helpers.dart';
 
+const _smokeTag = <String>['smoke'];
+const _qualityTag = <String>['quality'];
+
 void main() {
-  group('event scheduling', () {
+  group('event scheduling smoke', () {
     test(
       'runtime graph resolves modulation targets once to direct Parameters',
       () {
@@ -53,8 +56,7 @@ void main() {
                   },
                   'targets': <Map<String, dynamic>>[
                     <String, dynamic>{
-                      'path':
-                          'layers[layer-a].processors[lp-1].biquad.frequency',
+                      'path': 'layers[layer-a].processors[lp-1].biquad.frequency',
                       'amount': 1.0,
                     },
                   ],
@@ -79,6 +81,7 @@ void main() {
         expect(resolved, isNotNull);
         expect(identical(directTarget, resolved!.parameter), isTrue);
       },
+      tags: _smokeTag,
     );
 
     test(
@@ -149,8 +152,11 @@ void main() {
           'mod-random',
         );
       },
+      tags: _smokeTag,
     );
+  });
 
+  group('event scheduling quality', () {
     test(
       'EventScheduler periodic triggers dispatch trigger and gate actions',
       () {
@@ -158,7 +164,7 @@ void main() {
         final modulation = RuntimeModulationBinding(
           id: 'mod-counter',
           modulator: counter,
-          amount: 1.0,
+          amount: 1,
           targets: const <ModulationTargetBinding>[],
         );
 
@@ -167,7 +173,7 @@ void main() {
             RuntimeEventBinding(
               id: 'evt-periodic',
               type: TriggerType.periodic,
-              rate: 20.0,
+              rate: 20,
               actions: <RuntimeEventAction>[
                 RuntimeEventAction(
                   mode: ActionMode.trigger,
@@ -188,10 +194,12 @@ void main() {
           scheduler.processBlock();
         }
 
-        expect(counter.triggerCount, greaterThan(0));
-        expect(counter.resetCount, greaterThan(0));
+        // 20 Hz over 0.5 s should yield exactly 10 periodic firings.
+        expect(counter.triggerCount, 10);
+        expect(counter.resetCount, 10);
         expect(counter.triggerCount, counter.resetCount);
       },
+      tags: _qualityTag,
     );
 
     test('EventScheduler Poisson schedule is deterministic for same seed', () {
@@ -202,14 +210,14 @@ void main() {
         return RuntimeEventBinding(
           id: 'evt-poisson',
           type: TriggerType.poisson,
-          rate: 4.0,
+          rate: 4,
           actions: <RuntimeEventAction>[
             RuntimeEventAction(
               mode: ActionMode.trigger,
               modulation: RuntimeModulationBinding(
                 id: 'mod-counter',
                 modulator: modulator,
-                amount: 1.0,
+                amount: 1,
                 targets: const <ModulationTargetBinding>[],
               ),
             ),
@@ -240,7 +248,11 @@ void main() {
       expect(firedA.length, firedB.length);
       expect(counterA.triggerCount, counterB.triggerCount);
       expect(firedA.join(','), firedB.join(','));
-    });
+      const seconds = (200 * 10) / 100.0;
+      const expected = 4.0 * seconds;
+      expect(counterA.triggerCount, greaterThan(expected * 0.6));
+      expect(counterA.triggerCount, lessThan(expected * 1.4));
+    }, tags: _qualityTag);
 
     test('EventScheduler random trigger is deterministic for same seed', () {
       final counterA = CounterModulator();
@@ -257,7 +269,7 @@ void main() {
               modulation: RuntimeModulationBinding(
                 id: 'mod-counter-random',
                 modulator: modulator,
-                amount: 1.0,
+                amount: 1,
                 targets: const <ModulationTargetBinding>[],
               ),
             ),
@@ -288,7 +300,11 @@ void main() {
       expect(counterA.triggerCount, greaterThan(0));
       expect(counterA.triggerCount, counterB.triggerCount);
       expect(firedA.join(','), firedB.join(','));
-    });
+      const seconds = (200 * 10) / 100.0;
+      const expected = 4.5 * seconds;
+      expect(counterA.triggerCount, greaterThan(expected * 0.5));
+      expect(counterA.triggerCount, lessThan(expected * 1.5));
+    }, tags: _qualityTag);
 
     test('engine events can modulate gain processor parameter', () {
       const parser = GenerationConfigParser();
@@ -368,6 +384,7 @@ void main() {
       expect(peak, greaterThan(0.1));
       expect(floor, closeTo(0.0, 1e-6));
       expect(values.toSet().length, greaterThan(3));
-    });
+      expect(peak - floor, greaterThan(0.3));
+    }, tags: _qualityTag);
   });
 }

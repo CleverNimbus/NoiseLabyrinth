@@ -5,6 +5,14 @@ import 'package:noiselabyrinth_core/models/configs/modulation_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 import 'package:noiselabyrinth_core/models/parameter.dart';
 
+int nextXorshift32(int state) {
+  var next = state;
+  next ^= (next << 13) & 0xFFFFFFFF;
+  next ^= (next >> 17) & 0xFFFFFFFF;
+  next ^= (next << 5) & 0xFFFFFFFF;
+  return next & 0xFFFFFFFF;
+}
+
 abstract class Modulator {
   void process(int blockSize, Float32List buffer);
 
@@ -14,6 +22,11 @@ abstract class Modulator {
 }
 
 class LfoSineModulator implements Modulator {
+  LfoSineModulator({
+    required this.sampleRate,
+    required this.frequency,
+    required this.depth,
+  }) : _phaseStep = sampleRate > 0 ? _twoPi * frequency / sampleRate : 0.0;
   static const double _twoPi = 2.0 * math.pi;
 
   final int sampleRate;
@@ -21,13 +34,7 @@ class LfoSineModulator implements Modulator {
   final double depth;
   final double _phaseStep;
 
-  double _phase = 0.0;
-
-  LfoSineModulator({
-    required this.sampleRate,
-    required this.frequency,
-    required this.depth,
-  }) : _phaseStep = sampleRate > 0 ? _twoPi * frequency / sampleRate : 0.0;
+  double _phase = 0;
 
   @override
   void process(int blockSize, Float32List buffer) {
@@ -56,17 +63,6 @@ class LfoSineModulator implements Modulator {
 }
 
 class SmoothRandomModulator implements Modulator {
-  final int sampleRate;
-  final double rateHz;
-  final double smooth;
-  final int _segmentSamples;
-  final double _followFactor;
-
-  int _rngState = 0xA3C59AC3;
-  double _current = 0.0;
-  double _target = 0.0;
-  int _samplesUntilTarget = 0;
-
   SmoothRandomModulator({
     required this.sampleRate,
     required this.rateHz,
@@ -76,6 +72,16 @@ class SmoothRandomModulator implements Modulator {
          (sampleRate / (rateHz <= 0.0 ? 0.01 : rateHz)).round(),
        ),
        _followFactor = (1.0 - smooth).clamp(0.001, 1.0);
+  final int sampleRate;
+  final double rateHz;
+  final double smooth;
+  final int _segmentSamples;
+  final double _followFactor;
+
+  int _rngState = 0xA3C59AC3;
+  double _current = 0;
+  double _target = 0;
+  int _samplesUntilTarget = 0;
 
   @override
   void process(int blockSize, Float32List buffer) {
@@ -104,28 +110,12 @@ class SmoothRandomModulator implements Modulator {
   }
 
   double _nextRandomBiPolar() {
-    _rngState = _xorshift32(_rngState);
+    _rngState = nextXorshift32(_rngState);
     return ((_rngState & 0x7FFFFFFF) / 1073741824.0) - 1.0;
-  }
-
-  static int _xorshift32(int state) {
-    state ^= (state << 13) & 0xFFFFFFFF;
-    state ^= (state >> 17) & 0xFFFFFFFF;
-    state ^= (state << 5) & 0xFFFFFFFF;
-    return state & 0xFFFFFFFF;
   }
 }
 
 class DriftModulator implements Modulator {
-  final int sampleRate;
-  final double speed;
-  final double range;
-  final double _stepPerSample;
-  final double _clampedRange;
-
-  int _rngState = 0x5F37_59DF;
-  double _value = 0.0;
-
   DriftModulator({
     required this.sampleRate,
     required this.speed,
@@ -135,6 +125,14 @@ class DriftModulator implements Modulator {
          1.0,
        ),
        _clampedRange = range.abs();
+  final int sampleRate;
+  final double speed;
+  final double range;
+  final double _stepPerSample;
+  final double _clampedRange;
+
+  int _rngState = 0x5F37_59DF;
+  double _value = 0;
 
   @override
   void process(int blockSize, Float32List buffer) {
@@ -148,9 +146,8 @@ class DriftModulator implements Modulator {
     var state = _rngState;
     var value = _value;
     for (var i = 0; i < blockSize; i++) {
-      state = _xorshift32(state);
-      final noiseStep =
-          (((state & 0x7FFFFFFF) / 1073741824.0) - 1.0) * _stepPerSample;
+      state = nextXorshift32(state);
+      final noiseStep = (((state & 0x7FFFFFFF) / 1073741824.0) - 1.0) * _stepPerSample;
       value = (value + noiseStep).clamp(-_clampedRange, _clampedRange);
       buffer[i] = value;
     }
@@ -166,18 +163,21 @@ class DriftModulator implements Modulator {
 
   @override
   void trigger() {}
-
-  static int _xorshift32(int state) {
-    state ^= (state << 13) & 0xFFFFFFFF;
-    state ^= (state >> 17) & 0xFFFFFFFF;
-    state ^= (state << 5) & 0xFFFFFFFF;
-    return state & 0xFFFFFFFF;
-  }
 }
 
 enum _EnvelopeStage { idle, attack, decay, sustain }
 
 class AdsrEnvelopeModulator implements Modulator {
+  AdsrEnvelopeModulator({
+    required this.sampleRate,
+    required this.attackMs,
+    required this.decayMs,
+    required this.sustain,
+    required this.releaseMs,
+  }) : _attackSamples = _msToSamplesStatic(sampleRate, attackMs),
+       _decaySamples = _msToSamplesStatic(sampleRate, decayMs),
+       _sustainValue = sustain.clamp(0.0, 1.0),
+       _releaseStep = 1.0 / _msToSamplesStatic(sampleRate, releaseMs);
   final int sampleRate;
   final int attackMs;
   final int decayMs;
@@ -189,18 +189,7 @@ class AdsrEnvelopeModulator implements Modulator {
   final double _releaseStep;
 
   _EnvelopeStage _stage = _EnvelopeStage.idle;
-  double _value = 0.0;
-
-  AdsrEnvelopeModulator({
-    required this.sampleRate,
-    required this.attackMs,
-    required this.decayMs,
-    required this.sustain,
-    required this.releaseMs,
-  }) : _attackSamples = _msToSamplesStatic(sampleRate, attackMs),
-       _decaySamples = _msToSamplesStatic(sampleRate, decayMs),
-       _sustainValue = sustain.clamp(0.0, 1.0).toDouble(),
-       _releaseStep = 1.0 / _msToSamplesStatic(sampleRate, releaseMs);
+  double _value = 0;
 
   @override
   void process(int blockSize, Float32List buffer) {
@@ -208,7 +197,6 @@ class AdsrEnvelopeModulator implements Modulator {
       switch (_stage) {
         case _EnvelopeStage.idle:
           _value = _applyRelease(_value);
-          break;
         case _EnvelopeStage.attack:
           if (_attackSamples <= 1) {
             _value = 1.0;
@@ -220,7 +208,6 @@ class AdsrEnvelopeModulator implements Modulator {
               _stage = _EnvelopeStage.decay;
             }
           }
-          break;
         case _EnvelopeStage.decay:
           if (_decaySamples <= 1) {
             _value = _sustainValue;
@@ -232,10 +219,8 @@ class AdsrEnvelopeModulator implements Modulator {
               _stage = _EnvelopeStage.sustain;
             }
           }
-          break;
         case _EnvelopeStage.sustain:
           _value = _sustainValue;
-          break;
       }
 
       buffer[i] = _value;
@@ -264,18 +249,34 @@ class AdsrEnvelopeModulator implements Modulator {
 
   double _applyRelease(double current) {
     if (_releaseStep >= 1.0) {
-      return 0.0;
+      return 0;
     }
 
     final next = current - _releaseStep;
     if (next <= 0.0) {
-      return 0.0;
+      return 0;
     }
     return next;
   }
 }
 
 class BurstModulator implements Modulator {
+  BurstModulator({
+    required this.sampleRate,
+    required this.durationMs,
+    required this.intensity,
+    required this.randomness,
+    required this.attackMs,
+    required this.releaseMs,
+    required this.clusterMin,
+    required this.clusterMax,
+    required this.clusterSpreadMs,
+  }) : _attackSamples = _msToSamplesStatic(sampleRate, attackMs),
+       _releaseSamples = _msToSamplesStatic(sampleRate, releaseMs),
+       _clusterSpreadSamples = _msToSamplesStatic(sampleRate, clusterSpreadMs),
+       _maxLifeSamples = _msToSamplesStatic(sampleRate, durationMs),
+       _clampedIntensity = intensity.clamp(0.0, 1.0),
+       _clampedRandomness = randomness.clamp(0.0, 1.0);
   final int sampleRate;
   final int durationMs;
   final double intensity;
@@ -296,23 +297,6 @@ class BurstModulator implements Modulator {
   int _rngState = 0x7A5B_3C2D;
   final List<_ScheduledBurst> _scheduledBursts = <_ScheduledBurst>[];
   final List<_ActiveBurst> _activeBursts = <_ActiveBurst>[];
-
-  BurstModulator({
-    required this.sampleRate,
-    required this.durationMs,
-    required this.intensity,
-    required this.randomness,
-    required this.attackMs,
-    required this.releaseMs,
-    required this.clusterMin,
-    required this.clusterMax,
-    required this.clusterSpreadMs,
-  }) : _attackSamples = _msToSamplesStatic(sampleRate, attackMs),
-       _releaseSamples = _msToSamplesStatic(sampleRate, releaseMs),
-       _clusterSpreadSamples = _msToSamplesStatic(sampleRate, clusterSpreadMs),
-       _maxLifeSamples = _msToSamplesStatic(sampleRate, durationMs),
-       _clampedIntensity = intensity.clamp(0.0, 1.0).toDouble(),
-       _clampedRandomness = randomness.clamp(0.0, 1.0).toDouble();
 
   @override
   void process(int blockSize, Float32List buffer) {
@@ -382,8 +366,7 @@ class BurstModulator implements Modulator {
   }
 
   double _nextBurstLevel() {
-    final randomScalar =
-        (1.0 - _clampedRandomness) + (_clampedRandomness * _nextUnit01());
+    final randomScalar = (1.0 - _clampedRandomness) + (_clampedRandomness * _nextUnit01());
     return _clampedIntensity * randomScalar;
   }
 
@@ -414,39 +397,20 @@ class BurstModulator implements Modulator {
   }
 
   double _nextUnit01() {
-    _rngState = _xorshift32(_rngState);
+    _rngState = nextXorshift32(_rngState);
     return (_rngState & 0x7FFFFFFF) / 2147483647.0;
-  }
-
-  static int _xorshift32(int state) {
-    state ^= (state << 13) & 0xFFFFFFFF;
-    state ^= (state >> 17) & 0xFFFFFFFF;
-    state ^= (state << 5) & 0xFFFFFFFF;
-    return state & 0xFFFFFFFF;
   }
 }
 
 enum _BurstEnvelopeStage { idle, attack, release }
 
 class _ScheduledBurst {
+  _ScheduledBurst({required this.samplesUntilStart, required this.level});
   int samplesUntilStart;
   final double level;
-
-  _ScheduledBurst({required this.samplesUntilStart, required this.level});
 }
 
 class _ActiveBurst {
-  static const double _epsilon = 1e-9;
-
-  final double level;
-  final double _attackStep;
-  final double _releaseStep;
-  final int _maxLifeSamples;
-
-  _BurstEnvelopeStage _stage = _BurstEnvelopeStage.idle;
-  double _envelope = 0.0;
-  int _lifetimeSamples = 0;
-
   _ActiveBurst({
     required this.level,
     required int attackSamples,
@@ -457,19 +421,28 @@ class _ActiveBurst {
        _maxLifeSamples = maxLifeSamples <= 0 ? 1 : maxLifeSamples {
     _stage = _BurstEnvelopeStage.attack;
   }
+  static const double _epsilon = 1e-9;
+
+  final double level;
+  final double _attackStep;
+  final double _releaseStep;
+  final int _maxLifeSamples;
+
+  _BurstEnvelopeStage _stage = _BurstEnvelopeStage.idle;
+  double _envelope = 0;
+  int _lifetimeSamples = 0;
 
   bool get finished => _stage == _BurstEnvelopeStage.idle;
 
   double nextSample() {
     _lifetimeSamples++;
-    if (_lifetimeSamples >= _maxLifeSamples &&
-        _stage != _BurstEnvelopeStage.idle) {
+    if (_lifetimeSamples >= _maxLifeSamples && _stage != _BurstEnvelopeStage.idle) {
       _stage = _BurstEnvelopeStage.release;
     }
 
     switch (_stage) {
       case _BurstEnvelopeStage.idle:
-        return 0.0;
+        return 0;
       case _BurstEnvelopeStage.attack:
         _envelope += _attackStep;
         if (_envelope >= 1.0) {
@@ -482,7 +455,7 @@ class _ActiveBurst {
         if (_envelope <= _epsilon) {
           _envelope = 0.0;
           _stage = _BurstEnvelopeStage.idle;
-          return 0.0;
+          return 0;
         }
         return _envelope * level;
     }
@@ -490,12 +463,6 @@ class _ActiveBurst {
 }
 
 class ModulationTargetBinding {
-  final Parameter parameter;
-  final double amount;
-  final ModulationApplyMode mode;
-  final double? minValue;
-  final double? maxValue;
-
   const ModulationTargetBinding({
     required this.parameter,
     required this.amount,
@@ -503,20 +470,24 @@ class ModulationTargetBinding {
     this.minValue,
     this.maxValue,
   });
+  final Parameter parameter;
+  final double amount;
+  final ModulationApplyMode mode;
+  final double? minValue;
+  final double? maxValue;
 }
 
 class RuntimeModulationBinding {
-  final String id;
-  final Modulator modulator;
-  final double amount;
-  final List<ModulationTargetBinding> targets;
-
   const RuntimeModulationBinding({
     required this.id,
     required this.modulator,
     required this.amount,
     required this.targets,
   });
+  final String id;
+  final Modulator modulator;
+  final double amount;
+  final List<ModulationTargetBinding> targets;
 }
 
 class ModulatorFactory {
@@ -587,10 +558,9 @@ class ModulatorFactory {
 }
 
 class ModulationEngine {
+  ModulationEngine({required this.bindings});
   final List<RuntimeModulationBinding> bindings;
   Float32List _scratch = Float32List(0);
-
-  ModulationEngine({required this.bindings});
 
   void processBlock(int blockSize) {
     if (bindings.isEmpty || blockSize <= 0) {
@@ -634,7 +604,7 @@ class ModulationEngine {
     if (minValue != null || maxValue != null) {
       final clampMin = minValue ?? double.negativeInfinity;
       final clampMax = maxValue ?? double.infinity;
-      nextFinal = nextFinal.clamp(clampMin, clampMax).toDouble();
+      nextFinal = nextFinal.clamp(clampMin, clampMax);
     }
 
     parameter.modulationValue = nextFinal - parameter.baseValue;

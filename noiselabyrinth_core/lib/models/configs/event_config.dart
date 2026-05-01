@@ -1,10 +1,6 @@
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class EventConfig {
-  final String id;
-  final TriggerConfig trigger;
-  final List<ActionConfig> actions;
-
   const EventConfig({
     required this.id,
     required this.trigger,
@@ -24,6 +20,9 @@ class EventConfig {
           const <ActionConfig>[],
     );
   }
+  final String id;
+  final TriggerConfig trigger;
+  final List<ActionConfig> actions;
 
   Map<String, dynamic> toJson() {
     return {
@@ -35,8 +34,7 @@ class EventConfig {
 }
 
 class TriggerConfig {
-  final TriggerType type;
-  final double rate; // For periodic triggers
+  // For periodic triggers
 
   const TriggerConfig({this.type = TriggerType.periodic, this.rate = 0.2});
 
@@ -49,6 +47,8 @@ class TriggerConfig {
       rate: (json['rate'] as num?)?.toDouble() ?? 0.2,
     );
   }
+  final TriggerType type;
+  final double rate;
 
   Map<String, dynamic> toJson() {
     return {'type': type.name, 'rate': rate};
@@ -56,9 +56,6 @@ class TriggerConfig {
 }
 
 class ActionConfig {
-  final String modulatorId;
-  final ActionMode mode;
-
   const ActionConfig({
     required this.modulatorId,
     this.mode = ActionMode.trigger,
@@ -73,6 +70,8 @@ class ActionConfig {
       ),
     );
   }
+  final String modulatorId;
+  final ActionMode mode;
 
   Map<String, dynamic> toJson() {
     return {

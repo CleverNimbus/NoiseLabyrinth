@@ -4,11 +4,6 @@ import 'package:noiselabyrinth_core/models/configs/mix_config.dart';
 import 'package:noiselabyrinth_core/models/configs/render_config.dart';
 
 class GenerationConfig {
-  final MetadataConfig metadata;
-  final RenderConfig render;
-  final MixConfig mix;
-  final List<LayerConfig> layers;
-
   const GenerationConfig({
     required this.metadata,
     required this.render,
@@ -32,6 +27,10 @@ class GenerationConfig {
           .toList(growable: false),
     );
   }
+  final MetadataConfig metadata;
+  final RenderConfig render;
+  final MixConfig mix;
+  final List<LayerConfig> layers;
 
   Map<String, dynamic> toJson() {
     return {

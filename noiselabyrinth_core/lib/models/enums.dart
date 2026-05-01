@@ -19,3 +19,5 @@ enum TriggerType { poisson, periodic, random }
 enum LFOType { sine, triangle, square, sawtooth }
 
 enum RenderFormat { wav, mp3 }
+
+enum DitherType { tpdf }

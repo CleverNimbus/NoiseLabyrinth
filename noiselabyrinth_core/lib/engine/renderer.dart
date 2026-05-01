@@ -1,27 +1,30 @@
 import 'dart:typed_data';
 
-import 'package:dart_lame/dart_lame.dart';
+import 'package:flutter_lame/flutter_lame.dart';
 import 'package:noiselabyrinth_core/engine/audio_engine.dart';
 import 'package:noiselabyrinth_core/engine/runtime_graph_builder.dart';
+import 'package:noiselabyrinth_core/engine/wav_encoder.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
+import 'package:noiselabyrinth_core/models/configs/render_config.dart' show RenderConfig;
 import 'package:noiselabyrinth_core/models/enums.dart';
+import 'package:noiselabyrinth_core/noiselabyrinth_core.dart' show RenderConfig;
 
 /// Render context assembled from a [GenerationConfig] before rendering starts.
 class _RenderContext {
-  final AudioEngine engine;
-  final int totalSamples;
-  final int bitRate;
-
   _RenderContext({
     required this.engine,
     required this.totalSamples,
     required this.bitRate,
   });
+  final AudioEngine engine;
+  final int totalSamples;
+  final int bitRate;
 }
 
 /// Top-level output renderer.
 ///
-/// Use [render] to dispatch to WAV or MP3 according to [GenerationConfig.render.format].
+/// Use [render] to dispatch to WAV or MP3 according to [GenerationConfig.render]
+/// and [RenderConfig.format].
 /// Use [renderWav] or [renderMp3] to target a specific format directly.
 class Renderer {
   const Renderer._();
@@ -62,7 +65,6 @@ class Renderer {
 
     final encoder = LameMp3Encoder(
       sampleRate: config.render.sampleRate,
-      numChannels: 2,
       bitRate: ctx.bitRate,
     );
 
@@ -97,8 +99,6 @@ class Renderer {
     return builder.takeBytes();
   }
 
-  // ---------------------------------------------------------------------------
-
   static _RenderContext _buildContext(GenerationConfig config) {
     final graph = RuntimeGraphBuilder(
       sampleRate: config.render.sampleRate,
@@ -108,8 +108,7 @@ class Renderer {
       sampleRate: config.render.sampleRate,
       blockSize: 512,
     );
-    final totalSamples =
-        config.render.sampleRate * config.render.durationMinutes * 60;
+    final totalSamples = config.render.sampleRate * config.render.durationMinutes * 60;
     return _RenderContext(
       engine: engine,
       totalSamples: totalSamples,
@@ -117,13 +116,11 @@ class Renderer {
     );
   }
 
-  /// Fills [out] with PCM-16 values from [src] in [start, end).
+  // Fills [out] with PCM-16 values from [src] in [start, end).
   static void _fillInt16(Float32List src, int start, int end, Int16List out) {
     for (var i = start; i < end; i++) {
       final sample = src[i];
-      final clamped = sample < -1.0
-          ? -1.0
-          : (sample > 1.0 ? 1.0 : sample.toDouble());
+      final clamped = sample < -1.0 ? -1.0 : (sample > 1.0 ? 1.0 : sample);
       out[i - start] = (clamped * 32767.0).round();
     }
   }

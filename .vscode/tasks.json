@@ -1,0 +1,111 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Interactive Rebase Pending Commits",
+      "type": "shell",
+      "command": "git",
+      "args": ["rebase", "-i", "@{u}"],
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "echo": true
+      },
+      "problemMatcher": [],
+      "detail": "Interactive rebase of all pending commits against the upstream tracking branch",
+      "options": {
+        "statusbar": {
+          "label": "$(git-branch)",
+          "color": "#ff4d4d",
+          "detail": "Interactive rebase of all pending commits against the upstream tracking branch"
+        }
+      }
+    },
+    {
+      "label": "Run All Tests",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "cd noiselabyrinth_core && flutter test --coverage && cd ../noiselabyrinth_test_cli && flutter test --coverage && cd ../noiselabyrinth_ui && flutter test --coverage"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "echo": true
+      },
+      "problemMatcher": ["$dart"],
+      "detail": "Run all tests for the three Dart/Flutter projects",
+      "options": {
+        "statusbar": {
+          "label": "$(beaker)",
+          "color": "#ff4d4d",
+          "detail": "Run all tests for the three Dart/Flutter projects"
+        }
+      }
+    },
+    {
+      "label": "Run Test CLI",
+      "type": "shell",
+      "command": "bash",
+      "args": ["-c", "cd noiselabyrinth_test_cli && dart run"],
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "echo": true
+      },
+      "isBackground": true,
+      "problemMatcher": ["$dart"],
+      "detail": "Run the Test CLI application",
+      "options": {
+        "statusbar": {
+          "label": "$(terminal)",
+          "color": "#ff4d4d",
+          "detail": "Run the Test CLI application"
+        }
+      }
+    },
+    {
+      "label": "Run UI",
+      "type": "shell",
+      "command": "bash",
+      "args": ["-c", "cd noiselabyrinth_ui && flutter run"],
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "echo": true
+      },
+      "isBackground": true,
+      "problemMatcher": ["$dart"],
+      "detail": "Run the Flutter UI application",
+      "options": {
+        "statusbar": {
+          "label": "$(window)",
+          "color": "#ff4d4d",
+          "detail": "Run the Flutter UI application"
+        }
+      }
+    },
+    {
+      "label": "Run UI (Web - Chrome)",
+      "type": "shell",
+      "command": "bash",
+      "args": ["-c", "cd noiselabyrinth_ui && flutter run -d chrome"],
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "echo": true
+      },
+      "isBackground": true,
+      "problemMatcher": ["$dart"],
+      "detail": "Run the Flutter UI application in Chrome",
+      "options": {
+        "statusbar": {
+          "label": "$(globe)",
+          "color": "#ff4d4d",
+          "detail": "Run the Flutter UI application in Chrome"
+        }
+      }
+    }
+  ]
+}

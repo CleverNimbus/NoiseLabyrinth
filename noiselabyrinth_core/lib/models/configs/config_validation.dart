@@ -8,23 +8,21 @@ import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class ConfigValidationIssue {
+  const ConfigValidationIssue({required this.path, required this.message});
   final String path;
   final String message;
-
-  const ConfigValidationIssue({required this.path, required this.message});
 
   @override
   String toString() => '$path: $message';
 }
 
 class ConfigValidationException implements Exception {
-  final List<ConfigValidationIssue> issues;
-
   const ConfigValidationException(this.issues);
+  final List<ConfigValidationIssue> issues;
 
   @override
   String toString() {
-    final details = issues.map((issue) => '- ${issue.toString()}').join('\n');
+    final details = issues.map((issue) => '- $issue').join('\n');
     return 'Configuration validation failed with ${issues.length} issue(s):\n$details';
   }
 }
@@ -119,6 +117,42 @@ class GenerationConfigParser {
       );
     }
 
+    if (config.mix.dither.bitDepth <= 0) {
+      issues.add(
+        const ConfigValidationIssue(
+          path: 'mix.dither.bitDepth',
+          message: 'bitDepth must be > 0.',
+        ),
+      );
+    }
+
+    if (config.mix.dither.amount < 0.0) {
+      issues.add(
+        const ConfigValidationIssue(
+          path: 'mix.dither.amount',
+          message: 'amount must be >= 0.',
+        ),
+      );
+    }
+
+    if (config.mix.normalization.targetDb > 0.0) {
+      issues.add(
+        const ConfigValidationIssue(
+          path: 'mix.normalization.targetDb',
+          message: 'targetDb must be <= 0 dBFS.',
+        ),
+      );
+    }
+
+    if (config.mix.normalization.targetDb < -120.0) {
+      issues.add(
+        const ConfigValidationIssue(
+          path: 'mix.normalization.targetDb',
+          message: 'targetDb must be >= -120 dBFS.',
+        ),
+      );
+    }
+
     if (config.layers.isEmpty) {
       issues.add(
         const ConfigValidationIssue(
@@ -194,8 +228,7 @@ class GenerationConfigParser {
         issues.add(
           ConfigValidationIssue(
             path: '$processorPath.id',
-            message:
-                'processor id "${processor.id}" must be unique inside a layer.',
+            message: 'processor id "${processor.id}" must be unique inside a layer.',
           ),
         );
       }
@@ -219,8 +252,7 @@ class GenerationConfigParser {
         issues.add(
           ConfigValidationIssue(
             path: '$modulationPath.id',
-            message:
-                'modulation id "${modulation.id}" must be unique inside a layer.',
+            message: 'modulation id "${modulation.id}" must be unique inside a layer.',
           ),
         );
       }
@@ -259,11 +291,7 @@ class GenerationConfigParser {
         );
       }
 
-      for (
-        var actionIndex = 0;
-        actionIndex < event.actions.length;
-        actionIndex++
-      ) {
+      for (var actionIndex = 0; actionIndex < event.actions.length; actionIndex++) {
         final action = event.actions[actionIndex];
         if (action.modulatorId.trim().isEmpty) {
           issues.add(
@@ -311,7 +339,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
       case SourceType.impulse:
         if (source.impulseConfig == null) {
           issues.add(
@@ -323,8 +350,7 @@ class GenerationConfigParser {
           return;
         }
 
-        if (source.impulseConfig!.density < 0.0 ||
-            source.impulseConfig!.density > 1.0) {
+        if (source.impulseConfig!.density < 0.0 || source.impulseConfig!.density > 1.0) {
           issues.add(
             ConfigValidationIssue(
               path: '$path.impulseConfig.density',
@@ -333,8 +359,7 @@ class GenerationConfigParser {
           );
         }
 
-        if (source.impulseConfig!.randomness < 0.0 ||
-            source.impulseConfig!.randomness > 1.0) {
+        if (source.impulseConfig!.randomness < 0.0 || source.impulseConfig!.randomness > 1.0) {
           issues.add(
             ConfigValidationIssue(
               path: '$path.impulseConfig.randomness',
@@ -342,7 +367,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
       case SourceType.sine:
         if (source.sineConfig == null) {
           issues.add(
@@ -362,7 +386,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
     }
   }
 
@@ -401,7 +424,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
       case ProcessorType.gain:
         final gain = processor.gain;
         if (gain == null) {
@@ -422,15 +444,13 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
       case ProcessorType.saturator:
         final saturator = processor.saturator;
         if (saturator == null) {
           issues.add(
             ConfigValidationIssue(
               path: '$path.saturator',
-              message:
-                  'saturator config is required for processor type saturator.',
+              message: 'saturator config is required for processor type saturator.',
             ),
           );
           return;
@@ -444,7 +464,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
       case ProcessorType.delay:
         final delay = processor.delay;
         if (delay == null) {
@@ -483,7 +502,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
     }
   }
 
@@ -548,9 +566,7 @@ class GenerationConfigParser {
         );
       }
 
-      if (target.minValue != null &&
-          target.maxValue != null &&
-          target.minValue! > target.maxValue!) {
+      if (target.minValue != null && target.maxValue != null && target.minValue! > target.maxValue!) {
         issues.add(
           ConfigValidationIssue(
             path: '$path.targets[$i]',
@@ -588,7 +604,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
       case ModulationType.random:
         final random = modulation.randomConfig;
         if (random == null) {
@@ -616,7 +631,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
       case ModulationType.drift:
         final drift = modulation.driftConfig;
         if (drift == null) {
@@ -644,15 +658,13 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
       case ModulationType.envelope:
         final envelope = modulation.envelopeConfig;
         if (envelope == null) {
           issues.add(
             ConfigValidationIssue(
               path: '$path.envelopeConfig',
-              message:
-                  'envelopeConfig is required for modulation type envelope.',
+              message: 'envelopeConfig is required for modulation type envelope.',
             ),
           );
           return;
@@ -689,7 +701,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
       case ModulationType.burst:
         final burst = modulation.burstConfig;
         if (burst == null) {
@@ -765,7 +776,6 @@ class GenerationConfigParser {
             ),
           );
         }
-        break;
     }
   }
 
@@ -776,9 +786,7 @@ class GenerationConfigParser {
     List<ConfigValidationIssue> issues,
   ) {
     final layerPath = 'layers[$layerIndex]';
-    final modulatorIds = layer.modulations
-        .map((modulation) => modulation.id)
-        .toSet();
+    final modulatorIds = layer.modulations.map((modulation) => modulation.id).toSet();
 
     for (var i = 0; i < layer.events.length; i++) {
       final event = layer.events[i];
@@ -791,8 +799,7 @@ class GenerationConfigParser {
           issues.add(
             ConfigValidationIssue(
               path: '$layerPath.events[$i].actions[$j].modulatorId',
-              message:
-                  'modulator id "${action.modulatorId}" does not exist in layer modulations.',
+              message: 'modulator id "${action.modulatorId}" does not exist in layer modulations.',
             ),
           );
         }

@@ -5,15 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
+const _smokeTag = <String>['smoke'];
+const _qualityTag = <String>['quality'];
+
 void main() {
-  group('audio sources', () {
+  group('audio sources smoke', () {
     test('AudioNode base classes prepare and keep parameters', () {
       final source = SineSourceNode(
         id: 'source-1',
         frequencyHz: 220,
-        phase: 0.0,
+        phase: 0,
       );
-      final processor = GainProcessorNode(id: 'proc-1', gain: 1.0);
+      final processor = GainProcessorNode(id: 'proc-1', gain: 1);
 
       source.prepare(48000, 256);
       processor.prepare(48000, 256);
@@ -24,17 +27,17 @@ void main() {
       expect(processor.blockSize, 256);
       expect(source.parameter('frequencyHz'), isA<Parameter>());
       expect(processor.parameter('gain'), isA<Parameter>());
-    });
+    }, tags: _smokeTag);
+  });
 
+  group('audio sources quality', () {
     test('white noise source produces non-silent samples', () {
       final source = NoiseSourceNode(
         id: 'noise-source',
         color: NoiseColor.white,
         low: 20,
         high: 20000,
-      );
-
-      source.prepare(44100, 64);
+      )..prepare(44100, 64);
       for (final parameter in source.parameters.values) {
         parameter.update();
       }
@@ -48,7 +51,15 @@ void main() {
       final first = buffer.first;
       final allEqual = buffer.every((sample) => sample == first);
       expect(allEqual, isFalse);
-    });
+
+      final mean = buffer.reduce((a, b) => a + b) / buffer.length;
+      final rms = math.sqrt(
+        buffer.fold<double>(0, (sum, sample) => sum + sample * sample) / buffer.length,
+      );
+      expect(mean.abs(), lessThan(0.2));
+      expect(rms, greaterThan(0.2));
+      expect(rms, lessThan(0.8));
+    }, tags: _qualityTag);
 
     test('pink and brown noise sources produce valid non-silent buffers', () {
       final pink = NoiseSourceNode(
@@ -89,7 +100,7 @@ void main() {
         expect(sample, greaterThanOrEqualTo(-1.0));
         expect(sample, lessThanOrEqualTo(1.0));
       }
-    });
+    }, tags: _qualityTag);
 
     test('pink and brown are temporally smoother than white noise', () {
       final white = NoiseSourceNode(
@@ -144,18 +155,17 @@ void main() {
       final pinkDelta = averageDelta(pinkBuffer);
       final brownDelta = averageDelta(brownBuffer);
 
-      expect(pinkDelta, lessThan(whiteDelta));
-      expect(brownDelta, lessThan(whiteDelta));
-    });
+      expect(pinkDelta, lessThan(whiteDelta * 0.9));
+      expect(brownDelta, lessThan(whiteDelta * 0.8));
+      expect(brownDelta, lessThan(pinkDelta));
+    }, tags: _qualityTag);
 
     test('impulse source generates sparse clicks', () {
       final impulse = ImpulseSourceNode(
         id: 'impulse-sparse',
         density: 0.01,
-        randomness: 0.0,
-      );
-
-      impulse.prepare(44100, 1024);
+        randomness: 0,
+      )..prepare(44100, 1024);
       for (final parameter in impulse.parameters.values) {
         parameter.update();
       }
@@ -172,16 +182,14 @@ void main() {
 
       expect(nonZeroCount, greaterThan(0));
       expect(nonZeroCount, lessThan(80));
-    });
+    }, tags: _qualityTag);
 
     test('impulse source supports amplitude variation', () {
       final impulse = ImpulseSourceNode(
         id: 'impulse-randomness',
-        density: 1.0,
+        density: 1,
         randomness: 0.8,
-      );
-
-      impulse.prepare(44100, 256);
+      )..prepare(44100, 256);
       for (final parameter in impulse.parameters.values) {
         parameter.update();
       }
@@ -196,16 +204,14 @@ void main() {
         expect(sample, greaterThan(0.19));
         expect(sample, lessThanOrEqualTo(1.0));
       }
-    });
+    }, tags: _qualityTag);
 
     test('sine source generates stable oscillator signal', () {
       final sine = SineSourceNode(
         id: 'sine-source',
         frequencyHz: 400,
-        phase: 0.0,
-      );
-
-      sine.prepare(8000, 256);
+        phase: 0,
+      )..prepare(8000, 256);
       for (final parameter in sine.parameters.values) {
         parameter.update();
       }
@@ -217,21 +223,22 @@ void main() {
       var energy = 0.0;
       var zeroCrossings = 0;
       for (var i = 0; i < buffer.length; i++) {
-        final sample = buffer[i].toDouble();
+        final sample = buffer[i];
         peak = math.max(peak, sample.abs());
         energy += sample * sample;
-        if (i > 0 &&
-            ((buffer[i - 1] <= 0.0 && sample > 0.0) ||
-                (buffer[i - 1] >= 0.0 && sample < 0.0))) {
+        if (i > 0 && ((buffer[i - 1] <= 0.0 && sample > 0.0) || (buffer[i - 1] >= 0.0 && sample < 0.0))) {
           zeroCrossings++;
         }
       }
 
       final rms = math.sqrt(energy / buffer.length);
-      expect(peak, greaterThan(0.95));
-      expect(rms, closeTo(0.707, 0.08));
-      expect(zeroCrossings, greaterThan(20));
-    });
+      final mean = buffer.reduce((a, b) => a + b) / buffer.length;
+      final estimatedFrequency = zeroCrossings * 8000 / (2 * buffer.length);
+      expect(peak, closeTo(1.0, 0.05));
+      expect(rms, closeTo(0.707, 0.03));
+      expect(mean.abs(), lessThan(0.03));
+      expect(estimatedFrequency, closeTo(400.0, 25.0));
+    }, tags: _qualityTag);
 
     test('bandlimited noise attenuates out-of-band energy', () {
       const sampleRate = 8000;
@@ -284,9 +291,10 @@ void main() {
       final bandHigh = binMagnitude(bandBuffer, highBin);
 
       expect(bandLow, greaterThan(0.005));
-      expect(bandHigh, lessThan(whiteHigh * 0.4));
+      expect(bandHigh, lessThan(whiteHigh * 0.25));
       expect(bandHigh, lessThan(bandLow));
       expect(whiteLow, greaterThan(0.001));
-    });
+      expect(bandLow, greaterThan(bandHigh * 2.0));
+    }, tags: _qualityTag);
   });
 }

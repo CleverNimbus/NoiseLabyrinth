@@ -38,7 +38,7 @@ void main() {
           'durationMinutes': 10,
           'sampleRate': 48000,
           'bitRate': 256,
-          'format': 'wav',
+          'format': 'mp3',
         },
       );
     });
@@ -53,8 +53,8 @@ void main() {
             path: 'layers[layer-a].processors[gain-1].gain',
             amount: 0.5,
             mode: ModulationApplyMode.multiplicative,
-            minValue: 0.0,
-            maxValue: 1.0,
+            minValue: 0,
+            maxValue: 1,
           ),
         ],
       );
@@ -286,8 +286,7 @@ void main() {
           }),
           throwsA(
             isA<ConfigValidationException>().having(
-              (error) =>
-                  error.issues.any((issue) => issue.path.endsWith('.path')),
+              (error) => error.issues.any((issue) => issue.path.endsWith('.path')),
               'path issue',
               isTrue,
             ),
@@ -330,8 +329,7 @@ void main() {
         }),
         throwsA(
           isA<ConfigValidationException>().having(
-            (error) =>
-                error.issues.any((issue) => issue.path.endsWith('.gain.gain')),
+            (error) => error.issues.any((issue) => issue.path.endsWith('.gain.gain')),
             'gain issue',
             isTrue,
           ),
@@ -345,16 +343,17 @@ void main() {
       final parameter = Parameter(0.5);
       expect(parameter.finalValue, 0.5);
 
-      parameter.modulationValue = 0.25;
-      parameter.update();
+      parameter
+        ..modulationValue = 0.25
+        ..update();
       expect(parameter.finalValue, closeTo(0.75, 1e-9));
       expect(parameter.modulationValue, 0.0);
     });
 
     test('SmoothedParameter clamps smoothing and interpolates', () {
-      final smoothed = SmoothedParameter(0.0, 2.0);
-      smoothed.target = 1.0;
-      smoothed.update();
+      final smoothed = SmoothedParameter(0, 2)
+        ..target = 1.0
+        ..update();
 
       expect(smoothed.smoothing, 1.0);
       expect(smoothed.current, closeTo(1.0, 1e-9));
@@ -502,9 +501,9 @@ void main() {
       final source = SineSourceNode(
         id: 'source-1',
         frequencyHz: 220,
-        phase: 0.0,
+        phase: 0,
       );
-      final processor = GainProcessorNode(id: 'proc-1', gain: 1.0);
+      final processor = GainProcessorNode(id: 'proc-1', gain: 1);
 
       source.prepare(48000, 256);
       processor.prepare(48000, 256);
@@ -621,9 +620,7 @@ void main() {
         color: NoiseColor.white,
         low: 20,
         high: 20000,
-      );
-
-      source.prepare(44100, 64);
+      )..prepare(44100, 64);
       for (final parameter in source.parameters.values) {
         parameter.update();
       }
@@ -741,10 +738,8 @@ void main() {
       final impulse = ImpulseSourceNode(
         id: 'impulse-sparse',
         density: 0.01,
-        randomness: 0.0,
-      );
-
-      impulse.prepare(44100, 1024);
+        randomness: 0,
+      )..prepare(44100, 1024);
       for (final parameter in impulse.parameters.values) {
         parameter.update();
       }
@@ -766,11 +761,9 @@ void main() {
     test('impulse source supports amplitude variation', () {
       final impulse = ImpulseSourceNode(
         id: 'impulse-randomness',
-        density: 1.0,
+        density: 1,
         randomness: 0.8,
-      );
-
-      impulse.prepare(44100, 256);
+      )..prepare(44100, 256);
       for (final parameter in impulse.parameters.values) {
         parameter.update();
       }
@@ -788,13 +781,12 @@ void main() {
     });
 
     test('gain processor scales buffer samples', () {
-      final gain = GainProcessorNode(id: 'gain-node', gain: 0.5);
-      gain.prepare(44100, 4);
+      final gain = GainProcessorNode(id: 'gain-node', gain: 0.5)..prepare(44100, 4);
       for (final parameter in gain.parameters.values) {
         parameter.update();
       }
 
-      final buffer = Float32List.fromList(<double>[1.0, -1.0, 0.5, -0.25]);
+      final buffer = Float32List.fromList(<double>[1, -1, 0.5, -0.25]);
       gain.process(buffer);
 
       expect(buffer[0], closeTo(0.5, 1e-9));
@@ -804,13 +796,12 @@ void main() {
     });
 
     test('gain processor supports negative gain for polarity inversion', () {
-      final gain = GainProcessorNode(id: 'gain-invert', gain: -1.0);
-      gain.prepare(44100, 3);
+      final gain = GainProcessorNode(id: 'gain-invert', gain: -1)..prepare(44100, 3);
       for (final parameter in gain.parameters.values) {
         parameter.update();
       }
 
-      final buffer = Float32List.fromList(<double>[0.3, -0.5, 1.0]);
+      final buffer = Float32List.fromList(<double>[0.3, -0.5, 1]);
       gain.process(buffer);
 
       expect(buffer[0], closeTo(-0.3, 1e-6));
@@ -819,13 +810,12 @@ void main() {
     });
 
     test('gain processor guards against non-finite finalValue', () {
-      final gain = GainProcessorNode(id: 'gain-safe', gain: 1.0);
-      gain.prepare(44100, 4);
+      final gain = GainProcessorNode(id: 'gain-safe', gain: 1)..prepare(44100, 4);
 
       gain.parameter('gain')!.baseValue = double.nan;
       gain.parameter('gain')!.update();
 
-      final buffer = Float32List.fromList(<double>[1.0, -1.0, 0.5, -0.5]);
+      final buffer = Float32List.fromList(<double>[1, -1, 0.5, -0.5]);
       gain.process(buffer);
 
       // Smoothed gain moves gradually toward the safety fallback target.
@@ -835,45 +825,43 @@ void main() {
       }
 
       for (var i = 0; i < 30; i++) {
-        final decay = Float32List.fromList(<double>[1.0]);
+        final decay = Float32List.fromList(<double>[1]);
         gain.process(decay);
       }
 
-      final settled = Float32List.fromList(<double>[1.0]);
+      final settled = Float32List.fromList(<double>[1]);
       gain.process(settled);
       expect(settled[0], lessThan(0.01));
     });
 
     test('gain processor reads finalValue and requires update cycle', () {
-      final gain = GainProcessorNode(id: 'gain-cycle', gain: 1.0);
-      gain.prepare(44100, 2);
+      final gain = GainProcessorNode(id: 'gain-cycle', gain: 1)..prepare(44100, 2);
       gain.parameter('gain')!.update(); // finalValue = 1.0
 
       gain.parameter('gain')!.baseValue = 0.25;
-      final noUpdate = Float32List.fromList(<double>[1.0, 1.0]);
+      final noUpdate = Float32List.fromList(<double>[1, 1]);
       gain.process(noUpdate);
       expect(noUpdate[0], closeTo(1.0, 1e-9));
 
       gain.parameter('gain')!.update(); // finalValue now reflects baseValue
-      final updated = Float32List.fromList(<double>[1.0, 1.0]);
+      final updated = Float32List.fromList(<double>[1, 1]);
       gain.process(updated);
       expect(updated[0], lessThan(1.0));
       expect(updated[0], greaterThan(0.25));
     });
 
     test('gain smoothing eases abrupt target changes', () {
-      final gain = GainProcessorNode(id: 'gain-smoothing', gain: 1.0);
-      gain.prepare(44100, 1);
+      final gain = GainProcessorNode(id: 'gain-smoothing', gain: 1)..prepare(44100, 1);
       gain.parameter('gain')!.update();
 
-      final first = Float32List.fromList(<double>[1.0]);
+      final first = Float32List.fromList(<double>[1]);
       gain.process(first);
       expect(first[0], closeTo(1.0, 1e-9));
 
       gain.parameter('gain')!.baseValue = 0.0;
       gain.parameter('gain')!.update();
 
-      final second = Float32List.fromList(<double>[1.0]);
+      final second = Float32List.fromList(<double>[1]);
       gain.process(second);
       expect(second[0], greaterThan(0.0));
       expect(second[0], lessThan(1.0));
@@ -886,10 +874,8 @@ void main() {
         mode: BiquadMode.lowpass,
         frequency: 300,
         q: 0.707,
-        gainDb: 0.0,
-      );
-
-      biquad.prepare(44100, 128);
+        gainDb: 0,
+      )..prepare(44100, 128);
       for (final parameter in biquad.parameters.values) {
         parameter.update();
       }
@@ -917,10 +903,8 @@ void main() {
         mode: BiquadMode.lowpass,
         frequency: 1000,
         q: 0.8,
-        gainDb: 0.0,
-      );
-
-      biquad.prepare(44100, 32);
+        gainDb: 0,
+      )..prepare(44100, 32);
       for (final parameter in biquad.parameters.values) {
         parameter.update();
       }
@@ -951,10 +935,8 @@ void main() {
         mode: BiquadMode.lowpass,
         frequency: 1200,
         q: 0.707,
-        gainDb: 0.0,
-      );
-
-      biquad.prepare(44100, 16);
+        gainDb: 0,
+      )..prepare(44100, 16);
       biquad.parameter('frequency')!.update();
       biquad.parameter('q')!.update();
       biquad.parameter('gainDb')!.update();
@@ -1017,9 +999,7 @@ void main() {
         graph: graph,
         sampleRate: 44100,
         blockSize: 32,
-      );
-
-      engine.processBlocks(1);
+      )..processBlocks(1);
 
       final layerA = engine.layerBuffers('layer-a').main;
       final layerB = engine.layerBuffers('layer-b').main;
@@ -1067,17 +1047,13 @@ void main() {
       graph.masterMix.baseValue = 0.0;
       graph.masterMix.update();
       engine.processBlocks(1);
-      final silentPeak = engine.masterBuffer
-          .map((sample) => sample.abs())
-          .reduce((a, b) => a > b ? a : b);
+      final silentPeak = engine.masterBuffer.map((sample) => sample.abs()).reduce((a, b) => a > b ? a : b);
       expect(silentPeak, closeTo(0.0, 1e-9));
 
       graph.masterMix.baseValue = 1.0;
       graph.masterMix.update();
       engine.processBlocks(1);
-      final audiblePeak = engine.masterBuffer
-          .map((sample) => sample.abs())
-          .reduce((a, b) => a > b ? a : b);
+      final audiblePeak = engine.masterBuffer.map((sample) => sample.abs()).reduce((a, b) => a > b ? a : b);
       expect(audiblePeak, greaterThan(0.0));
     });
 
@@ -1200,8 +1176,8 @@ void main() {
       () {
         final Modulator modulator = LfoSineModulator(
           sampleRate: 44100,
-          frequency: 2.0,
-          depth: 1.0,
+          frequency: 2,
+          depth: 1,
         );
 
         final buffer = Float32List(64);
@@ -1217,7 +1193,7 @@ void main() {
       () {
         final random = SmoothRandomModulator(
           sampleRate: 44100,
-          rateHz: 3.0,
+          rateHz: 3,
           smooth: 0.95,
         );
 
@@ -1340,8 +1316,8 @@ void main() {
       final burst = BurstModulator(
         sampleRate: 1000,
         durationMs: 20,
-        intensity: 1.0,
-        randomness: 0.0,
+        intensity: 1,
+        randomness: 0,
         attackMs: 0,
         releaseMs: 20,
         clusterMin: 1,
@@ -1379,20 +1355,18 @@ void main() {
       final burst = BurstModulator(
         sampleRate: 1000,
         durationMs: 10,
-        intensity: 1.0,
-        randomness: 1.0,
+        intensity: 1,
+        randomness: 1,
         attackMs: 0,
         releaseMs: 10,
         clusterMin: 1,
         clusterMax: 1,
         clusterSpreadMs: 0,
-      );
-
-      burst.trigger();
+      )..trigger();
       final first = Float32List(10);
-      burst.process(10, first);
-
-      burst.trigger();
+      burst
+        ..process(10, first)
+        ..trigger();
       final second = Float32List(10);
       burst.process(10, second);
 
@@ -1606,8 +1580,7 @@ void main() {
                   },
                   'targets': <Map<String, dynamic>>[
                     <String, dynamic>{
-                      'path':
-                          'layers[layer-a].processors[lp-1].biquad.frequency',
+                      'path': 'layers[layer-a].processors[lp-1].biquad.frequency',
                       'amount': 1.0,
                     },
                   ],
@@ -1711,7 +1684,7 @@ void main() {
         final modulation = RuntimeModulationBinding(
           id: 'mod-counter',
           modulator: counter,
-          amount: 1.0,
+          amount: 1,
           targets: const <ModulationTargetBinding>[],
         );
 
@@ -1720,7 +1693,7 @@ void main() {
             RuntimeEventBinding(
               id: 'evt-periodic',
               type: TriggerType.periodic,
-              rate: 20.0,
+              rate: 20,
               actions: <RuntimeEventAction>[
                 RuntimeEventAction(
                   mode: ActionMode.trigger,
@@ -1755,14 +1728,14 @@ void main() {
         return RuntimeEventBinding(
           id: 'evt-poisson',
           type: TriggerType.poisson,
-          rate: 4.0,
+          rate: 4,
           actions: <RuntimeEventAction>[
             RuntimeEventAction(
               mode: ActionMode.trigger,
               modulation: RuntimeModulationBinding(
                 id: 'mod-counter',
                 modulator: modulator,
-                amount: 1.0,
+                amount: 1,
                 targets: const <ModulationTargetBinding>[],
               ),
             ),
@@ -1902,7 +1875,7 @@ void main() {
         const tanhConfig = ProcessorConfig(
           id: 'sat-1',
           type: ProcessorType.saturator,
-          saturator: SaturatorConfig(drive: 0.7, curve: SaturatorCurve.tanh),
+          saturator: SaturatorConfig(drive: 0.7),
         );
         final softJson = <String, dynamic>{
           'id': 'sat-2',
@@ -1925,9 +1898,8 @@ void main() {
       final sat = SaturatorProcessorNode(
         id: 'sat-bypass',
         curve: SaturatorCurve.tanh,
-        drive: 0.0,
-      );
-      sat.prepare(44100, 4);
+        drive: 0,
+      )..prepare(44100, 4);
       for (final p in sat.parameters.values) {
         p.update();
       }
@@ -1947,9 +1919,8 @@ void main() {
         final sat = SaturatorProcessorNode(
           id: 'sat-tanh',
           curve: SaturatorCurve.tanh,
-          drive: 1.0,
-        );
-        sat.prepare(44100, 4);
+          drive: 1,
+        )..prepare(44100, 4);
         for (final p in sat.parameters.values) {
           p.update();
         }
@@ -1975,9 +1946,8 @@ void main() {
       final sat = SaturatorProcessorNode(
         id: 'sat-soft',
         curve: SaturatorCurve.soft,
-        drive: 1.0,
-      );
-      sat.prepare(44100, 4);
+        drive: 1,
+      )..prepare(44100, 4);
       for (final p in sat.parameters.values) {
         p.update();
       }
@@ -1999,9 +1969,8 @@ void main() {
       final sat = SaturatorProcessorNode(
         id: 'sat-safe',
         curve: SaturatorCurve.tanh,
-        drive: 1.0,
-      );
-      sat.prepare(44100, 4);
+        drive: 1,
+      )..prepare(44100, 4);
       sat.parameter('drive')!.baseValue = double.nan;
       sat.parameter('drive')!.update();
 
@@ -2033,10 +2002,9 @@ void main() {
       final delay = DelayProcessorNode(
         id: 'delay-dry',
         delayTimeMs: 10,
-        feedback: 0.0,
-        mix: 0.0,
-      );
-      delay.prepare(44100, 8);
+        feedback: 0,
+        mix: 0,
+      )..prepare(44100, 8);
       for (final p in delay.parameters.values) {
         p.update();
       }
@@ -2066,8 +2034,8 @@ void main() {
         final delay = DelayProcessorNode(
           id: 'delay-impulse',
           delayTimeMs: 10,
-          feedback: 0.0,
-          mix: 1.0,
+          feedback: 0,
+          mix: 1,
         );
         const blockSize = 512;
         delay.prepare(44100, blockSize);
@@ -2104,14 +2072,13 @@ void main() {
       }
 
       // Drive the delay with a constant signal for one block.
-      final block1 = Float32List(blockSize);
-      block1.fillRange(0, blockSize, 0.5);
+      final block1 = Float32List(blockSize)..fillRange(0, blockSize, 0.5);
       delay.process(block1);
 
       // Feed silence into the delay — energy should appear from feedback tails.
       final block2 = Float32List(blockSize);
       delay.process(block2);
-      final energy = block2.fold<double>(0.0, (sum, s) => sum + s * s);
+      final energy = block2.fold<double>(0, (sum, s) => sum + s * s);
 
       expect(energy, greaterThan(0.0));
     });
@@ -2122,13 +2089,11 @@ void main() {
         delayTimeMs: 10,
         feedback: 0.5,
         mix: 0.5,
-      );
-      delay.prepare(44100, 8);
+      )..prepare(44100, 8);
       delay.parameter('feedback')!.baseValue = double.nan;
       delay.parameter('feedback')!.update();
 
-      final buffer = Float32List(8);
-      buffer.fillRange(0, 8, 0.5);
+      final buffer = Float32List(8)..fillRange(0, 8, 0.5);
       delay.process(buffer);
 
       for (final s in buffer) {

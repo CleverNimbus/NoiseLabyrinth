@@ -1,13 +1,6 @@
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class ProcessorConfig {
-  final String id;
-  final ProcessorType type;
-  final BiquadConfig? biquad;
-  final GainConfig? gain;
-  final SaturatorConfig? saturator;
-  final DelayConfig? delay;
-
   const ProcessorConfig({
     required this.id,
     required this.type,
@@ -27,20 +20,18 @@ class ProcessorConfig {
     return ProcessorConfig(
       id: json['id'] as String? ?? '',
       type: parsedType,
-      biquad: json['biquad'] != null
-          ? BiquadConfig.fromJson(json['biquad'] as Map<String, dynamic>)
-          : null,
-      gain: json['gain'] != null
-          ? GainConfig.fromJson(json['gain'] as Map<String, dynamic>)
-          : null,
-      saturator: json['saturator'] != null
-          ? SaturatorConfig.fromJson(json['saturator'] as Map<String, dynamic>)
-          : null,
-      delay: json['delay'] != null
-          ? DelayConfig.fromJson(json['delay'] as Map<String, dynamic>)
-          : null,
+      biquad: json['biquad'] != null ? BiquadConfig.fromJson(json['biquad'] as Map<String, dynamic>) : null,
+      gain: json['gain'] != null ? GainConfig.fromJson(json['gain'] as Map<String, dynamic>) : null,
+      saturator: json['saturator'] != null ? SaturatorConfig.fromJson(json['saturator'] as Map<String, dynamic>) : null,
+      delay: json['delay'] != null ? DelayConfig.fromJson(json['delay'] as Map<String, dynamic>) : null,
     );
   }
+  final String id;
+  final ProcessorType type;
+  final BiquadConfig? biquad;
+  final GainConfig? gain;
+  final SaturatorConfig? saturator;
+  final DelayConfig? delay;
 
   Map<String, dynamic> toJson() {
     return {
@@ -55,12 +46,6 @@ class ProcessorConfig {
 }
 
 class BiquadConfig {
-  final BiquadMode biquadMode;
-  final int frequency;
-  final double q;
-  final double gainDb;
-  final bool resonant;
-
   const BiquadConfig({
     this.biquadMode = BiquadMode.lowpass,
     this.frequency = 500,
@@ -84,6 +69,11 @@ class BiquadConfig {
       resonant: json['resonant'] as bool? ?? false,
     );
   }
+  final BiquadMode biquadMode;
+  final int frequency;
+  final double q;
+  final double gainDb;
+  final bool resonant;
 
   Map<String, dynamic> toJson() {
     return {
@@ -97,13 +87,12 @@ class BiquadConfig {
 }
 
 class GainConfig {
-  final double gain;
-
   const GainConfig({this.gain = 1.0});
 
   factory GainConfig.fromJson(Map<String, dynamic> json) {
     return GainConfig(gain: (json['gain'] as num?)?.toDouble() ?? 1.0);
   }
+  final double gain;
 
   Map<String, dynamic> toJson() {
     return {'gain': gain};
@@ -111,9 +100,6 @@ class GainConfig {
 }
 
 class SaturatorConfig {
-  final double drive;
-  final SaturatorCurve curve;
-
   const SaturatorConfig({this.drive = 0.0, this.curve = SaturatorCurve.tanh});
 
   factory SaturatorConfig.fromJson(Map<String, dynamic> json) {
@@ -128,6 +114,8 @@ class SaturatorConfig {
       curve: parsedCurve,
     );
   }
+  final double drive;
+  final SaturatorCurve curve;
 
   Map<String, dynamic> toJson() {
     return {'drive': drive, 'curve': curve.name};
@@ -135,10 +123,6 @@ class SaturatorConfig {
 }
 
 class DelayConfig {
-  final int delayTimeMs;
-  final double feedback;
-  final double mix;
-
   const DelayConfig({
     this.delayTimeMs = 120,
     this.feedback = 0.3,
@@ -152,6 +136,9 @@ class DelayConfig {
       mix: (json['mix'] as num?)?.toDouble() ?? 0.2,
     );
   }
+  final int delayTimeMs;
+  final double feedback;
+  final double mix;
 
   Map<String, dynamic> toJson() {
     return {'delayTimeMs': delayTimeMs, 'feedback': feedback, 'mix': mix};
