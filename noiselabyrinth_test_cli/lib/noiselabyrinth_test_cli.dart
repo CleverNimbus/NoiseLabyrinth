@@ -5,6 +5,7 @@ import 'package:noiselabyrinth_core/presets/tests.dart';
 import 'package:path/path.dart' as p;
 
 List<GenerationConfig> hardcodedProfiles = <GenerationConfig>[
+  brownNoiseProfile_001,
   pinkNoiseBed,
   stereoBandlimitedHiss,
   sineDroneWithDelay,
@@ -12,25 +13,6 @@ List<GenerationConfig> hardcodedProfiles = <GenerationConfig>[
   pinkNoiseProfile,
   brownNoiseProfile,
   bandlimitedNoiseProfile,
-  const GenerationsMerger().merge(
-    vibrantStyleProfile,
-    clarityPersonalityProfile,
-    <GenerationConfig>[
-      psychoacousticFeatureProfile,
-      activationEnergyProfile,
-      ambianceEnergyProfile,
-    ],
-  ),
-  brownNoiseDeepField,
-  whiteFullband,
-  brownLow,
-  bandpassMid,
-  sineReference,
-  biquadLowpassTest,
-  delayImpulseTest,
-  lfoGainTest,
-  randomFilterTest,
-  stormForestVivid,
 ];
 
 GenerationConfig forceMp3(GenerationConfig config) {

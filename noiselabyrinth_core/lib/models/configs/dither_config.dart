@@ -1,5 +1,6 @@
 import 'package:noiselabyrinth_core/models/enums.dart';
 
+/// Optional master-stage dithering settings.
 class DitherConfig {
   const DitherConfig({
     this.enabled = false,
@@ -23,9 +24,16 @@ class DitherConfig {
     );
   }
 
+  /// Enables or disables master dithering.
   final bool enabled;
+
+  /// Dither algorithm selection.
   final DitherType type;
+
+  /// Target quantization bit depth used to derive dither amplitude.
   final int bitDepth;
+
+  /// Linear dither amount multiplier, where 1.0 equals 1 LSB TPDF.
   final double amount;
 
   Map<String, dynamic> toJson() {

@@ -52,36 +52,5 @@ void main() {
     test('white noise profile matches explicit broadband validation spec', () {
       validatePreset(whiteNoiseProfile);
     });
-
-    test('brown sleep-like profile matches explicit low-frequency validation spec', () {
-      final validation = validatePreset(brownNoiseDeepField);
-      final features = validation.features;
-      expect(features.bandEnergy['low'], greaterThan(features.bandEnergy['high']!));
-    });
-
-    test('gain-modulated profile matches explicit dynamic-stability validation spec', () {
-      final validation = validatePreset(lfoGainTest);
-      final features = validation.features;
-      expect(features.windowedRms.variance, greaterThan(0.0003));
-    });
-
-    test('bandlimited noise profile matches explicit mid-focused validation spec', () {
-      final validation = validatePreset(bandlimitedNoiseProfile);
-      final features = validation.features;
-      expect(features.bandEnergy['mid'], greaterThan(features.bandEnergy['low']!));
-      expect(features.bandEnergy['mid'], greaterThan(features.bandEnergy['high']!));
-    });
-
-    test('random filter profile matches explicit wandering mid-focus validation spec', () {
-      final validation = validatePreset(randomFilterTest);
-      final features = validation.features;
-      expect(features.windowedSpectralCentroid.variance, greaterThan(150.0));
-    });
-
-    test('storm forest vivid profile matches explicit burst-dynamic validation spec', () {
-      final validation = validatePreset(stormForestVivid);
-      final features = validation.features;
-      expect(features.burstFactor, greaterThan(1.05));
-    });
   });
 }

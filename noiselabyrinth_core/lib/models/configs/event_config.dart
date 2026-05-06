@@ -1,5 +1,6 @@
 import 'package:noiselabyrinth_core/models/enums.dart';
 
+/// Event trigger and action definition for a layer.
 class EventConfig {
   const EventConfig({
     required this.id,
@@ -20,8 +21,14 @@ class EventConfig {
           const <ActionConfig>[],
     );
   }
+
+  /// Unique identifier of the event definition within a layer.
   final String id;
+
+  /// Trigger definition controlling when event actions execute.
   final TriggerConfig trigger;
+
+  /// Actions executed when the trigger fires.
   final List<ActionConfig> actions;
 
   Map<String, dynamic> toJson() {
@@ -33,9 +40,8 @@ class EventConfig {
   }
 }
 
+/// Trigger configuration for an event.
 class TriggerConfig {
-  // For periodic triggers
-
   const TriggerConfig({this.type = TriggerType.periodic, this.rate = 0.2});
 
   factory TriggerConfig.fromJson(Map<String, dynamic> json) {
@@ -47,7 +53,11 @@ class TriggerConfig {
       rate: (json['rate'] as num?)?.toDouble() ?? 0.2,
     );
   }
+
+  /// Trigger behavior type.
   final TriggerType type;
+
+  /// Trigger rate in Hz or equivalent cadence units, depending on type.
   final double rate;
 
   Map<String, dynamic> toJson() {
@@ -55,6 +65,7 @@ class TriggerConfig {
   }
 }
 
+/// Action configuration for an event trigger.
 class ActionConfig {
   const ActionConfig({
     required this.modulatorId,
@@ -70,7 +81,11 @@ class ActionConfig {
       ),
     );
   }
+
+  /// Identifier of the modulation source affected by this action.
   final String modulatorId;
+
+  /// Action mode describing how the modulator is controlled.
   final ActionMode mode;
 
   Map<String, dynamic> toJson() {

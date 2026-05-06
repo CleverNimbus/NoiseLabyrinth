@@ -1,6 +1,7 @@
 import 'package:noiselabyrinth_core/models/configs/band_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
+/// Primary source definition for a layer.
 class SourceConfig {
   const SourceConfig({
     required this.type,
@@ -26,9 +27,17 @@ class SourceConfig {
       sineConfig: json['sineConfig'] != null ? SineConfig.fromJson(json['sineConfig'] as Map<String, dynamic>) : null,
     );
   }
+
+  /// Selected source generator type for this layer.
   final SourceType type;
+
+  /// Configuration for noise source generation, required when type is noise.
   final NoiseConfig? noiseConfig;
+
+  /// Configuration for impulse source generation, required when type is impulse.
   final ImpulseConfig? impulseConfig;
+
+  /// Configuration for sine source generation, required when type is sine.
   final SineConfig? sineConfig;
 
   Map<String, dynamic> toJson() {
@@ -41,6 +50,7 @@ class SourceConfig {
   }
 }
 
+/// Noise source generation settings.
 class NoiseConfig {
   const NoiseConfig({required this.color, required this.band});
 
@@ -55,7 +65,11 @@ class NoiseConfig {
       ),
     );
   }
+
+  /// Noise color algorithm used to shape spectral distribution.
   final NoiseColor color;
+
+  /// Frequency band limits applied to band-limited noise generation.
   final BandConfig band;
 
   Map<String, dynamic> toJson() {
@@ -63,6 +77,7 @@ class NoiseConfig {
   }
 }
 
+/// Sine source generation settings.
 class SineConfig {
   const SineConfig({this.frequencyHz = 100, this.phase = 0.0});
 
@@ -72,7 +87,11 @@ class SineConfig {
       phase: (json['phase'] as num?)?.toDouble() ?? 0.0,
     );
   }
+
+  /// Sine oscillator frequency in Hz.
   final int frequencyHz;
+
+  /// Initial sine oscillator phase offset in normalized phase units.
   final double phase;
 
   Map<String, dynamic> toJson() {
@@ -80,6 +99,7 @@ class SineConfig {
   }
 }
 
+/// Impulse source generation settings.
 class ImpulseConfig {
   const ImpulseConfig({this.density = 0.2, this.randomness = 0.5});
 
@@ -89,7 +109,11 @@ class ImpulseConfig {
       randomness: (json['randomness'] as num?)?.toDouble() ?? 0.5,
     );
   }
+
+  /// Average impulse density, from 0 to 1.
   final double density;
+
+  /// Randomness applied to impulse timing or distribution, from 0 to 1.
   final double randomness;
 
   Map<String, dynamic> toJson() {

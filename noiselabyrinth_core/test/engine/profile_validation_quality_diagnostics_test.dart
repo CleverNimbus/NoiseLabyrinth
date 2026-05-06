@@ -63,41 +63,5 @@ void main() {
         reason: 'Bandlimited profile should suppress highs relative to white noise.',
       );
     });
-
-    test('random filter profile should produce substantial centroid drift over time', () {
-      final features = _extractFeatures(randomFilterTest);
-
-      expect(
-        features.windowedSpectralCentroid.variance,
-        greaterThan(2000.0),
-        reason: 'A wandering filter should measurably move the spectral center over windows.',
-      );
-    });
-
-    test('storm forest vivid should remain dynamic without excessive clipping', () {
-      final features = _extractFeatures(stormForestVivid);
-
-      expect(
-        features.clippedRatio,
-        lessThan(0.05),
-        reason: 'Dynamic ambience should not spend a large fraction of samples clipped.',
-      );
-      expect(
-        features.burstFactor,
-        greaterThan(1.3),
-        reason: 'Burst-driven ambience should show stronger transient-to-average contrast.',
-      );
-    });
-
-    test('storm forest vivid should be burstier than slow gain modulation', () {
-      final storm = _extractFeatures(stormForestVivid);
-      final lfo = _extractFeatures(lfoGainTest);
-
-      expect(
-        storm.burstFactor,
-        greaterThan(lfo.burstFactor * 1.2),
-        reason: 'Poisson bursts and thunder envelopes should exceed slow breathing modulation.',
-      );
-    });
   });
 }

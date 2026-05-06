@@ -1,3 +1,4 @@
+/// Optional master output normalization settings.
 class NormalizationConfig {
   const NormalizationConfig({
     this.enabled = false,
@@ -11,7 +12,10 @@ class NormalizationConfig {
     );
   }
 
+  /// Enables or disables master output normalization.
   final bool enabled;
+
+  /// Target peak level in dBFS for normalization.
   final double targetDb;
 
   Map<String, dynamic> toJson() {

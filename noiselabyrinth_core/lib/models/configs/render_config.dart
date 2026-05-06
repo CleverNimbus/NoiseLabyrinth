@@ -1,5 +1,6 @@
 import 'package:noiselabyrinth_core/models/enums.dart';
 
+/// Rendering output settings.
 class RenderConfig {
   const RenderConfig({
     this.durationMinutes = 120,
@@ -21,9 +22,17 @@ class RenderConfig {
       format: format,
     );
   }
+
+  /// Total render duration in minutes.
   final int durationMinutes;
+
+  /// Audio sample rate in Hz.
   final int sampleRate;
+
+  /// Target encoded bitrate in kbps.
   final int bitRate;
+
+  /// Output file format for rendered audio.
   final RenderFormat format;
 
   Map<String, dynamic> toJson() {

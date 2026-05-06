@@ -2,11 +2,9 @@
   "recommendations": [
     "alefragnani.Bookmarks",
     "esbenp.prettier-vscode",
-    "jbockle.jbockle-format-files",
     "pkief.material-icon-theme",
     "qcz.text-power-tools",
     "shardulm94.trailing-spaces",
-    "github.github-vscode-theme",
     "actboy168.tasks",
     "dnut.rewrap-revived",
     "dart-code.flutter",

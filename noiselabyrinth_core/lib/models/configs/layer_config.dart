@@ -3,6 +3,7 @@ import 'package:noiselabyrinth_core/models/configs/modulation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 
+/// Audio layer configuration.
 class LayerConfig {
   const LayerConfig({
     required this.id,
@@ -39,12 +40,26 @@ class LayerConfig {
           const <EventConfig>[],
     );
   }
+
+  /// Unique identifier of the layer within the generation.
   final String id;
+
+  /// Linear gain multiplier applied to the layer output.
   final double gain;
+
+  /// Pan position of the layer in the stereo field, where -1 is full left, 0 is center, and 1 is full right.
   final double pan;
+
+  /// Primary source definition that generates the layer signal.
   final SourceConfig source;
+
+  /// Ordered list of processors applied to the layer signal chain.
   final List<ProcessorConfig> processors;
+
+  /// Modulators available in this layer to animate parameters over time.
   final List<ModulationConfig> modulations;
+
+  /// Event triggers that can activate or gate modulators.
   final List<EventConfig> events;
 
   Map<String, dynamic> toJson() {

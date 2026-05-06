@@ -1,3 +1,4 @@
+/// Metadata for a generation preset.
 class MetadataConfig {
   const MetadataConfig({
     this.name = '',
@@ -14,9 +15,17 @@ class MetadataConfig {
       version: json['version'] as int? ?? 0,
     );
   }
+
+  /// Human-readable name of the generation preset.
   final String name;
+
+  /// Optional free-text description of the preset intent or content.
   final String description;
+
+  /// Optional classification tags for search and organization.
   final List<String> tags;
+
+  /// Preset version number for configuration evolution.
   final int version;
 
   Map<String, dynamic> toJson() {

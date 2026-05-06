@@ -1,3 +1,4 @@
+/// Frequency band limits used for band-limited noise generation.
 class BandConfig {
   const BandConfig({this.low = 20, this.high = 20000});
 
@@ -7,7 +8,11 @@ class BandConfig {
       high: json['high'] as int? ?? 20000,
     );
   }
+
+  /// Lower frequency bound in Hz.
   final int low;
+
+  /// Upper frequency bound in Hz.
   final int high;
 
   Map<String, dynamic> toJson() {
