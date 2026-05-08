@@ -26,12 +26,12 @@ GenerationConfig _config({
       bitRate: bitRate,
       format: format,
     ),
-    mix: MixConfig(mix: mix),
+    mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: mix),
     layers: <LayerConfig>[
       LayerConfig(
         id: layerId,
         gain: 0.5,
-        source: const SourceConfig(
+        source: SourceConfig(
           type: SourceType.noise,
           noiseConfig: NoiseConfig(
             color: NoiseColor.white,
@@ -53,16 +53,16 @@ class _InvalidOutputRule extends GenerationMergeRule {
   @override
   void apply(GenerationMergeContext context, GenerationMergeDraft draft) {
     draft
-      ..metadata = const MetadataConfig(name: 'Invalid merged config')
+      ..metadata = MetadataConfig(name: 'Invalid merged config')
       ..render = const RenderConfig(durationMinutes: 1)
-      ..mix = const MixConfig();
+      ..mix = MixConfig(dither: DitherConfig(), normalization: NormalizationConfig());
   }
 }
 
 void main() {
   group('GenerationsMerger', () {
     test('requires at least two configs', () {
-      const merger = GenerationsMerger();
+      final merger = GenerationsMerger(parser: GenerationConfigParser());
 
       expect(
         () => merger.mergeAll(<GenerationConfig>[
@@ -73,7 +73,7 @@ void main() {
     });
 
     test('merges metadata, render, mix, and layers with default rules', () {
-      const merger = GenerationsMerger();
+      final merger = GenerationsMerger(parser: GenerationConfigParser());
       final first = _config(
         name: 'Rain bed',
         layerId: 'rain',
@@ -113,12 +113,12 @@ void main() {
     });
 
     test('renames duplicate layer ids and rewrites modulation targets', () {
-      const merger = GenerationsMerger();
+      final merger = GenerationsMerger(parser: GenerationConfigParser());
       final first = _config(name: 'First', layerId: 'shared');
       final second = _config(
         name: 'Second',
         layerId: 'shared',
-        modulations: const <ModulationConfig>[
+        modulations: <ModulationConfig>[
           ModulationConfig(
             id: 'gain-lfo',
             type: ModulationType.lfo,
@@ -140,13 +140,14 @@ void main() {
         merged.layers.last.modulations.single.targets.single.path,
         'layers[shared-2].gain',
       );
-      expect(const GenerationConfigParser().validate(merged), isEmpty);
+      expect(GenerationConfigParser().validate(merged), isEmpty);
     });
 
     test('validates the merged config after rules are applied', () {
-      const merger = GenerationsMerger(
+      final merger = GenerationsMerger(
+        parser: GenerationConfigParser(),
         rules: <GenerationMergeRule>[
-          _InvalidOutputRule(),
+          const _InvalidOutputRule(),
         ],
       );
       final first = _config(name: 'First', layerId: 'first');

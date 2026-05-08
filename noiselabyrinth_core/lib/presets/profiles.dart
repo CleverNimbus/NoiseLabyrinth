@@ -1,22 +1,24 @@
 import 'package:noiselabyrinth_core/models/configs/band_config.dart';
+import 'package:noiselabyrinth_core/models/configs/dither_config.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
 import 'package:noiselabyrinth_core/models/configs/metadata_config.dart';
 import 'package:noiselabyrinth_core/models/configs/mix_config.dart';
+import 'package:noiselabyrinth_core/models/configs/normalization_config.dart';
 import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/render_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
-const GenerationConfig pinkNoiseBed = GenerationConfig(
+GenerationConfig pinkNoiseBed = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Pink noise bed',
     description: 'Single pink-noise layer through a gentle low-pass.',
     tags: <String>['debug', 'noise', 'pink'],
     version: 1,
   ),
-  render: RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
-  mix: MixConfig(mix: 0.75),
+  render: const RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.75),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'pink-bed',
@@ -42,15 +44,15 @@ const GenerationConfig pinkNoiseBed = GenerationConfig(
   ],
 );
 
-const GenerationConfig stereoBandlimitedHiss = GenerationConfig(
+GenerationConfig stereoBandlimitedHiss = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Stereo bandlimited hiss',
     description: 'Two filtered noise layers panned apart.',
     tags: <String>['debug', 'stereo', 'bandlimited'],
     version: 1,
   ),
-  render: RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
-  mix: MixConfig(mix: 0.65),
+  render: const RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.65),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'left-air',
@@ -79,20 +81,20 @@ const GenerationConfig stereoBandlimitedHiss = GenerationConfig(
   ],
 );
 
-const GenerationConfig sineDroneWithDelay = GenerationConfig(
+GenerationConfig sineDroneWithDelay = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Sine drone with delay',
     description: 'Low sine tone processed by saturation and delay.',
     tags: <String>['debug', 'sine', 'delay'],
     version: 1,
   ),
-  render: RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
-  mix: MixConfig(mix: 0.5),
+  render: const RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.5),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'sine-drone',
       gain: 0.45,
-      source: SourceConfig(
+      source: const SourceConfig(
         type: SourceType.sine,
         sineConfig: SineConfig(frequencyHz: 110),
       ),

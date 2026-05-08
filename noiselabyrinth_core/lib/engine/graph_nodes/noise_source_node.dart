@@ -228,16 +228,16 @@ class NoiseSourceNode extends SourceNode {
 class _BiquadSection {
   static const double _twoPi = 2.0 * math.pi;
 
-  double _b0 = 1.0;
-  double _b1 = 0.0;
-  double _b2 = 0.0;
-  double _a1 = 0.0;
-  double _a2 = 0.0;
+  double _b0 = 1;
+  double _b1 = 0;
+  double _b2 = 0;
+  double _a1 = 0;
+  double _a2 = 0;
 
-  double _x1 = 0.0;
-  double _x2 = 0.0;
-  double _y1 = 0.0;
-  double _y2 = 0.0;
+  double _x1 = 0;
+  double _x2 = 0;
+  double _y1 = 0;
+  double _y2 = 0;
 
   void reset() {
     _x1 = 0.0;
@@ -303,8 +303,7 @@ class _BiquadSection {
   }
 
   double process(double input) {
-    final output =
-        (_b0 * input) + (_b1 * _x1) + (_b2 * _x2) - (_a1 * _y1) - (_a2 * _y2);
+    final output = (_b0 * input) + (_b1 * _x1) + (_b2 * _x2) - (_a1 * _y1) - (_a2 * _y2);
     _x2 = _x1;
     _x1 = input;
     _y2 = _y1;

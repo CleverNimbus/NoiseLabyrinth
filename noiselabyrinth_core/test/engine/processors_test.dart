@@ -526,7 +526,7 @@ void main() {
     test(
       'saturator config serializes and deserializes with both curve types',
       () {
-        const tanhConfig = ProcessorConfig(
+        final tanhConfig = ProcessorConfig(
           id: 'sat-1',
           type: ProcessorType.saturator,
           saturator: SaturatorConfig(drive: 0.7),
@@ -640,7 +640,7 @@ void main() {
 
   group('delay processor quality', () {
     test('delay config serializes and deserializes safely', () {
-      const config = ProcessorConfig(
+      final config = ProcessorConfig(
         id: 'delay-proc',
         type: ProcessorType.delay,
         delay: DelayConfig(delayTimeMs: 200, feedback: 0.4, mix: 0.5),

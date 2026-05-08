@@ -1,22 +1,24 @@
 import 'package:noiselabyrinth_core/models/configs/band_config.dart';
+import 'package:noiselabyrinth_core/models/configs/dither_config.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
 import 'package:noiselabyrinth_core/models/configs/metadata_config.dart';
 import 'package:noiselabyrinth_core/models/configs/mix_config.dart';
+import 'package:noiselabyrinth_core/models/configs/normalization_config.dart';
 import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/render_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
-const GenerationConfig deepStyleProfile = GenerationConfig(
+GenerationConfig deepStyleProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Style: Deep',
     description: 'Low-heavy profile with weight and slow breathing space.',
     tags: <String>['preset', 'style', 'deep', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 9, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.56),
+  render: const RenderConfig(durationMinutes: 9, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.56),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'style-deep-foundation',
@@ -32,15 +34,15 @@ const GenerationConfig deepStyleProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig lowStyleProfile = GenerationConfig(
+GenerationConfig lowStyleProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Style: Low',
     description: 'Subdued low-mid focus with restrained high-frequency content.',
     tags: <String>['preset', 'style', 'low', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 8, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.54),
+  render: const RenderConfig(durationMinutes: 8, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.54),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'style-low-floor',
@@ -63,15 +65,15 @@ const GenerationConfig lowStyleProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig vibrantStyleProfile = GenerationConfig(
+GenerationConfig vibrantStyleProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Style: Vibrant',
     description: 'More animated top-end profile for an energetic texture.',
     tags: <String>['preset', 'style', 'vibrant', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 5, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.76),
+  render: const RenderConfig(durationMinutes: 5, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.76),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'style-vibrant-spark',
@@ -94,15 +96,15 @@ const GenerationConfig vibrantStyleProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig mutedStyleProfile = GenerationConfig(
+GenerationConfig mutedStyleProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Style: Muted',
     description: 'Soft-edged profile with reduced harshness and smooth masking.',
     tags: <String>['preset', 'style', 'muted', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 7, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.5),
+  render: const RenderConfig(durationMinutes: 7, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.5),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'style-muted-veil',
@@ -125,7 +127,7 @@ const GenerationConfig mutedStyleProfile = GenerationConfig(
   ],
 );
 
-const List<GenerationConfig> styleProfiles = <GenerationConfig>[
+List<GenerationConfig> styleProfiles = <GenerationConfig>[
   deepStyleProfile,
   lowStyleProfile,
   vibrantStyleProfile,

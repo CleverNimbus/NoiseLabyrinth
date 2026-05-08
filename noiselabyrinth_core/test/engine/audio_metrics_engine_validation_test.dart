@@ -14,7 +14,7 @@ Float32List _renderMono(
   required int totalSamples,
   int blockSize = 256,
 }) {
-  const parser = GenerationConfigParser();
+  final parser = GenerationConfigParser();
   final builder = RuntimeGraphBuilder(sampleRate: sampleRate);
 
   final config = parser.parseJsonMap(root);
@@ -785,7 +785,7 @@ void main() {
 
     test('mixing and generation merge preserve predictable spectral behavior', () {
       const sampleRate = 8000;
-      const merger = GenerationsMerger();
+      final merger = GenerationsMerger(parser: GenerationConfigParser());
 
       final merged = merger.merge(whiteNoiseProfile, brownNoiseProfile);
       final mergedSamples = _renderFromConfig(merged, totalSamples: 65536);

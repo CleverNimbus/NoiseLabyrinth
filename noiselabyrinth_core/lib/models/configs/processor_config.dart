@@ -2,7 +2,7 @@ import 'package:noiselabyrinth_core/models/enums.dart';
 
 /// Processor node definition for a layer signal chain.
 class ProcessorConfig {
-  const ProcessorConfig({
+  ProcessorConfig({
     required this.id,
     required this.type,
     this.biquad,
@@ -29,22 +29,22 @@ class ProcessorConfig {
   }
 
   /// Unique identifier of the processor within a layer.
-  final String id;
+  String id;
 
   /// Selected processor type for this processor node.
-  final ProcessorType type;
+  ProcessorType type;
 
   /// Biquad filter settings, required when type is biquad.
-  final BiquadConfig? biquad;
+  BiquadConfig? biquad;
 
   /// Gain processor settings, required when type is gain.
-  final GainConfig? gain;
+  GainConfig? gain;
 
   /// Saturator processor settings, required when type is saturator.
-  final SaturatorConfig? saturator;
+  SaturatorConfig? saturator;
 
   /// Delay processor settings, required when type is delay.
-  final DelayConfig? delay;
+  DelayConfig? delay;
 
   Map<String, dynamic> toJson() {
     return {
@@ -60,7 +60,7 @@ class ProcessorConfig {
 
 /// Biquad filter settings.
 class BiquadConfig {
-  const BiquadConfig({
+  BiquadConfig({
     this.biquadMode = BiquadMode.lowpass,
     this.frequency = 500,
     this.q = 1.7,
@@ -85,19 +85,19 @@ class BiquadConfig {
   }
 
   /// Biquad filter mode.
-  final BiquadMode biquadMode;
+  BiquadMode biquadMode;
 
   /// Biquad center or cutoff frequency in Hz.
-  final int frequency;
+  int frequency;
 
   /// Biquad Q factor controlling resonance width.
-  final double q;
+  double q;
 
   /// Biquad gain in dB for filter modes that use gain.
-  final double gainDb;
+  double gainDb;
 
   /// Whether resonance behavior is explicitly enabled for the filter.
-  final bool resonant;
+  bool resonant;
 
   Map<String, dynamic> toJson() {
     return {
@@ -112,14 +112,14 @@ class BiquadConfig {
 
 /// Gain processor settings.
 class GainConfig {
-  const GainConfig({this.gain = 1.0});
+  GainConfig({this.gain = 1.0});
 
   factory GainConfig.fromJson(Map<String, dynamic> json) {
     return GainConfig(gain: (json['gain'] as num?)?.toDouble() ?? 1.0);
   }
 
   /// Linear gain multiplier for the gain processor.
-  final double gain;
+  double gain;
 
   Map<String, dynamic> toJson() {
     return {'gain': gain};
@@ -128,7 +128,7 @@ class GainConfig {
 
 /// Saturator processor settings.
 class SaturatorConfig {
-  const SaturatorConfig({this.drive = 0.0, this.curve = SaturatorCurve.tanh});
+  SaturatorConfig({this.drive = 0.0, this.curve = SaturatorCurve.tanh});
 
   factory SaturatorConfig.fromJson(Map<String, dynamic> json) {
     final curveName = json['curve'] as String? ?? SaturatorCurve.tanh.name;
@@ -144,10 +144,10 @@ class SaturatorConfig {
   }
 
   /// Input drive amount applied before saturation.
-  final double drive;
+  double drive;
 
   /// Saturation transfer curve model.
-  final SaturatorCurve curve;
+  SaturatorCurve curve;
 
   Map<String, dynamic> toJson() {
     return {'drive': drive, 'curve': curve.name};
@@ -156,7 +156,7 @@ class SaturatorConfig {
 
 /// Delay processor settings.
 class DelayConfig {
-  const DelayConfig({
+  DelayConfig({
     this.delayTimeMs = 120,
     this.feedback = 0.3,
     this.mix = 0.2,
@@ -171,13 +171,13 @@ class DelayConfig {
   }
 
   /// Delay time in milliseconds.
-  final int delayTimeMs;
+  int delayTimeMs;
 
   /// Feedback amount routed from delay output back to input, from 0 to 1.
-  final double feedback;
+  double feedback;
 
   /// Wet mix of delayed signal in the processor output, from 0 to 1.
-  final double mix;
+  double mix;
 
   Map<String, dynamic> toJson() {
     return {'delayTimeMs': delayTimeMs, 'feedback': feedback, 'mix': mix};

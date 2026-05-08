@@ -32,19 +32,19 @@ ConfigValidationException _expectValidationFailure(
 void main() {
   group('config validation', () {
     test('ConfigValidationIssue and exception provide useful string output', () {
-      const issue = ConfigValidationIssue(
+      final issue = ConfigValidationIssue(
         path: 'render.durationMinutes',
         message: 'durationMinutes must be > 0.',
       );
       expect(issue.toString(), 'render.durationMinutes: durationMinutes must be > 0.');
 
-      const exception = ConfigValidationException(<ConfigValidationIssue>[issue]);
+      final exception = ConfigValidationException(<ConfigValidationIssue>[issue]);
       expect(exception.toString(), contains('Configuration validation failed with 1 issue(s):'));
       expect(exception.toString(), contains('- render.durationMinutes: durationMinutes must be > 0.'));
     });
 
     test('parseJsonString accepts valid object JSON and rejects non-object root', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final validJson = jsonEncode(
         _validRoot(
@@ -70,7 +70,7 @@ void main() {
     });
 
     test('validation rejects invalid dither settings', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final error = _expectValidationFailure(
         parser,
@@ -106,7 +106,7 @@ void main() {
     });
 
     test('validation rejects invalid normalization targetDb settings', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final tooHigh = _expectValidationFailure(
         parser,
@@ -163,7 +163,7 @@ void main() {
     });
 
     test('root and cross-layer constraints reject empty layer set and duplicate ids', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final emptyLayersError = _expectValidationFailure(
         parser,
@@ -205,7 +205,7 @@ void main() {
     });
 
     test('validation reports source, processor, modulation, and event branch errors', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final error = _expectValidationFailure(
         parser,

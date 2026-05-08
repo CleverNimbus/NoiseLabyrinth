@@ -5,7 +5,7 @@ import 'package:noiselabyrinth_core/models/configs/render_config.dart';
 
 /// Top-level generation preset configuration.
 class GenerationConfig {
-  const GenerationConfig({
+  GenerationConfig({
     required this.metadata,
     required this.render,
     required this.mix,
@@ -33,10 +33,10 @@ class GenerationConfig {
           .toList(growable: false),
     );
   }
-  final MetadataConfig metadata;
-  final RenderConfig render;
-  final MixConfig mix;
-  final List<LayerConfig> layers;
+  MetadataConfig metadata;
+  RenderConfig render;
+  MixConfig mix;
+  List<LayerConfig> layers;
 
   Map<String, dynamic> toJson() {
     return {

@@ -12,7 +12,7 @@ import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 void main() {
   group('configuration models', () {
     test('MetadataConfig serializes and deserializes safely', () {
-      const config = MetadataConfig(
+      final config = MetadataConfig(
         name: 'Patch A',
         description: 'Test patch',
         tags: <String>['alpha', 'noise'],
@@ -49,7 +49,7 @@ void main() {
     });
 
     test('ModulationConfig serializes enum name with canonical fields', () {
-      const config = ModulationConfig(
+      final config = ModulationConfig(
         id: 'mod-1',
         type: ModulationType.drift,
         amount: 12,
@@ -119,7 +119,7 @@ void main() {
     });
 
     test('EventConfig serializes enum names safely', () {
-      const config = EventConfig(
+      final config = EventConfig(
         id: 'event-1',
         trigger: TriggerConfig(type: TriggerType.poisson, rate: 0.75),
         actions: <ActionConfig>[
@@ -135,7 +135,7 @@ void main() {
     });
 
     test('ProcessorConfig gain serializes and deserializes safely', () {
-      const config = ProcessorConfig(
+      final config = ProcessorConfig(
         id: 'gain-1',
         type: ProcessorType.gain,
         gain: GainConfig(gain: 0.75),
@@ -149,7 +149,7 @@ void main() {
     });
 
     test('GenerationConfigParser parses and validates a valid config tree', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final config = parser.parseJsonMap(<String, dynamic>{
         'metadata': <String, dynamic>{'name': 'Valid Patch'},
@@ -213,7 +213,7 @@ void main() {
     test(
       'GenerationConfigParser rejects invalid ranges and missing required fields',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
 
         expect(
           () => parser.parseJsonMap(<String, dynamic>{
@@ -250,7 +250,7 @@ void main() {
     test(
       'GenerationConfigParser rejects unknown modulation target references',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
 
         expect(
           () => parser.parseJsonMap(<String, dynamic>{
@@ -301,7 +301,7 @@ void main() {
     );
 
     test('GenerationConfigParser rejects non-finite gain processor values', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       expect(
         () => parser.parseJsonMap(<String, dynamic>{
@@ -367,7 +367,7 @@ void main() {
 
   group('runtime graph builder', () {
     test('builds a wired layer graph with wrapped parameters', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const builder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -524,7 +524,7 @@ void main() {
     test(
       'AudioEngine allocates reusable per-layer buffer and optional scratch',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
         const graphBuilder = RuntimeGraphBuilder();
 
         final config = parser.parseJsonMap(<String, dynamic>{
@@ -578,7 +578,7 @@ void main() {
     );
 
     test('AudioEngine loop runs stubs without crashing', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -962,7 +962,7 @@ void main() {
     });
 
     test('engine mixes layers into master buffer', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -1017,7 +1017,7 @@ void main() {
     });
 
     test('engine master mix reads finalValue with update cycle', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -1063,7 +1063,7 @@ void main() {
     });
 
     test('engine can render raw noise WAV bytes', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -1115,7 +1115,7 @@ void main() {
     });
 
     test('engine renders filtered low-passed noise waveform', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -1247,7 +1247,7 @@ void main() {
     });
 
     test('engine events can trigger envelope modulation on layer gain', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder(sampleRate: 1000);
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -1383,7 +1383,7 @@ void main() {
     });
 
     test('engine events can trigger burst modulation on layer gain', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder(sampleRate: 1000);
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -1458,7 +1458,7 @@ void main() {
     });
 
     test('engine events can modulate gain processor parameter', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder(sampleRate: 1000);
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -1540,7 +1540,7 @@ void main() {
     test(
       'runtime graph resolves modulation targets once to direct Parameters',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
         const graphBuilder = RuntimeGraphBuilder();
 
         final config = parser.parseJsonMap(<String, dynamic>{
@@ -1615,7 +1615,7 @@ void main() {
     test(
       'runtime graph resolves event actions to direct modulation bindings',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
         const graphBuilder = RuntimeGraphBuilder();
 
         final config = parser.parseJsonMap(<String, dynamic>{
@@ -1774,7 +1774,7 @@ void main() {
     });
 
     test('engine applies modulation per block and evolves filtered sound', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -1877,7 +1877,7 @@ void main() {
     test(
       'saturator config serializes and deserializes with both curve types',
       () {
-        const tanhConfig = ProcessorConfig(
+        final tanhConfig = ProcessorConfig(
           id: 'sat-1',
           type: ProcessorType.saturator,
           saturator: SaturatorConfig(drive: 0.7),
@@ -1990,7 +1990,7 @@ void main() {
 
   group('delay processor', () {
     test('delay config serializes and deserializes safely', () {
-      const config = ProcessorConfig(
+      final config = ProcessorConfig(
         id: 'delay-proc',
         type: ProcessorType.delay,
         delay: DelayConfig(delayTimeMs: 200, feedback: 0.4, mix: 0.5),

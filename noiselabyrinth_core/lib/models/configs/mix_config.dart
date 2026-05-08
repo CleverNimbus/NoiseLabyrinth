@@ -3,10 +3,10 @@ import 'package:noiselabyrinth_core/models/configs/normalization_config.dart';
 
 /// Global mix controls for combining generated layers.
 class MixConfig {
-  const MixConfig({
+  MixConfig({
+    required this.dither,
+    required this.normalization,
     this.mix = 1.0,
-    this.dither = const DitherConfig(),
-    this.normalization = const NormalizationConfig(),
   });
 
   factory MixConfig.fromJson(Map<String, dynamic> json) {
@@ -22,13 +22,13 @@ class MixConfig {
   }
 
   /// Global wet mix amount applied to the generated output, from 0 to 1.
-  final double mix;
+  double mix;
 
   /// Optional master-stage dithering applied after layer mix and master gain.
-  final DitherConfig dither;
+  DitherConfig dither;
 
   /// Optional master peak normalization applied to rendered output.
-  final NormalizationConfig normalization;
+  NormalizationConfig normalization;
 
   Map<String, dynamic> toJson() {
     return {

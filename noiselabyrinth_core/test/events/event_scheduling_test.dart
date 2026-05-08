@@ -12,7 +12,7 @@ void main() {
     test(
       'runtime graph resolves modulation targets once to direct Parameters',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
         const graphBuilder = RuntimeGraphBuilder();
 
         final config = parser.parseJsonMap(<String, dynamic>{
@@ -88,7 +88,7 @@ void main() {
     test(
       'runtime graph resolves event actions to direct modulation bindings',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
         const graphBuilder = RuntimeGraphBuilder();
 
         final config = parser.parseJsonMap(<String, dynamic>{
@@ -308,7 +308,7 @@ void main() {
     }, tags: _qualityTag);
 
     test('engine events can modulate gain processor parameter', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder(sampleRate: 1000);
 
       final config = parser.parseJsonMap(<String, dynamic>{

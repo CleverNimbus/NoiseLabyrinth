@@ -1,6 +1,6 @@
 /// Metadata for a generation preset.
 class MetadataConfig {
-  const MetadataConfig({
+  MetadataConfig({
     this.name = '',
     this.description = '',
     this.tags = const [],
@@ -17,16 +17,16 @@ class MetadataConfig {
   }
 
   /// Human-readable name of the generation preset.
-  final String name;
+  String name;
 
   /// Optional free-text description of the preset intent or content.
-  final String description;
+  String description;
 
   /// Optional classification tags for search and organization.
-  final List<String> tags;
+  List<String> tags;
 
   /// Preset version number for configuration evolution.
-  final int version;
+  int version;
 
   Map<String, dynamic> toJson() {
     return {

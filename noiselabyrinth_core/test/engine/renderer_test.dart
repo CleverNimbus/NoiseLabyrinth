@@ -12,7 +12,7 @@ GenerationConfig _minimalConfig({
   List<Map<String, dynamic>>? processors,
   double layerGain = 1.0,
 }) {
-  const parser = GenerationConfigParser();
+  final parser = GenerationConfigParser();
   return parser.parseJsonMap(<String, dynamic>{
     'metadata': <String, dynamic>{
       'name': 'Renderer Test',

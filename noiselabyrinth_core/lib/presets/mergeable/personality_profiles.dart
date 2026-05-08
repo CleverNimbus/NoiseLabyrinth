@@ -1,22 +1,24 @@
 import 'package:noiselabyrinth_core/models/configs/band_config.dart';
+import 'package:noiselabyrinth_core/models/configs/dither_config.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
 import 'package:noiselabyrinth_core/models/configs/metadata_config.dart';
 import 'package:noiselabyrinth_core/models/configs/mix_config.dart';
+import 'package:noiselabyrinth_core/models/configs/normalization_config.dart';
 import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/render_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
-const GenerationConfig calmPersonalityProfile = GenerationConfig(
+GenerationConfig calmPersonalityProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Personality: Calm',
     description: 'Rounded pink texture designed to stay stable and unobtrusive.',
     tags: <String>['preset', 'personality', 'calm', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 8, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.52),
+  render: const RenderConfig(durationMinutes: 8, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.52),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'personality-calm-core',
@@ -39,15 +41,15 @@ const GenerationConfig calmPersonalityProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig focusPersonalityProfile = GenerationConfig(
+GenerationConfig focusPersonalityProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Personality: Focus',
     description: 'Mid-focused bandlimited layer to support concentration.',
     tags: <String>['preset', 'personality', 'focus', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 6, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.66),
+  render: const RenderConfig(durationMinutes: 6, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.66),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'personality-focus-mid',
@@ -74,15 +76,15 @@ const GenerationConfig focusPersonalityProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig immersionPersonalityProfile = GenerationConfig(
+GenerationConfig immersionPersonalityProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Personality: Immersion',
     description: 'Dual-layer field with low depth and airy top texture.',
     tags: <String>['preset', 'personality', 'immersion', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 12, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.62),
+  render: const RenderConfig(durationMinutes: 12, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.62),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'personality-immersion-low',
@@ -109,15 +111,15 @@ const GenerationConfig immersionPersonalityProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig clarityPersonalityProfile = GenerationConfig(
+GenerationConfig clarityPersonalityProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Personality: Clarity',
     description: 'High-shelf leaning texture that keeps details articulated.',
     tags: <String>['preset', 'personality', 'clarity', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 5, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.64),
+  render: const RenderConfig(durationMinutes: 5, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.64),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'personality-clarity-edge',
@@ -144,7 +146,7 @@ const GenerationConfig clarityPersonalityProfile = GenerationConfig(
   ],
 );
 
-const List<GenerationConfig> personalityProfiles = <GenerationConfig>[
+List<GenerationConfig> personalityProfiles = <GenerationConfig>[
   calmPersonalityProfile,
   focusPersonalityProfile,
   immersionPersonalityProfile,

@@ -1,9 +1,4 @@
-import 'package:noiselabyrinth_core/models/configs/config_validation.dart';
-import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
-import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
-import 'package:noiselabyrinth_core/models/configs/metadata_config.dart';
-import 'package:noiselabyrinth_core/models/configs/mix_config.dart';
-import 'package:noiselabyrinth_core/models/configs/render_config.dart';
+import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
 class GenerationMergeException implements Exception {
   const GenerationMergeException(this.message);
@@ -56,7 +51,7 @@ abstract class GenerationMergeRule {
 
 class GenerationsMerger {
   const GenerationsMerger({
-    this.parser = const GenerationConfigParser(),
+    required this.parser,
     this.rules = defaultGenerationMergeRules,
   });
 
@@ -207,7 +202,11 @@ class _MixMergeRule extends GenerationMergeRule {
       (sum, config) => sum + config.mix.mix,
     );
 
-    draft.mix = MixConfig(mix: total / context.configs.length);
+    draft.mix = MixConfig(
+      dither: DitherConfig(),
+      normalization: NormalizationConfig(),
+      mix: total / context.configs.length,
+    );
   }
 }
 

@@ -12,7 +12,7 @@ void main() {
     test(
       'AudioEngine allocates reusable per-layer buffer and optional scratch',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
         const graphBuilder = RuntimeGraphBuilder();
 
         final config = parser.parseJsonMap(<String, dynamic>{
@@ -69,7 +69,7 @@ void main() {
     );
 
     test('AudioEngine loop runs stubs without crashing', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -111,7 +111,7 @@ void main() {
     }, tags: _smokeTag);
 
     test('engine mixes layers into master buffer', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -170,7 +170,7 @@ void main() {
     }, tags: _qualityTag);
 
     test('engine applies optional master dithering when enabled', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final baseJson = <String, dynamic>{
@@ -240,7 +240,7 @@ void main() {
     }, tags: _qualityTag);
 
     test('engine applies optional render normalization to target dBFS', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final baseJson = <String, dynamic>{
@@ -302,7 +302,7 @@ void main() {
     });
 
     test('engine applies per-layer pan into stereo channels', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -374,7 +374,7 @@ void main() {
     });
 
     test('engine master mix reads finalValue with update cycle', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -420,7 +420,7 @@ void main() {
     });
 
     test('engine can render raw noise WAV bytes', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -472,7 +472,7 @@ void main() {
     });
 
     test('engine renders filtered low-passed noise waveform', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -535,7 +535,7 @@ void main() {
     }, tags: _qualityTag);
 
     test('engine applies modulation per block and evolves filtered sound', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{

@@ -1,22 +1,24 @@
 import 'package:noiselabyrinth_core/models/configs/band_config.dart';
+import 'package:noiselabyrinth_core/models/configs/dither_config.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
 import 'package:noiselabyrinth_core/models/configs/metadata_config.dart';
 import 'package:noiselabyrinth_core/models/configs/mix_config.dart';
+import 'package:noiselabyrinth_core/models/configs/normalization_config.dart';
 import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/render_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
-const GenerationConfig whiteNoiseProfile = GenerationConfig(
+GenerationConfig whiteNoiseProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'White noise profile',
     description: 'Flat-spectrum white noise from low rumble to high air.',
     tags: <String>['preset', 'noise', 'white', 'spectrum'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 5),
-  mix: MixConfig(mix: 0.9),
+  render: const RenderConfig(durationMinutes: 5),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.9),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'white-noise-layer',
@@ -39,15 +41,15 @@ const GenerationConfig whiteNoiseProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig pinkNoiseProfile = GenerationConfig(
+GenerationConfig pinkNoiseProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Pink noise profile',
     description: 'Pink noise with naturally softer highs for balanced ambience checks.',
     tags: <String>['preset', 'noise', 'pink', 'spectrum'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 5),
-  mix: MixConfig(mix: 0.9),
+  render: const RenderConfig(durationMinutes: 5),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.9),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'pink-noise-layer',
@@ -70,15 +72,15 @@ const GenerationConfig pinkNoiseProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig brownNoiseProfile = GenerationConfig(
+GenerationConfig brownNoiseProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Brown noise profile',
     description: 'Brown noise emphasizing low-end energy and deep rumble.',
     tags: <String>['preset', 'noise', 'brown', 'spectrum'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 5),
-  mix: MixConfig(mix: 0.9),
+  render: const RenderConfig(durationMinutes: 5),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.9),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'brown-noise-layer',
@@ -101,15 +103,15 @@ const GenerationConfig brownNoiseProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig bandlimitedNoiseProfile = GenerationConfig(
+GenerationConfig bandlimitedNoiseProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Bandlimited noise profile',
     description: 'Bandlimited noise focused on the midrange for texture and masking.',
     tags: <String>['preset', 'noise', 'bandlimited', 'spectrum'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 5),
-  mix: MixConfig(mix: 0.9),
+  render: const RenderConfig(durationMinutes: 5),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.9),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'bandlimited-noise-layer',
@@ -132,7 +134,7 @@ const GenerationConfig bandlimitedNoiseProfile = GenerationConfig(
   ],
 );
 
-const List<GenerationConfig> basicNoiseSpectrumProfiles = <GenerationConfig>[
+List<GenerationConfig> basicNoiseSpectrumProfiles = <GenerationConfig>[
   whiteNoiseProfile,
   pinkNoiseProfile,
   brownNoiseProfile,

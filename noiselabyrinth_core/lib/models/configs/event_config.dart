@@ -2,7 +2,7 @@ import 'package:noiselabyrinth_core/models/enums.dart';
 
 /// Event trigger and action definition for a layer.
 class EventConfig {
-  const EventConfig({
+  EventConfig({
     required this.id,
     required this.trigger,
     required this.actions,
@@ -23,13 +23,13 @@ class EventConfig {
   }
 
   /// Unique identifier of the event definition within a layer.
-  final String id;
+  String id;
 
   /// Trigger definition controlling when event actions execute.
-  final TriggerConfig trigger;
+  TriggerConfig trigger;
 
   /// Actions executed when the trigger fires.
-  final List<ActionConfig> actions;
+  List<ActionConfig> actions;
 
   Map<String, dynamic> toJson() {
     return {
@@ -42,7 +42,7 @@ class EventConfig {
 
 /// Trigger configuration for an event.
 class TriggerConfig {
-  const TriggerConfig({this.type = TriggerType.periodic, this.rate = 0.2});
+  TriggerConfig({this.type = TriggerType.periodic, this.rate = 0.2});
 
   factory TriggerConfig.fromJson(Map<String, dynamic> json) {
     return TriggerConfig(
@@ -55,10 +55,10 @@ class TriggerConfig {
   }
 
   /// Trigger behavior type.
-  final TriggerType type;
+  TriggerType type;
 
   /// Trigger rate in Hz or equivalent cadence units, depending on type.
-  final double rate;
+  double rate;
 
   Map<String, dynamic> toJson() {
     return {'type': type.name, 'rate': rate};
@@ -67,7 +67,7 @@ class TriggerConfig {
 
 /// Action configuration for an event trigger.
 class ActionConfig {
-  const ActionConfig({
+  ActionConfig({
     required this.modulatorId,
     this.mode = ActionMode.trigger,
   });
@@ -83,10 +83,10 @@ class ActionConfig {
   }
 
   /// Identifier of the modulation source affected by this action.
-  final String modulatorId;
+  String modulatorId;
 
   /// Action mode describing how the modulator is controlled.
-  final ActionMode mode;
+  ActionMode mode;
 
   Map<String, dynamic> toJson() {
     return {

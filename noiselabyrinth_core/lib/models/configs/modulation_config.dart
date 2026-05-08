@@ -2,7 +2,7 @@ import 'package:noiselabyrinth_core/models/enums.dart';
 
 /// Modulation source definition for a layer.
 class ModulationConfig {
-  const ModulationConfig({
+  ModulationConfig({
     required this.id,
     required this.type,
     this.amount = 0.0,
@@ -49,31 +49,31 @@ class ModulationConfig {
   }
 
   /// Unique identifier of the modulation source within a layer.
-  final String id;
+  String id;
 
   /// Selected modulation source type.
-  final ModulationType type;
+  ModulationType type;
 
   /// Global scaling amount applied by this modulation source.
-  final double amount;
+  double amount;
 
   /// LFO settings, required when type is lfo.
-  final LfoConfig? lfoConfig;
+  LfoConfig? lfoConfig;
 
   /// Random modulation settings, required when type is random.
-  final RandomConfig? randomConfig;
+  RandomConfig? randomConfig;
 
   /// Drift modulation settings, required when type is drift.
-  final DriftConfig? driftConfig;
+  DriftConfig? driftConfig;
 
   /// Envelope modulation settings, required when type is envelope.
-  final EnvelopeConfig? envelopeConfig;
+  EnvelopeConfig? envelopeConfig;
 
   /// Burst modulation settings, required when type is burst.
-  final BurstConfig? burstConfig;
+  BurstConfig? burstConfig;
 
   /// List of parameter targets affected by this modulation source.
-  final List<ModulationTargetConfig> targets;
+  List<ModulationTargetConfig> targets;
 
   Map<String, dynamic> toJson() {
     return {
@@ -108,7 +108,7 @@ class ModulationConfig {
 
 /// Target parameter configuration for a modulation source.
 class ModulationTargetConfig {
-  const ModulationTargetConfig({
+  ModulationTargetConfig({
     required this.path,
     this.amount = 1.0,
     this.mode = ModulationApplyMode.additive,
@@ -133,19 +133,19 @@ class ModulationTargetConfig {
   }
 
   /// Target parameter path to modulate.
-  final String path;
+  String path;
 
   /// Per-target scaling amount applied in addition to modulation amount.
-  final double amount;
+  double amount;
 
   /// How modulation is applied to the target parameter value.
-  final ModulationApplyMode mode;
+  ModulationApplyMode mode;
 
   /// Optional lower clamp for the modulated target value.
-  final double? minValue;
+  double? minValue;
 
   /// Optional upper clamp for the modulated target value.
-  final double? maxValue;
+  double? maxValue;
 
   Map<String, dynamic> toJson() {
     return {
@@ -160,7 +160,7 @@ class ModulationTargetConfig {
 
 /// LFO modulation settings.
 class LfoConfig {
-  const LfoConfig({
+  LfoConfig({
     this.type = LFOType.sine,
     this.frequency = 1.0,
     this.depth = 1.0,
@@ -178,13 +178,13 @@ class LfoConfig {
   }
 
   /// LFO waveform shape.
-  final LFOType type;
+  LFOType type;
 
   /// LFO frequency in Hz.
-  final double frequency;
+  double frequency;
 
   /// LFO depth amount applied to modulation output.
-  final double depth;
+  double depth;
 
   Map<String, dynamic> toJson() {
     return {'type': type.name, 'frequency': frequency, 'depth': depth};
@@ -193,7 +193,7 @@ class LfoConfig {
 
 /// Random modulation settings.
 class RandomConfig {
-  const RandomConfig({this.rateHz = 0.05, this.smooth = 0.9});
+  RandomConfig({this.rateHz = 0.05, this.smooth = 0.9});
 
   factory RandomConfig.fromJson(Map<String, dynamic> json) {
     return RandomConfig(
@@ -203,10 +203,10 @@ class RandomConfig {
   }
 
   /// Update rate in Hz for random modulation changes.
-  final double rateHz;
+  double rateHz;
 
   /// Smoothing factor for random transitions, from 0 to 1.
-  final double smooth;
+  double smooth;
 
   Map<String, dynamic> toJson() {
     return {'rateHz': rateHz, 'smooth': smooth};
@@ -215,7 +215,7 @@ class RandomConfig {
 
 /// Drift modulation settings.
 class DriftConfig {
-  const DriftConfig({this.speed = 0.01, this.range = 1.0});
+  DriftConfig({this.speed = 0.01, this.range = 1.0});
 
   factory DriftConfig.fromJson(Map<String, dynamic> json) {
     return DriftConfig(
@@ -225,10 +225,10 @@ class DriftConfig {
   }
 
   /// Rate at which drift evolves over time.
-  final double speed;
+  double speed;
 
   /// Maximum drift excursion range.
-  final double range;
+  double range;
 
   Map<String, dynamic> toJson() {
     return {'speed': speed, 'range': range};
@@ -237,7 +237,7 @@ class DriftConfig {
 
 /// Envelope modulation settings.
 class EnvelopeConfig {
-  const EnvelopeConfig({
+  EnvelopeConfig({
     this.attackMs = 50,
     this.decayMs = 200,
     this.sustain = 0.0,
@@ -254,16 +254,16 @@ class EnvelopeConfig {
   }
 
   /// Attack stage duration in milliseconds.
-  final int attackMs;
+  int attackMs;
 
   /// Decay stage duration in milliseconds.
-  final int decayMs;
+  int decayMs;
 
   /// Sustain level from 0 to 1.
-  final double sustain;
+  double sustain;
 
   /// Release stage duration in milliseconds.
-  final int releaseMs;
+  int releaseMs;
 
   Map<String, dynamic> toJson() {
     return {
@@ -277,7 +277,7 @@ class EnvelopeConfig {
 
 /// Burst modulation settings.
 class BurstConfig {
-  const BurstConfig({
+  BurstConfig({
     this.durationMs = 120,
     this.intensity = 1.0,
     this.randomness = 0.5,
@@ -302,28 +302,28 @@ class BurstConfig {
   }
 
   /// Total burst duration in milliseconds.
-  final int durationMs;
+  int durationMs;
 
   /// Burst intensity from 0 to 1.
-  final double intensity;
+  double intensity;
 
   /// Random variation amount within bursts, from 0 to 1.
-  final double randomness;
+  double randomness;
 
   /// Burst attack duration in milliseconds.
-  final int attackMs;
+  int attackMs;
 
   /// Burst release duration in milliseconds.
-  final int releaseMs;
+  int releaseMs;
 
   /// Minimum number of events per burst cluster.
-  final int clusterMin;
+  int clusterMin;
 
   /// Maximum number of events per burst cluster.
-  final int clusterMax;
+  int clusterMax;
 
   /// Temporal spread in milliseconds between clustered events.
-  final int clusterSpreadMs;
+  int clusterSpreadMs;
 
   Map<String, dynamic> toJson() {
     return {

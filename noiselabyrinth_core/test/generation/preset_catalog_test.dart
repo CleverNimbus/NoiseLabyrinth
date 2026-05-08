@@ -4,7 +4,7 @@ import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 void main() {
   group('Curated preset catalog', () {
     test('all curated presets are individually valid', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       for (final profile in curatedNoiseProfiles) {
         final issues = parser.validate(profile);
@@ -17,8 +17,8 @@ void main() {
     });
 
     test('category selections can be merged into one valid config', () {
-      const merger = GenerationsMerger();
-      const parser = GenerationConfigParser();
+      final merger = GenerationsMerger(parser: GenerationConfigParser());
+      final parser = GenerationConfigParser();
 
       final merged = merger.mergeAll(<GenerationConfig>[
         relaxEnergyProfile,

@@ -233,7 +233,7 @@ void main() {
 
   group('modulators with events', () {
     test('engine events can trigger envelope modulation on layer gain', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder(sampleRate: 1000);
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -303,7 +303,7 @@ void main() {
     });
 
     test('engine events can trigger burst modulation on layer gain', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder(sampleRate: 1000);
 
       final config = parser.parseJsonMap(<String, dynamic>{

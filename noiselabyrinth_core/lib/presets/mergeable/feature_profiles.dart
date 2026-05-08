@@ -1,24 +1,26 @@
 import 'package:noiselabyrinth_core/models/configs/band_config.dart';
+import 'package:noiselabyrinth_core/models/configs/dither_config.dart';
 import 'package:noiselabyrinth_core/models/configs/event_config.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
 import 'package:noiselabyrinth_core/models/configs/metadata_config.dart';
 import 'package:noiselabyrinth_core/models/configs/mix_config.dart';
 import 'package:noiselabyrinth_core/models/configs/modulation_config.dart';
+import 'package:noiselabyrinth_core/models/configs/normalization_config.dart';
 import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/render_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
-const GenerationConfig steadyFeatureProfile = GenerationConfig(
+GenerationConfig steadyFeatureProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Feature: Steady',
     description: 'Static, predictable layer with no time-varying modulation.',
     tags: <String>['preset', 'feature', 'steady', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 8, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.58),
+  render: const RenderConfig(durationMinutes: 8, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.58),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'feature-steady-core',
@@ -41,20 +43,20 @@ const GenerationConfig steadyFeatureProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig psychoacousticFeatureProfile = GenerationConfig(
+GenerationConfig psychoacousticFeatureProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Feature: Psychoacoustic',
     description: 'Event-driven movement profile with controlled pulsing accents.',
     tags: <String>['preset', 'feature', 'psychoacoustic', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 6, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.64),
+  render: const RenderConfig(durationMinutes: 6, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.64),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'feature-psychoacoustic-pulse',
       gain: 0.46,
-      source: SourceConfig(
+      source: const SourceConfig(
         type: SourceType.impulse,
         impulseConfig: ImpulseConfig(density: 0.15, randomness: 0.55),
       ),
@@ -118,15 +120,15 @@ const GenerationConfig psychoacousticFeatureProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig coloredFeatureProfile = GenerationConfig(
+GenerationConfig coloredFeatureProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Feature: Colored',
     description: 'Multi-color blend combining pink body and bright white air.',
     tags: <String>['preset', 'feature', 'colored', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 7, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.62),
+  render: const RenderConfig(durationMinutes: 7, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.62),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'feature-colored-body',
@@ -169,7 +171,7 @@ const GenerationConfig coloredFeatureProfile = GenerationConfig(
   ],
 );
 
-const List<GenerationConfig> featureProfiles = <GenerationConfig>[
+List<GenerationConfig> featureProfiles = <GenerationConfig>[
   steadyFeatureProfile,
   psychoacousticFeatureProfile,
   coloredFeatureProfile,

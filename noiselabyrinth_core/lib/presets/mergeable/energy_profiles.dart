@@ -1,22 +1,24 @@
 import 'package:noiselabyrinth_core/models/configs/band_config.dart';
+import 'package:noiselabyrinth_core/models/configs/dither_config.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
 import 'package:noiselabyrinth_core/models/configs/metadata_config.dart';
 import 'package:noiselabyrinth_core/models/configs/mix_config.dart';
+import 'package:noiselabyrinth_core/models/configs/normalization_config.dart';
 import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/render_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
-const GenerationConfig relaxEnergyProfile = GenerationConfig(
+GenerationConfig relaxEnergyProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Energy: Relax',
     description: 'Soft pink bed with gentle rolloff for downshifting energy.',
     tags: <String>['preset', 'energy', 'relax', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 10, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.55),
+  render: const RenderConfig(durationMinutes: 10, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.55),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'energy-relax-bed',
@@ -42,15 +44,15 @@ const GenerationConfig relaxEnergyProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig sleepEnergyProfile = GenerationConfig(
+GenerationConfig sleepEnergyProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Energy: Sleep',
     description: 'Deep brown foundation tuned for low-distraction sleep support.',
     tags: <String>['preset', 'energy', 'sleep', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 20, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.48),
+  render: const RenderConfig(durationMinutes: 20, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.48),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'energy-sleep-drift',
@@ -76,15 +78,15 @@ const GenerationConfig sleepEnergyProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig activationEnergyProfile = GenerationConfig(
+GenerationConfig activationEnergyProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Energy: Activation',
     description: 'Bright white layer with mild drive to increase alertness.',
     tags: <String>['preset', 'energy', 'activation', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 4, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.72),
+  render: const RenderConfig(durationMinutes: 4, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.72),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'energy-activation-bright',
@@ -107,15 +109,15 @@ const GenerationConfig activationEnergyProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig highEnergyProfile = GenerationConfig(
+GenerationConfig highEnergyProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Energy: High',
     description: 'Dense upper-band texture with stronger excitement and edge.',
     tags: <String>['preset', 'energy', 'high', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 3, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.82),
+  render: const RenderConfig(durationMinutes: 3, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.82),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'energy-high-rush',
@@ -143,15 +145,15 @@ const GenerationConfig highEnergyProfile = GenerationConfig(
   ],
 );
 
-const GenerationConfig ambianceEnergyProfile = GenerationConfig(
+GenerationConfig ambianceEnergyProfile = GenerationConfig(
   metadata: MetadataConfig(
     name: 'Energy: Ambiance',
     description: 'Wide stereo air with light, non-intrusive movement.',
     tags: <String>['preset', 'energy', 'ambiance', 'noise'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 12, format: RenderFormat.mp3),
-  mix: MixConfig(mix: 0.6),
+  render: const RenderConfig(durationMinutes: 12, format: RenderFormat.mp3),
+  mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.6),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'energy-ambiance-left',
@@ -180,7 +182,7 @@ const GenerationConfig ambianceEnergyProfile = GenerationConfig(
   ],
 );
 
-const List<GenerationConfig> energyProfiles = <GenerationConfig>[
+List<GenerationConfig> energyProfiles = <GenerationConfig>[
   relaxEnergyProfile,
   sleepEnergyProfile,
   activationEnergyProfile,

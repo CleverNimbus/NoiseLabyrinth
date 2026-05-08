@@ -8,17 +8,17 @@ import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class ConfigValidationIssue {
-  const ConfigValidationIssue({required this.path, required this.message});
-  final String path;
-  final String message;
+  ConfigValidationIssue({required this.path, required this.message});
+  String path;
+  String message;
 
   @override
   String toString() => '$path: $message';
 }
 
 class ConfigValidationException implements Exception {
-  const ConfigValidationException(this.issues);
-  final List<ConfigValidationIssue> issues;
+  ConfigValidationException(this.issues);
+  List<ConfigValidationIssue> issues;
 
   @override
   String toString() {
@@ -28,7 +28,7 @@ class ConfigValidationException implements Exception {
 }
 
 class GenerationConfigParser {
-  const GenerationConfigParser();
+  GenerationConfigParser();
 
   GenerationConfig parseJsonString(String jsonSource) {
     final decoded = jsonDecode(jsonSource);
@@ -74,7 +74,7 @@ class GenerationConfigParser {
   ) {
     if (config.metadata.name.trim().isEmpty) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'metadata.name',
           message: 'name is required.',
         ),
@@ -83,7 +83,7 @@ class GenerationConfigParser {
 
     if (config.render.durationMinutes <= 0) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'render.durationMinutes',
           message: 'durationMinutes must be > 0.',
         ),
@@ -92,7 +92,7 @@ class GenerationConfigParser {
 
     if (config.render.sampleRate <= 0) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'render.sampleRate',
           message: 'sampleRate must be > 0.',
         ),
@@ -101,7 +101,7 @@ class GenerationConfigParser {
 
     if (config.render.bitRate <= 0) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'render.bitRate',
           message: 'bitRate must be > 0.',
         ),
@@ -110,7 +110,7 @@ class GenerationConfigParser {
 
     if (config.mix.mix < 0.0 || config.mix.mix > 1.0) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'mix.mix',
           message: 'mix must be in [0, 1].',
         ),
@@ -119,7 +119,7 @@ class GenerationConfigParser {
 
     if (config.mix.dither.bitDepth <= 0) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'mix.dither.bitDepth',
           message: 'bitDepth must be > 0.',
         ),
@@ -128,7 +128,7 @@ class GenerationConfigParser {
 
     if (config.mix.dither.amount < 0.0) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'mix.dither.amount',
           message: 'amount must be >= 0.',
         ),
@@ -137,7 +137,7 @@ class GenerationConfigParser {
 
     if (config.mix.normalization.targetDb > 0.0) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'mix.normalization.targetDb',
           message: 'targetDb must be <= 0 dBFS.',
         ),
@@ -146,7 +146,7 @@ class GenerationConfigParser {
 
     if (config.mix.normalization.targetDb < -120.0) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'mix.normalization.targetDb',
           message: 'targetDb must be >= -120 dBFS.',
         ),
@@ -155,7 +155,7 @@ class GenerationConfigParser {
 
     if (config.layers.isEmpty) {
       issues.add(
-        const ConfigValidationIssue(
+        ConfigValidationIssue(
           path: 'layers',
           message: 'at least one layer is required.',
         ),

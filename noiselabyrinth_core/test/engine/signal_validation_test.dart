@@ -37,7 +37,7 @@ double _binMagnitude(Float32List data, int bin) {
 void main() {
   group('signal validation', () {
     test('RMS sanity: sine source renders near 0.707 RMS', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const builder = RuntimeGraphBuilder(sampleRate: 8000);
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -74,7 +74,7 @@ void main() {
     }, tags: _qualityTag);
 
     test('clipping detection identifies overs after high gain', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const builder = RuntimeGraphBuilder(sampleRate: 8000);
 
       final config = parser.parseJsonMap(<String, dynamic>{
@@ -121,7 +121,7 @@ void main() {
     test(
       'spectral sanity: low-pass chain attenuates high-frequency content',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
         const builder = RuntimeGraphBuilder(sampleRate: 8000);
 
         final config = parser.parseJsonMap(<String, dynamic>{
@@ -180,7 +180,7 @@ void main() {
     test(
       'feature coverage: canonical paths with drift and random events execute',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
         const builder = RuntimeGraphBuilder(sampleRate: 1000);
 
         final config = parser.parseJsonMap(<String, dynamic>{
@@ -281,7 +281,7 @@ void main() {
     );
 
     test('multiplicative target mode respects min/max clamps', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const builder = RuntimeGraphBuilder(sampleRate: 1000);
 
       final config = parser.parseJsonMap(<String, dynamic>{

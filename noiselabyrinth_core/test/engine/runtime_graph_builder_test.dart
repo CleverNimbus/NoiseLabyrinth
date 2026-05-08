@@ -5,7 +5,7 @@ import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 void main() {
   group('runtime graph builder', () {
     test('builds a wired layer graph with wrapped parameters', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
       const builder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{

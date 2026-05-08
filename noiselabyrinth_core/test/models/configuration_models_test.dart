@@ -32,7 +32,7 @@ Map<String, dynamic> _baseValidConfigJson() {
 void main() {
   group('configuration models', () {
     test('MetadataConfig serializes and deserializes safely', () {
-      const config = MetadataConfig(
+      final config = MetadataConfig(
         name: 'Patch A',
         description: 'Test patch',
         tags: <String>['alpha', 'noise'],
@@ -90,7 +90,7 @@ void main() {
       expect(defaults.normalization.enabled, isFalse);
       expect(defaults.normalization.targetDb, closeTo(-1.0, 1e-9));
 
-      const configured = MixConfig(
+      final configured = MixConfig(
         mix: 0.85,
         dither: DitherConfig(
           enabled: true,
@@ -124,7 +124,7 @@ void main() {
     );
 
     test('ModulationConfig serializes enum name with canonical fields', () {
-      const config = ModulationConfig(
+      final config = ModulationConfig(
         id: 'mod-1',
         type: ModulationType.drift,
         amount: 12,
@@ -194,7 +194,7 @@ void main() {
     });
 
     test('EventConfig serializes enum names safely', () {
-      const config = EventConfig(
+      final config = EventConfig(
         id: 'event-1',
         trigger: TriggerConfig(type: TriggerType.poisson, rate: 0.75),
         actions: <ActionConfig>[
@@ -210,7 +210,7 @@ void main() {
     });
 
     test('ProcessorConfig gain serializes and deserializes safely', () {
-      const config = ProcessorConfig(
+      final config = ProcessorConfig(
         id: 'gain-1',
         type: ProcessorType.gain,
         gain: GainConfig(gain: 0.75),
@@ -224,7 +224,7 @@ void main() {
     });
 
     test('ProcessorConfig biquad preserves highpass and resonant flags', () {
-      const config = ProcessorConfig(
+      final config = ProcessorConfig(
         id: 'hp-1',
         type: ProcessorType.biquad,
         biquad: BiquadConfig(
@@ -247,7 +247,7 @@ void main() {
     });
 
     test('ProcessorConfig biquad preserves bandpass and peak modes', () {
-      const bandpass = ProcessorConfig(
+      final bandpass = ProcessorConfig(
         id: 'bp-1',
         type: ProcessorType.biquad,
         biquad: BiquadConfig(
@@ -257,7 +257,7 @@ void main() {
           resonant: true,
         ),
       );
-      const peak = ProcessorConfig(
+      final peak = ProcessorConfig(
         id: 'peak-1',
         type: ProcessorType.biquad,
         biquad: BiquadConfig(
@@ -279,7 +279,7 @@ void main() {
     });
 
     test('GenerationConfigParser parses and validates a valid config tree', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final config = parser.parseJsonMap(<String, dynamic>{
         'metadata': <String, dynamic>{'name': 'Valid Patch'},
@@ -343,7 +343,7 @@ void main() {
     test(
       'GenerationConfigParser rejects invalid ranges and missing required fields',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
 
         expect(
           () => parser.parseJsonMap(<String, dynamic>{
@@ -380,7 +380,7 @@ void main() {
     test(
       'GenerationConfigParser rejects unknown modulation target references',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
 
         expect(
           () => parser.parseJsonMap(<String, dynamic>{
@@ -431,7 +431,7 @@ void main() {
     );
 
     test('GenerationConfigParser rejects non-finite gain processor values', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       expect(
         () => parser.parseJsonMap(<String, dynamic>{
@@ -475,7 +475,7 @@ void main() {
     test(
       'GenerationConfigParser rejects target minValue greater than maxValue',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
 
         expect(
           () => parser.parseJsonMap(<String, dynamic>{
@@ -532,7 +532,7 @@ void main() {
     test(
       'GenerationConfigParser rejects legacy processor config path aliases',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
 
         expect(
           () => parser.parseJsonMap(<String, dynamic>{
@@ -592,7 +592,7 @@ void main() {
     );
 
     test('GenerationConfigParser parseJsonString rejects non-object root', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       expect(
         () => parser.parseJsonString('[]'),
@@ -601,7 +601,7 @@ void main() {
     });
 
     test('GenerationConfigParser rejects duplicate layer ids', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final json = _baseValidConfigJson();
       json['layers'] = <Map<String, dynamic>>[
@@ -630,7 +630,7 @@ void main() {
     test(
       'GenerationConfigParser rejects duplicate processor and modulation ids in a layer',
       () {
-        const parser = GenerationConfigParser();
+        final parser = GenerationConfigParser();
 
         final json = _baseValidConfigJson();
         final layers = json['layers'] as List<Map<String, dynamic>>;
@@ -681,7 +681,7 @@ void main() {
     );
 
     test('GenerationConfigParser rejects event action modulator references that do not exist', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final json = _baseValidConfigJson();
       final layer = (json['layers'] as List<Map<String, dynamic>>).first;
@@ -721,7 +721,7 @@ void main() {
     });
 
     test('GenerationConfigParser validates modulation-type specific numeric ranges', () {
-      const parser = GenerationConfigParser();
+      final parser = GenerationConfigParser();
 
       final json = _baseValidConfigJson();
       final layer = (json['layers'] as List<Map<String, dynamic>>).first;
