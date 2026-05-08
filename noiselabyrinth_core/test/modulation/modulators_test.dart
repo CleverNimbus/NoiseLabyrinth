@@ -2,6 +2,11 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:noiselabyrinth_core/engine/modulators/adsr_envelope_modulator.dart';
+import 'package:noiselabyrinth_core/engine/modulators/burst_modulator.dart';
+import 'package:noiselabyrinth_core/engine/modulators/drift_modulator.dart';
+import 'package:noiselabyrinth_core/engine/modulators/modulator.dart';
+import 'package:noiselabyrinth_core/engine/modulators/smooth_random_modulator.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
 const _smokeTag = <String>['smoke'];

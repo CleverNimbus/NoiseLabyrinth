@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:noiselabyrinth_core/engine/modulation_engine.dart';
+import 'package:noiselabyrinth_core/engine/modulators/modulator_factory.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class RuntimeEventAction {

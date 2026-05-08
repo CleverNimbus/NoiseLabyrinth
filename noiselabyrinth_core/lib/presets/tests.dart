@@ -12,12 +12,40 @@ import 'package:noiselabyrinth_core/models/enums.dart';
 
 const GenerationConfig brownNoiseProfile_001 = GenerationConfig(
   metadata: MetadataConfig(
-    name: 'Brown noise profile',
+    name: 'T01. Brown noise profile',
     description: 'Brown noise emphasizing low-end energy and deep rumble.',
     tags: <String>['preset', 'noise', 'brown', 'spectrum'],
     version: 1,
   ),
-  render: RenderConfig(durationMinutes: 5),
+  render: RenderConfig(durationMinutes: 30),
+  mix: MixConfig(
+    mix: 0.9,
+    normalization: NormalizationConfig(enabled: true, targetDb: -1.2),
+    dither: DitherConfig(enabled: true, type: DitherType.tpdf),
+  ),
+  layers: <LayerConfig>[
+    LayerConfig(
+      id: 'brown_core',
+      gain: 0.85,
+      source: SourceConfig(
+        type: SourceType.noise,
+        noiseConfig: NoiseConfig(
+          color: NoiseColor.brown,
+          band: BandConfig(high: 1200, low: 35),
+        ),
+      ),
+    ),
+  ],
+);
+
+const GenerationConfig brownNoiseProfile_002 = GenerationConfig(
+  metadata: MetadataConfig(
+    name: 'T02. Brown noise modulated',
+    description: 'Brown noise emphasizing low-end energy and deep rumble.',
+    tags: <String>['preset', 'noise', 'brown', 'spectrum'],
+    version: 1,
+  ),
+  render: RenderConfig(durationMinutes: 30),
   mix: MixConfig(
     mix: 0.9,
     normalization: NormalizationConfig(enabled: true, targetDb: -1.2),
@@ -36,17 +64,38 @@ const GenerationConfig brownNoiseProfile_001 = GenerationConfig(
       ),
       modulations: [
         ModulationConfig(
-          id: 'slow_drift',
-          type: ModulationType.drift,
-          amount: 0.6,
-          driftConfig: DriftConfig(
-            range: 0.45,
+          id: 'random_pan_sweep',
+          type: ModulationType.random,
+          amount: 1,
+          randomConfig: RandomConfig(
+            rateHz: 4,
+            smooth: 0.08,
           ),
           targets: [
             ModulationTargetConfig(
               path: 'layers[brown_core].pan',
+              amount: 1,
               mode: ModulationApplyMode.additive,
-              amount: 0.7,
+              minValue: -1,
+              maxValue: 1,
+            ),
+          ],
+        ),
+        ModulationConfig(
+          id: 'random_band_high_sweep',
+          type: ModulationType.random,
+          amount: 1,
+          randomConfig: RandomConfig(
+            rateHz: 2.5,
+            smooth: 0.12,
+          ),
+          targets: [
+            ModulationTargetConfig(
+              path: 'layers[brown_core].source.noise.band.high',
+              amount: 300,
+              mode: ModulationApplyMode.additive,
+              minValue: 900,
+              maxValue: 1500,
             ),
           ],
         ),

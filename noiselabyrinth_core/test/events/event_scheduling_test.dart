@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:noiselabyrinth_core/engine/modulators/modulator_factory.dart';
 
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 import '../test_helpers/modulators_test_helpers.dart';

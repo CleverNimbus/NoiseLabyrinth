@@ -1,6 +1,11 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:noiselabyrinth_core/engine/modulators/adsr_envelope_modulator.dart';
+import 'package:noiselabyrinth_core/engine/modulators/burst_modulator.dart';
+import 'package:noiselabyrinth_core/engine/modulators/modulator.dart';
+import 'package:noiselabyrinth_core/engine/modulators/modulator_factory.dart';
+import 'package:noiselabyrinth_core/engine/modulators/smooth_random_modulator.dart';
 
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 

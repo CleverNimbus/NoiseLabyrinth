@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
-import 'package:noiselabyrinth_core/presets/tests.dart';
 
 import '../test_helpers/profile_validation_harness.dart';
 

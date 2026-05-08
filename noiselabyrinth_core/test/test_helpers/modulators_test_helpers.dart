@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:noiselabyrinth_core/engine/modulators/modulator.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
 const double _epsilon = 1e-12;

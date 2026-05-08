@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 List<GenerationConfig> hardcodedProfiles = <GenerationConfig>[
   brownNoiseProfile_001,
+  brownNoiseProfile_002,
   pinkNoiseBed,
   stereoBandlimitedHiss,
   sineDroneWithDelay,

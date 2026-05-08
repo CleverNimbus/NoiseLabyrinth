@@ -7,7 +7,7 @@ import 'package:noiselabyrinth_core/engine/graph_nodes/impulse_source_node.dart'
 import 'package:noiselabyrinth_core/engine/graph_nodes/noise_source_node.dart';
 import 'package:noiselabyrinth_core/engine/graph_nodes/saturator_processor_node.dart';
 import 'package:noiselabyrinth_core/engine/graph_nodes/sine_source_node.dart';
-import 'package:noiselabyrinth_core/engine/modulation_engine.dart';
+import 'package:noiselabyrinth_core/engine/modulators/modulator_factory.dart';
 import 'package:noiselabyrinth_core/models/configs/event_config.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';

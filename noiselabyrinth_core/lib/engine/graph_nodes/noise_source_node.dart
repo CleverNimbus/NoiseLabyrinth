@@ -22,10 +22,13 @@ class NoiseSourceNode extends SourceNode {
        ) {
     _rngState = _nonZeroSeed(seed, id);
   }
-  static const double _twoPi = 2.0 * math.pi;
+  static const double _gaussianScale = 0.5773502691896258;
+  static final double _butterworthQ = 1.0 / math.sqrt(2.0);
 
   final NoiseColor color;
   int _rngState;
+  bool _hasGaussianSpare = false;
+  double _gaussianSpare = 0;
 
   // State for brown and pink noise shaping.
   double _brownState = 0;
@@ -37,14 +40,41 @@ class NoiseSourceNode extends SourceNode {
   double _pink5 = 0;
   double _pink6 = 0;
 
-  // State for simple band-limiting (high-pass then low-pass).
-  double _bandLowAlpha = 0;
-  double _bandHighAlpha = 0;
+  // State for band-limiting via cascaded biquad sections.
   double _bandLowHz = 0;
   double _bandHighHz = 0;
-  double _bandPrevInput = 0;
-  double _bandHighState = 0;
-  double _bandLowState = 0;
+  final List<_BiquadSection> _bandHighpassStages = List<_BiquadSection>.generate(
+    2,
+    (_) => _BiquadSection(),
+  );
+  final List<_BiquadSection> _bandLowpassStages = List<_BiquadSection>.generate(
+    2,
+    (_) => _BiquadSection(),
+  );
+
+  @override
+  void prepare(int sampleRate, int blockSize) {
+    super.prepare(sampleRate, blockSize);
+    _hasGaussianSpare = false;
+    _gaussianSpare = 0.0;
+    _lastGaussianState = _rngState;
+    _brownState = 0.0;
+    _pink0 = 0.0;
+    _pink1 = 0.0;
+    _pink2 = 0.0;
+    _pink3 = 0.0;
+    _pink4 = 0.0;
+    _pink5 = 0.0;
+    _pink6 = 0.0;
+    _bandLowHz = double.nan;
+    _bandHighHz = double.nan;
+    for (final stage in _bandHighpassStages) {
+      stage.reset();
+    }
+    for (final stage in _bandLowpassStages) {
+      stage.reset();
+    }
+  }
 
   @override
   void process(Float32List buffer, {Float32List? scratch}) {
@@ -54,8 +84,8 @@ class NoiseSourceNode extends SourceNode {
 
     var state = _rngState;
     for (var i = 0; i < buffer.length; i++) {
-      state = nextXorshift32(state);
-      final white = _stateToUnitFloat(state);
+      final white = _nextGaussianSample(state);
+      state = _lastGaussianState;
 
       switch (color) {
         case NoiseColor.white:
@@ -87,29 +117,43 @@ class NoiseSourceNode extends SourceNode {
       return;
     }
 
-    final dt = sampleRate > 0 ? 1.0 / sampleRate : 1.0 / 44100.0;
+    final effectiveSampleRate = sampleRate > 0 ? sampleRate.toDouble() : 44100.0;
 
     if (low <= 0.0) {
-      _bandLowAlpha = 0.0;
+      for (final stage in _bandHighpassStages) {
+        stage.bypass();
+      }
     } else {
-      final rcLow = 1.0 / (_twoPi * low);
-      _bandLowAlpha = rcLow / (rcLow + dt);
+      for (final stage in _bandHighpassStages) {
+        stage.configureHighpass(
+          sampleRate: effectiveSampleRate,
+          frequency: low,
+          q: _butterworthQ,
+        );
+      }
     }
 
-    final rcHigh = 1.0 / (_twoPi * high);
-    _bandHighAlpha = dt / (rcHigh + dt);
+    for (final stage in _bandLowpassStages) {
+      stage.configureLowpass(
+        sampleRate: effectiveSampleRate,
+        frequency: high,
+        q: _butterworthQ,
+      );
+    }
 
     _bandLowHz = low;
     _bandHighHz = high;
   }
 
   double _nextBandlimitedSample(double white) {
-    final highPassed = _bandLowAlpha <= 0.0 ? white : _bandLowAlpha * (_bandHighState + white - _bandPrevInput);
-    _bandPrevInput = white;
-    _bandHighState = highPassed;
-
-    _bandLowState += _bandHighAlpha * (highPassed - _bandLowState);
-    return _bandLowState.clamp(-1.0, 1.0);
+    var sample = white;
+    for (final stage in _bandHighpassStages) {
+      sample = stage.process(sample);
+    }
+    for (final stage in _bandLowpassStages) {
+      sample = stage.process(sample);
+    }
+    return sample.clamp(-1.0, 1.0);
   }
 
   double _nextBrownSample(double white) {
@@ -134,7 +178,35 @@ class NoiseSourceNode extends SourceNode {
     return (pink * 0.11).clamp(-1.0, 1.0);
   }
 
-  static double _stateToUnitFloat(int state) {
+  int _lastGaussianState = 0;
+
+  double _nextGaussianSample(int seedState) {
+    if (_hasGaussianSpare) {
+      _hasGaussianSpare = false;
+      _lastGaussianState = seedState;
+      return (_gaussianSpare * _gaussianScale).clamp(-1.0, 1.0);
+    }
+
+    var state = seedState;
+    while (true) {
+      state = nextXorshift32(state);
+      final u = _stateToCenteredUnitFloat(state);
+      state = nextXorshift32(state);
+      final v = _stateToCenteredUnitFloat(state);
+      final s = (u * u) + (v * v);
+      if (s <= 0.0 || s >= 1.0) {
+        continue;
+      }
+
+      final scale = math.sqrt((-2.0 * math.log(s)) / s);
+      _gaussianSpare = v * scale;
+      _hasGaussianSpare = true;
+      _lastGaussianState = state;
+      return ((u * scale) * _gaussianScale).clamp(-1.0, 1.0);
+    }
+  }
+
+  static double _stateToCenteredUnitFloat(int state) {
     return ((state & 0x7FFFFFFF) / 1073741824.0) - 1.0;
   }
 
@@ -150,5 +222,93 @@ class NoiseSourceNode extends SourceNode {
     }
 
     return hash == 0 ? 0x6D2B79F5 : hash;
+  }
+}
+
+class _BiquadSection {
+  static const double _twoPi = 2.0 * math.pi;
+
+  double _b0 = 1.0;
+  double _b1 = 0.0;
+  double _b2 = 0.0;
+  double _a1 = 0.0;
+  double _a2 = 0.0;
+
+  double _x1 = 0.0;
+  double _x2 = 0.0;
+  double _y1 = 0.0;
+  double _y2 = 0.0;
+
+  void reset() {
+    _x1 = 0.0;
+    _x2 = 0.0;
+    _y1 = 0.0;
+    _y2 = 0.0;
+  }
+
+  void bypass() {
+    _b0 = 1.0;
+    _b1 = 0.0;
+    _b2 = 0.0;
+    _a1 = 0.0;
+    _a2 = 0.0;
+  }
+
+  void configureLowpass({
+    required double sampleRate,
+    required double frequency,
+    required double q,
+  }) {
+    final omega = _twoPi * frequency / sampleRate;
+    final cosOmega = math.cos(omega);
+    final sinOmega = math.sin(omega);
+    final alpha = sinOmega / (2.0 * q);
+
+    final b0 = (1.0 - cosOmega) * 0.5;
+    final b1 = 1.0 - cosOmega;
+    final b2 = (1.0 - cosOmega) * 0.5;
+    final a0 = 1.0 + alpha;
+    final a1 = -2.0 * cosOmega;
+    final a2 = 1.0 - alpha;
+
+    _b0 = b0 / a0;
+    _b1 = b1 / a0;
+    _b2 = b2 / a0;
+    _a1 = a1 / a0;
+    _a2 = a2 / a0;
+  }
+
+  void configureHighpass({
+    required double sampleRate,
+    required double frequency,
+    required double q,
+  }) {
+    final omega = _twoPi * frequency / sampleRate;
+    final cosOmega = math.cos(omega);
+    final sinOmega = math.sin(omega);
+    final alpha = sinOmega / (2.0 * q);
+
+    final b0 = (1.0 + cosOmega) * 0.5;
+    final b1 = -(1.0 + cosOmega);
+    final b2 = (1.0 + cosOmega) * 0.5;
+    final a0 = 1.0 + alpha;
+    final a1 = -2.0 * cosOmega;
+    final a2 = 1.0 - alpha;
+
+    _b0 = b0 / a0;
+    _b1 = b1 / a0;
+    _b2 = b2 / a0;
+    _a1 = a1 / a0;
+    _a2 = a2 / a0;
+  }
+
+  double process(double input) {
+    final output =
+        (_b0 * input) + (_b1 * _x1) + (_b2 * _x2) - (_a1 * _y1) - (_a2 * _y2);
+    _x2 = _x1;
+    _x1 = input;
+    _y2 = _y1;
+    _y1 = output;
+    return output;
   }
 }
