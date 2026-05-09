@@ -8,6 +8,7 @@ GenerationConfig _minimalConfig({
   RenderFormat format = RenderFormat.wav,
   int durationMinutes = 1,
   int sampleRate = 8000,
+  bool dcBlockerEnabled = true,
   Map<String, dynamic>? source,
   List<Map<String, dynamic>>? processors,
   double layerGain = 1.0,
@@ -24,6 +25,7 @@ GenerationConfig _minimalConfig({
       'sampleRate': sampleRate,
       'bitRate': 128,
       'format': format.name,
+      'dcBlockerEnabled': dcBlockerEnabled,
     },
     'mix': <String, dynamic>{'mix': 1.0},
     'layers': <Map<String, dynamic>>[
@@ -40,6 +42,17 @@ GenerationConfig _minimalConfig({
       },
     ],
   });
+}
+
+double _meanPcmSample(Uint8List wavBytes) {
+  final bd = wavBytes.buffer.asByteData();
+  var sum = 0.0;
+  var count = 0;
+  for (var i = 44; i + 1 < wavBytes.length; i += 2) {
+    sum += bd.getInt16(i, Endian.little) / 32767.0;
+    count++;
+  }
+  return count == 0 ? 0.0 : sum / count;
 }
 
 void main() {
@@ -147,6 +160,40 @@ void main() {
 
       expect(viaDispatch, orderedEquals(direct));
     });
+
+    test('renderWav applies final-stage DC blocker by default', () {
+      final withoutDcBlocker = Renderer.renderWav(
+        _minimalConfig(
+          sampleRate: 256,
+          dcBlockerEnabled: false,
+          source: <String, dynamic>{
+            'type': 'impulse',
+            'impulseConfig': <String, dynamic>{
+              'density': 1.0,
+              'randomness': 0.0,
+            },
+          },
+        ),
+      );
+      final withDcBlocker = Renderer.renderWav(
+        _minimalConfig(
+          sampleRate: 256,
+          source: <String, dynamic>{
+            'type': 'impulse',
+            'impulseConfig': <String, dynamic>{
+              'density': 1.0,
+              'randomness': 0.0,
+            },
+          },
+        ),
+      );
+
+      final meanWithout = _meanPcmSample(withoutDcBlocker);
+      final meanWith = _meanPcmSample(withDcBlocker);
+
+      expect(meanWithout, greaterThan(0.9));
+      expect(meanWith.abs(), lessThan(0.05));
+    });
   });
 
   group('Renderer MP3', () {
@@ -186,9 +233,14 @@ void main() {
       expect(const RenderConfig().format, RenderFormat.mp3);
     });
 
+    test('RenderConfig enables DC blocker by default', () {
+      expect(const RenderConfig().dcBlockerEnabled, isTrue);
+    });
+
     test('RenderConfig toJson includes format name', () {
       const config = RenderConfig(format: RenderFormat.mp3, bitRate: 320);
       expect(config.toJson()['format'], equals('mp3'));
+      expect(config.toJson()['dcBlockerEnabled'], isTrue);
     });
   });
 }

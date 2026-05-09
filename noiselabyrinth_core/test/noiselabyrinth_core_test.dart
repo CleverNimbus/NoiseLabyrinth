@@ -32,18 +32,21 @@ void main() {
       expect(restored.durationMinutes, 120);
       expect(restored.sampleRate, 44100);
       expect(restored.bitRate, 192);
+      expect(restored.dcBlockerEnabled, isTrue);
 
       expect(
         const RenderConfig(
           durationMinutes: 10,
           sampleRate: 48000,
           bitRate: 256,
+          dcBlockerEnabled: false,
         ).toJson(),
         <String, dynamic>{
           'durationMinutes': 10,
           'sampleRate': 48000,
           'bitRate': 256,
           'format': 'mp3',
+          'dcBlockerEnabled': false,
         },
       );
     });

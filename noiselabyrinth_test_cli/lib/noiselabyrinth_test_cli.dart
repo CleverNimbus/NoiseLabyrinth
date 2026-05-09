@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
-import 'package:noiselabyrinth_core/presets/tests.dart';
+import 'package:noiselabyrinth_core/presets/brown_tests.dart';
 import 'package:path/path.dart' as p;
 
 List<GenerationConfig> hardcodedProfiles = <GenerationConfig>[
-  BrownConfigs.brownNoiseProfile_001,
-  BrownConfigs.getBrownNoiseProfile_002(),
+  BrownConfigTests.brownNoiseProfile_001,
+  BrownConfigTests.getBrownNoiseProfile_002(),
   pinkNoiseBed,
   stereoBandlimitedHiss,
   sineDroneWithDelay,
@@ -23,6 +23,7 @@ GenerationConfig forceMp3(GenerationConfig config) {
       durationMinutes: config.render.durationMinutes,
       sampleRate: config.render.sampleRate,
       bitRate: config.render.bitRate,
+      dcBlockerEnabled: config.render.dcBlockerEnabled,
     ),
     mix: config.mix,
     layers: config.layers,

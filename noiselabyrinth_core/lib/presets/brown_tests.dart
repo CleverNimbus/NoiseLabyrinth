@@ -10,7 +10,11 @@ import 'package:noiselabyrinth_core/models/configs/render_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
-class BrownConfigs {
+class BrownConfigTests {
+  static const int highBand = 1200;
+  static const int lowBand = 35;
+  static const double highBandModulationRange = 600;
+
   static GenerationConfig brownNoiseProfile_001 = GenerationConfig(
     metadata: MetadataConfig(
       name: 'T01. Brown noise profile',
@@ -32,7 +36,7 @@ class BrownConfigs {
           type: SourceType.noise,
           noiseConfig: NoiseConfig(
             color: NoiseColor.brown,
-            band: BandConfig(high: 1200, low: 35),
+            band: BandConfig(high: highBand, low: lowBand),
           ),
         ),
       ),
@@ -49,8 +53,8 @@ class BrownConfigs {
         type: ModulationType.random,
         amount: 1,
         randomConfig: RandomConfig(
-          rateHz: 4,
-          smooth: 0.08,
+          rateHz: 0.2,
+          smooth: 0.6,
         ),
         targets: [
           ModulationTargetConfig(
@@ -67,16 +71,16 @@ class BrownConfigs {
         type: ModulationType.random,
         amount: 1,
         randomConfig: RandomConfig(
-          rateHz: 2.5,
-          smooth: 0.12,
+          rateHz: 0.4,
+          smooth: 0.5,
         ),
         targets: [
           ModulationTargetConfig(
             path: 'layers[brown_core].source.noise.band.high',
-            amount: 300,
+            amount: BrownConfigTests.highBandModulationRange,
             mode: ModulationApplyMode.additive,
-            minValue: 900,
-            maxValue: 1500,
+            minValue: BrownConfigTests.highBand - BrownConfigTests.highBandModulationRange,
+            maxValue: BrownConfigTests.highBand + BrownConfigTests.highBandModulationRange,
           ),
         ],
       ),

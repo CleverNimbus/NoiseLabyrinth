@@ -19,7 +19,8 @@
         "durationMinutes": 120,
         "sampleRate": 44100,
         "bitRate": 192,
-        "format": "wav"
+        "format": "mp3",
+        "dcBlockerEnabled": true
       }
     },
     "mix": {
@@ -107,6 +108,11 @@
           "type": "string",
           "enum": ["wav", "mp3"],
           "default": "wav"
+        },
+        "dcBlockerEnabled": {
+          "description": "Enables or disables final-stage DC offset removal on rendered audio.",
+          "type": "boolean",
+          "default": true
         }
       }
     },

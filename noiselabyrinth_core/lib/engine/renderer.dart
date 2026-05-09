@@ -5,9 +5,7 @@ import 'package:noiselabyrinth_core/engine/audio_engine.dart';
 import 'package:noiselabyrinth_core/engine/runtime_graph_builder.dart';
 import 'package:noiselabyrinth_core/engine/wav_encoder.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
-import 'package:noiselabyrinth_core/models/configs/render_config.dart' show RenderConfig;
 import 'package:noiselabyrinth_core/models/enums.dart';
-import 'package:noiselabyrinth_core/noiselabyrinth_core.dart' show RenderConfig;
 
 /// Render context assembled from a [GenerationConfig] before rendering starts.
 class _RenderContext {
@@ -47,6 +45,7 @@ class Renderer {
     final stereo = ctx.engine.renderStereoSamples(
       totalSamples: ctx.totalSamples,
     );
+    _applyFinalDcBlocker(stereo, enabled: config.render.dcBlockerEnabled);
     return WavEncoder.encodePcm16Stereo(
       left: stereo.left,
       right: stereo.right,
@@ -62,6 +61,7 @@ class Renderer {
     final stereo = ctx.engine.renderStereoSamples(
       totalSamples: ctx.totalSamples,
     );
+    _applyFinalDcBlocker(stereo, enabled: config.render.dcBlockerEnabled);
 
     final encoder = LameMp3Encoder(
       sampleRate: config.render.sampleRate,
@@ -114,6 +114,29 @@ class Renderer {
       totalSamples: totalSamples,
       bitRate: config.render.bitRate,
     );
+  }
+
+  static void _applyFinalDcBlocker(StereoSamples stereo, {required bool enabled}) {
+    if (!enabled) {
+      return;
+    }
+
+    _applyDcBlockerInPlace(stereo.left);
+    _applyDcBlockerInPlace(stereo.right);
+  }
+
+  static void _applyDcBlockerInPlace(Float32List buffer) {
+    const feedback = 0.995;
+    var previousInput = 0.0;
+    var previousOutput = 0.0;
+
+    for (var i = 0; i < buffer.length; i++) {
+      final input = buffer[i];
+      final output = input - previousInput + feedback * previousOutput;
+      buffer[i] = output;
+      previousInput = input;
+      previousOutput = output;
+    }
   }
 
   // Fills [out] with PCM-16 values from [src] in [start, end).

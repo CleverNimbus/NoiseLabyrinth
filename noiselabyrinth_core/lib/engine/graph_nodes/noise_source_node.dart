@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:noiselabyrinth_core/engine/audio_node.dart';
+import 'package:noiselabyrinth_core/engine/dsp/biquad.dart';
 import 'package:noiselabyrinth_core/engine/modulation_engine.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 import 'package:noiselabyrinth_core/models/parameter.dart';
@@ -23,7 +24,10 @@ class NoiseSourceNode extends SourceNode {
     _rngState = _nonZeroSeed(seed, id);
   }
   static const double _gaussianScale = 0.5773502691896258;
-  static final double _butterworthQ = 1.0 / math.sqrt(2.0);
+  static const List<double> _butterworthOrder4Qs = <double>[
+    0.541196100146197,
+    1.306562964876377,
+  ];
 
   final NoiseColor color;
   int _rngState;
@@ -43,13 +47,13 @@ class NoiseSourceNode extends SourceNode {
   // State for band-limiting via cascaded biquad sections.
   double _bandLowHz = 0;
   double _bandHighHz = 0;
-  final List<_BiquadSection> _bandHighpassStages = List<_BiquadSection>.generate(
+  final List<BiquadSection> _bandHighpassStages = List<BiquadSection>.generate(
     2,
-    (_) => _BiquadSection(),
+    (_) => BiquadSection(),
   );
-  final List<_BiquadSection> _bandLowpassStages = List<_BiquadSection>.generate(
+  final List<BiquadSection> _bandLowpassStages = List<BiquadSection>.generate(
     2,
-    (_) => _BiquadSection(),
+    (_) => BiquadSection(),
   );
 
   @override
@@ -124,20 +128,28 @@ class NoiseSourceNode extends SourceNode {
         stage.bypass();
       }
     } else {
-      for (final stage in _bandHighpassStages) {
-        stage.configureHighpass(
-          sampleRate: effectiveSampleRate,
-          frequency: low,
-          q: _butterworthQ,
+      for (var i = 0; i < _bandHighpassStages.length; i++) {
+        final stage = _bandHighpassStages[i];
+        stage.configure(
+          BiquadDesigner.design(
+            mode: BiquadMode.highpass,
+            sampleRate: effectiveSampleRate,
+            frequency: low,
+            q: _butterworthOrder4Qs[i],
+          ),
         );
       }
     }
 
-    for (final stage in _bandLowpassStages) {
-      stage.configureLowpass(
-        sampleRate: effectiveSampleRate,
-        frequency: high,
-        q: _butterworthQ,
+    for (var i = 0; i < _bandLowpassStages.length; i++) {
+      final stage = _bandLowpassStages[i];
+      stage.configure(
+        BiquadDesigner.design(
+          mode: BiquadMode.lowpass,
+          sampleRate: effectiveSampleRate,
+          frequency: high,
+          q: _butterworthOrder4Qs[i],
+        ),
       );
     }
 
@@ -222,92 +234,5 @@ class NoiseSourceNode extends SourceNode {
     }
 
     return hash == 0 ? 0x6D2B79F5 : hash;
-  }
-}
-
-class _BiquadSection {
-  static const double _twoPi = 2.0 * math.pi;
-
-  double _b0 = 1;
-  double _b1 = 0;
-  double _b2 = 0;
-  double _a1 = 0;
-  double _a2 = 0;
-
-  double _x1 = 0;
-  double _x2 = 0;
-  double _y1 = 0;
-  double _y2 = 0;
-
-  void reset() {
-    _x1 = 0.0;
-    _x2 = 0.0;
-    _y1 = 0.0;
-    _y2 = 0.0;
-  }
-
-  void bypass() {
-    _b0 = 1.0;
-    _b1 = 0.0;
-    _b2 = 0.0;
-    _a1 = 0.0;
-    _a2 = 0.0;
-  }
-
-  void configureLowpass({
-    required double sampleRate,
-    required double frequency,
-    required double q,
-  }) {
-    final omega = _twoPi * frequency / sampleRate;
-    final cosOmega = math.cos(omega);
-    final sinOmega = math.sin(omega);
-    final alpha = sinOmega / (2.0 * q);
-
-    final b0 = (1.0 - cosOmega) * 0.5;
-    final b1 = 1.0 - cosOmega;
-    final b2 = (1.0 - cosOmega) * 0.5;
-    final a0 = 1.0 + alpha;
-    final a1 = -2.0 * cosOmega;
-    final a2 = 1.0 - alpha;
-
-    _b0 = b0 / a0;
-    _b1 = b1 / a0;
-    _b2 = b2 / a0;
-    _a1 = a1 / a0;
-    _a2 = a2 / a0;
-  }
-
-  void configureHighpass({
-    required double sampleRate,
-    required double frequency,
-    required double q,
-  }) {
-    final omega = _twoPi * frequency / sampleRate;
-    final cosOmega = math.cos(omega);
-    final sinOmega = math.sin(omega);
-    final alpha = sinOmega / (2.0 * q);
-
-    final b0 = (1.0 + cosOmega) * 0.5;
-    final b1 = -(1.0 + cosOmega);
-    final b2 = (1.0 + cosOmega) * 0.5;
-    final a0 = 1.0 + alpha;
-    final a1 = -2.0 * cosOmega;
-    final a2 = 1.0 - alpha;
-
-    _b0 = b0 / a0;
-    _b1 = b1 / a0;
-    _b2 = b2 / a0;
-    _a1 = a1 / a0;
-    _a2 = a2 / a0;
-  }
-
-  double process(double input) {
-    final output = (_b0 * input) + (_b1 * _x1) + (_b2 * _x2) - (_a1 * _y1) - (_a2 * _y2);
-    _x2 = _x1;
-    _x1 = input;
-    _y2 = _y1;
-    _y1 = output;
-    return output;
   }
 }

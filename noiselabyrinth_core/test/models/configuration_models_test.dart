@@ -53,18 +53,21 @@ void main() {
       expect(restored.sampleRate, 44100);
       expect(restored.bitRate, 192);
       expect(restored.format, RenderFormat.mp3);
+      expect(restored.dcBlockerEnabled, isTrue);
 
       expect(
         const RenderConfig(
           durationMinutes: 10,
           sampleRate: 48000,
           bitRate: 256,
+          dcBlockerEnabled: false,
         ).toJson(),
         <String, dynamic>{
           'durationMinutes': 10,
           'sampleRate': 48000,
           'bitRate': 256,
           'format': 'mp3',
+          'dcBlockerEnabled': false,
         },
       );
     });
@@ -78,6 +81,7 @@ void main() {
       final restored = RenderConfig.fromJson(config.toJson());
       expect(restored.format, RenderFormat.mp3);
       expect(restored.bitRate, 128);
+      expect(restored.dcBlockerEnabled, isTrue);
     });
 
     test('MixConfig supports optional dither config with defaults', () {

@@ -7,6 +7,7 @@ class RenderConfig {
     this.sampleRate = 44100,
     this.bitRate = 192,
     this.format = RenderFormat.mp3,
+    this.dcBlockerEnabled = true,
   });
 
   factory RenderConfig.fromJson(Map<String, dynamic> json) {
@@ -20,6 +21,7 @@ class RenderConfig {
       sampleRate: json['sampleRate'] as int? ?? 44100,
       bitRate: json['bitRate'] as int? ?? 192,
       format: format,
+      dcBlockerEnabled: json['dcBlockerEnabled'] as bool? ?? true,
     );
   }
 
@@ -35,12 +37,16 @@ class RenderConfig {
   /// Output file format for rendered audio.
   final RenderFormat format;
 
+  /// Enables final-stage DC offset removal on the rendered stereo output.
+  final bool dcBlockerEnabled;
+
   Map<String, dynamic> toJson() {
     return {
       'durationMinutes': durationMinutes,
       'sampleRate': sampleRate,
       'bitRate': bitRate,
       'format': format.name,
+      'dcBlockerEnabled': dcBlockerEnabled,
     };
   }
 }
