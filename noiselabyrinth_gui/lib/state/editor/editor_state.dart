@@ -10,12 +10,19 @@ class EditorValidationIssue {
 }
 
 class EditorState {
-  const EditorState({this.config, this.selectedNode, this.isDirty = false, this.validationIssues = const []});
+  const EditorState({
+    this.config,
+    this.selectedNode,
+    this.isDirty = false,
+    this.validationIssues = const [],
+    this.configRevision = 0,
+  });
 
   final GenerationConfig? config;
   final EditorNode? selectedNode;
   final bool isDirty;
   final List<EditorValidationIssue> validationIssues;
+  final int configRevision;
 
   bool get isOpen => config != null;
 
@@ -25,12 +32,14 @@ class EditorState {
     bool clearSelection = false,
     bool? isDirty,
     List<EditorValidationIssue>? validationIssues,
+    int? configRevision,
   }) {
     return EditorState(
       config: config ?? this.config,
       selectedNode: clearSelection ? null : (selectedNode ?? this.selectedNode),
       isDirty: isDirty ?? this.isDirty,
       validationIssues: validationIssues ?? this.validationIssues,
+      configRevision: configRevision ?? this.configRevision,
     );
   }
 }

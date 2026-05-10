@@ -26,12 +26,22 @@ class EditorNotifier extends StateNotifier<EditorState> {
       ],
     );
     final issues = _buildValidationIssues(config);
-    state = EditorState(config: config, isDirty: true, validationIssues: issues);
+    state = EditorState(
+      config: config,
+      isDirty: true,
+      validationIssues: issues,
+      configRevision: state.configRevision + 1,
+    );
   }
 
   void openConfig(GenerationConfig config) {
     final issues = _buildValidationIssues(config);
-    state = EditorState(config: config, isDirty: false, validationIssues: issues);
+    state = EditorState(
+      config: config,
+      isDirty: false,
+      validationIssues: issues,
+      configRevision: state.configRevision + 1,
+    );
   }
 
   // ---------- selection ----------
@@ -292,6 +302,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
       selectedNode: clearSel ? null : (selectedNode ?? state.selectedNode),
       isDirty: true,
       validationIssues: issues,
+      configRevision: state.configRevision + 1,
     );
   }
 

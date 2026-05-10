@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
+import 'package:noiselabyrinth_gui/state/preview/preview_controller.dart';
 
-class AppHeader extends StatelessWidget {
+class AppHeader extends ConsumerWidget {
   const AppHeader({required this.section, super.key});
 
   final String section;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
+    final editorState = ref.watch(editorNotifierProvider);
+    final previewState = ref.watch(previewControllerProvider);
+    final hasConfig = editorState.config != null;
+    final isActive = previewState.isActive;
+    final canPlay = hasConfig && !isActive;
+    final canStop = isActive;
 
     return Container(
       height: 58,
@@ -48,7 +57,23 @@ class AppHeader extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(onPressed: null, tooltip: 'Play', icon: const Icon(Icons.play_arrow)),
+          IconButton(
+            onPressed: (canPlay || canStop)
+                ? () {
+                    final notifier = ref.read(previewControllerProvider.notifier);
+                    if (canStop) {
+                      notifier.stop();
+                      return;
+                    }
+                    final config = editorState.config;
+                    if (config != null) {
+                      notifier.start(config, editorState.configRevision);
+                    }
+                  }
+                : null,
+            tooltip: canStop ? 'Stop preview' : 'Play preview',
+            icon: Icon(canStop ? Icons.stop : Icons.play_arrow),
+          ),
         ],
       ),
     );
