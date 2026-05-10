@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:noiselabyrinth_gui/header_widget.dart';
+import 'package:noiselabyrinth_gui/wellcome_panel_widget.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,27 +62,19 @@ class MyApp extends StatelessWidget {
 }
 
 class AppPersistedState extends ChangeNotifier {
-  AppPersistedState({
-    required this.prefs,
-    required this.selectedFooter,
-    required this.selectedWidget,
-    required this.welcomeDismissed,
-  });
+  AppPersistedState({required this.prefs, required this.selectedFooter, required this.welcomeDismissed});
 
   static const _footerKey = 'selected_footer';
-  static const _widgetKey = 'selected_widget';
   static const _welcomeKey = 'welcome_dismissed';
 
   final SharedPreferences prefs;
   int selectedFooter;
-  int selectedWidget;
   bool welcomeDismissed;
 
   static AppPersistedState load(SharedPreferences prefs) {
     return AppPersistedState(
       prefs: prefs,
       selectedFooter: prefs.getInt(_footerKey) ?? 0,
-      selectedWidget: prefs.getInt(_widgetKey) ?? 0,
       welcomeDismissed: prefs.getBool(_welcomeKey) ?? false,
     );
   }
@@ -90,12 +84,6 @@ class AppPersistedState extends ChangeNotifier {
     welcomeDismissed = true;
     await prefs.setInt(_footerKey, selectedFooter);
     await prefs.setBool(_welcomeKey, true);
-    notifyListeners();
-  }
-
-  Future<void> setWidgetIndex(int index) async {
-    selectedWidget = index;
-    await prefs.setInt(_widgetKey, selectedWidget);
     notifyListeners();
   }
 
@@ -117,7 +105,7 @@ class MainShell extends StatelessWidget {
     _FooterItem(label: 'Create / Advanced', icon: Icons.tune_outlined),
   ];
 
-  static const _widgetTitles = <String>['Widget 1', 'Widget 2', 'Widget 3', 'Widget 4'];
+  static const _panelTitles = <String>['Widget 1', 'Widget 2', 'Widget 3'];
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +116,7 @@ class MainShell extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            _Header(section: section),
+            AppHeader(section: section),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -151,27 +139,12 @@ class MainShell extends StatelessWidget {
 
   Widget _buildMainContent(BuildContext context, String section) {
     if (!state.welcomeDismissed) {
-      return _WelcomePanel(onStart: () => state.setFooter(state.selectedFooter));
+      return WelcomePanelWidget(onStart: () => state.setFooter(state.selectedFooter));
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (var i = 0; i < _widgetTitles.length; i++)
-              ChoiceChip(
-                label: Text(_widgetTitles[i]),
-                selected: state.selectedWidget == i,
-                onSelected: (_) => state.setWidgetIndex(i),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _MainPanel(sectionTitle: section, widgetTitle: _widgetTitles[state.selectedWidget]),
-      ],
+      children: [_MainPanel(sectionTitle: section, widgetTitle: _panelTitles[state.selectedFooter])],
     );
   }
 
@@ -230,109 +203,6 @@ class MainShell extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.section});
-
-  final String section;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Container(
-      height: 58,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [colors.surface, colors.surfaceContainerHighest.withValues(alpha: 0.35)]),
-        border: Border(bottom: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.4))),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ShaderMask(
-                  shaderCallback: (bounds) =>
-                      const LinearGradient(colors: [Color(0xFF6AA8FF), Color(0xFF8CD7CF)]).createShader(bounds),
-                  child: const Text(
-                    'NoiseLabyrinth',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.7,
-                      shadows: [Shadow(color: Colors.black54, blurRadius: 7, offset: Offset(0, 1))],
-                    ),
-                  ),
-                ),
-                Text(
-                  section,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-              ],
-            ),
-          ),
-          IconButton(onPressed: null, tooltip: 'Play', icon: const Icon(Icons.play_arrow)),
-        ],
-      ),
-    );
-  }
-}
-
-class _WelcomePanel extends StatelessWidget {
-  const _WelcomePanel({required this.onStart});
-
-  final VoidCallback onStart;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 700;
-        final horizontalPadding = isWide ? 24.0 : 16.0;
-        final titleStyle = isWide
-            ? Theme.of(context).textTheme.headlineMedium
-            : Theme.of(context).textTheme.headlineSmall;
-
-        return Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 820),
-            child: Card(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(horizontalPadding, 20, horizontalPadding, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Welcome', style: titleStyle),
-                    const SizedBox(height: 10),
-                    Text(
-                      'This home widget appears on first launch. Select any footer icon to open the main panels.',
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: onStart,
-                      icon: const Icon(Icons.arrow_forward),
-                      label: const Text('Open Main Panels'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }
