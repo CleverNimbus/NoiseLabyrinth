@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "pkief.material-icon-theme",
+    "qcz.text-power-tools",
+    "shardulm94.trailing-spaces",
+    "actboy168.tasks",
+    "dart-code.flutter",
+    "dart-code.dart-code",
+    "github.vscode-pull-request-github",
+    "trentrand.git-rebase-shortcuts",
+    "nick-rudenko.back-n-forth",
+    "eduardbar.dev-checkpoint",
+    "usernamehw.errorlens",
+    "flutterando.flutter-coverage"
+  ]
+}

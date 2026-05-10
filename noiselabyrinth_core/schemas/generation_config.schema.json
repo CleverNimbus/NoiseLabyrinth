@@ -1,0 +1,923 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://clevernimbus.dev/noiselabyrinth/schemas/generation_config.schema.json",
+  "title": "NoiseLabyrinth GenerationConfig",
+  "description": "Schema derived from GenerationConfig and nested config nodes, completed with rules from config_validation.dart where expressible in JSON Schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["metadata", "layers"],
+  "$comment": "The following validation rules from config_validation.dart require runtime checks and are not fully representable in standard JSON Schema: uniqueness of layer/processor/modulation IDs by specific fields, cross-reference existence checks for event action modulatorId and modulation target paths, and numeric sibling comparisons (band.high > band.low, target.minValue <= target.maxValue, burst.clusterMax >= burst.clusterMin).",
+  "properties": {
+    "metadata": {
+      "description": "Metadata for the generation preset, including name, tags, and version.",
+      "$ref": "#/$defs/MetadataConfig"
+    },
+    "render": {
+      "description": "Rendering output settings such as duration, sample rate, bitrate, and format.",
+      "$ref": "#/$defs/RenderConfig",
+      "default": {
+        "durationMinutes": 120,
+        "sampleRate": 44100,
+        "bitRate": 192,
+        "format": "mp3",
+        "dcBlockerEnabled": true
+      }
+    },
+    "mix": {
+      "description": "Global mix controls for combining generated layers.",
+      "$ref": "#/$defs/MixConfig",
+      "default": {
+        "mix": 1.0,
+        "dither": {
+          "enabled": false,
+          "type": "tpdf",
+          "bitDepth": 16,
+          "amount": 1.0
+        },
+        "normalization": {
+          "enabled": false,
+          "targetDb": -1.0
+        }
+      }
+    },
+    "layers": {
+      "description": "List of audio layers that define sources, processing, modulation, and events.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/LayerConfig"
+      }
+    }
+  },
+  "$defs": {
+    "MetadataConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "description": "Human-readable name of the generation preset.",
+          "type": "string",
+          "minLength": 1,
+          "default": ""
+        },
+        "description": {
+          "description": "Optional free-text description of the preset intent or content.",
+          "type": "string",
+          "default": ""
+        },
+        "tags": {
+          "description": "Optional classification tags for search and organization.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "version": {
+          "description": "Preset version number for configuration evolution.",
+          "type": "integer",
+          "default": 0
+        }
+      }
+    },
+    "RenderConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "durationMinutes": {
+          "description": "Total render duration in minutes.",
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 120
+        },
+        "sampleRate": {
+          "description": "Audio sample rate in Hz.",
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 44100
+        },
+        "bitRate": {
+          "description": "Target encoded bitrate in kbps.",
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 192
+        },
+        "format": {
+          "description": "Output file format for rendered audio.",
+          "type": "string",
+          "enum": ["wav", "mp3"],
+          "default": "wav"
+        },
+        "dcBlockerEnabled": {
+          "description": "Enables or disables final-stage DC offset removal on rendered audio.",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "MixConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mix": {
+          "description": "Global wet mix amount applied to the generated output, from 0 to 1.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1.0
+        },
+        "dither": {
+          "description": "Optional master-stage dithering applied after layer mix and master gain.",
+          "$ref": "#/$defs/DitherConfig",
+          "default": {
+            "enabled": false,
+            "type": "tpdf",
+            "bitDepth": 16,
+            "amount": 1.0
+          }
+        },
+        "normalization": {
+          "description": "Optional master peak normalization applied to rendered output.",
+          "$ref": "#/$defs/NormalizationConfig",
+          "default": {
+            "enabled": false,
+            "targetDb": -1.0
+          }
+        }
+      }
+    },
+    "DitherConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Enables or disables master dithering.",
+          "type": "boolean",
+          "default": false
+        },
+        "type": {
+          "description": "Dither algorithm selection.",
+          "type": "string",
+          "enum": ["tpdf"],
+          "default": "tpdf"
+        },
+        "bitDepth": {
+          "description": "Target quantization bit depth used to derive dither amplitude.",
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 16
+        },
+        "amount": {
+          "description": "Linear dither amount multiplier, where 1.0 equals 1 LSB TPDF.",
+          "type": "number",
+          "minimum": 0,
+          "default": 1.0
+        }
+      }
+    },
+    "NormalizationConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Enables or disables master output normalization.",
+          "type": "boolean",
+          "default": false
+        },
+        "targetDb": {
+          "description": "Target peak level in dBFS for normalization.",
+          "type": "number",
+          "minimum": -120,
+          "maximum": 0,
+          "default": -1.0
+        }
+      }
+    },
+    "LayerConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source"],
+      "properties": {
+        "id": {
+          "description": "Unique identifier of the layer within the generation.",
+          "type": "string",
+          "minLength": 1
+        },
+        "gain": {
+          "description": "Linear gain multiplier applied to the layer output.",
+          "type": "number",
+          "minimum": 0,
+          "default": 1.0
+        },
+        "pan": {
+          "type": "number",
+          "description": "Pan position of the layer in the stereo field, where -1 is full left, 0 is center, and 1 is full right.",
+          "minimum": -1,
+          "maximum": 1,
+          "default": 0.0
+        },
+        "source": {
+          "description": "Primary source definition that generates the layer signal.",
+          "$ref": "#/$defs/SourceConfig"
+        },
+        "processors": {
+          "description": "Ordered list of processors applied to the layer signal chain.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProcessorConfig"
+          },
+          "default": []
+        },
+        "modulations": {
+          "description": "Modulators available in this layer to animate parameters over time.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ModulationConfig"
+          },
+          "default": []
+        },
+        "events": {
+          "description": "Event triggers that can activate or gate modulators.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EventConfig"
+          },
+          "default": []
+        }
+      }
+    },
+    "SourceConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "description": "Selected source generator type for this layer.",
+          "type": "string",
+          "enum": ["noise", "impulse", "sine"]
+        },
+        "noiseConfig": {
+          "description": "Configuration for noise source generation, required when type is noise.",
+          "$ref": "#/$defs/NoiseConfig"
+        },
+        "impulseConfig": {
+          "description": "Configuration for impulse source generation, required when type is impulse.",
+          "$ref": "#/$defs/ImpulseConfig"
+        },
+        "sineConfig": {
+          "description": "Configuration for sine source generation, required when type is sine.",
+          "$ref": "#/$defs/SineConfig"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "noise"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["noiseConfig"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "impulse"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["impulseConfig"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "sine"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["sineConfig"]
+          }
+        }
+      ]
+    },
+    "NoiseConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["color", "band"],
+      "properties": {
+        "color": {
+          "description": "Noise color algorithm used to shape spectral distribution.",
+          "type": "string",
+          "enum": ["white", "pink", "brown", "bandlimited"],
+          "default": "white"
+        },
+        "band": {
+          "description": "Frequency band limits applied to band-limited noise generation.",
+          "$ref": "#/$defs/BandConfig"
+        }
+      }
+    },
+    "BandConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["low", "high"],
+      "properties": {
+        "low": {
+          "description": "Lower frequency bound in Hz.",
+          "type": "integer",
+          "minimum": 0,
+          "default": 20
+        },
+        "high": {
+          "description": "Upper frequency bound in Hz.",
+          "type": "integer",
+          "default": 20000
+        }
+      },
+      "$comment": "Runtime rule: high must be greater than low."
+    },
+    "ImpulseConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "density": {
+          "description": "Average impulse density, from 0 to 1.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.2
+        },
+        "randomness": {
+          "description": "Randomness applied to impulse timing or distribution, from 0 to 1.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.5
+        }
+      }
+    },
+    "SineConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frequencyHz": {
+          "description": "Sine oscillator frequency in Hz.",
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 100
+        },
+        "phase": {
+          "description": "Initial sine oscillator phase offset in normalized phase units.",
+          "type": "number",
+          "default": 0.0
+        }
+      }
+    },
+    "ProcessorConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "description": "Unique identifier of the processor within a layer.",
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "description": "Selected processor type for this processor node.",
+          "type": "string",
+          "enum": ["biquad", "gain", "saturator", "delay"]
+        },
+        "biquad": {
+          "description": "Biquad filter settings, required when type is biquad.",
+          "$ref": "#/$defs/BiquadConfig"
+        },
+        "gain": {
+          "description": "Gain processor settings, required when type is gain.",
+          "$ref": "#/$defs/GainConfig"
+        },
+        "saturator": {
+          "description": "Saturator processor settings, required when type is saturator.",
+          "$ref": "#/$defs/SaturatorConfig"
+        },
+        "delay": {
+          "description": "Delay processor settings, required when type is delay.",
+          "$ref": "#/$defs/DelayConfig"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "biquad"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["biquad"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "gain"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["gain"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "saturator"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["saturator"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "delay"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["delay"]
+          }
+        }
+      ]
+    },
+    "BiquadConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "biquadMode": {
+          "description": "Biquad filter mode.",
+          "type": "string",
+          "enum": ["lowpass", "highpass", "bandpass", "peak"],
+          "default": "lowpass"
+        },
+        "frequency": {
+          "description": "Biquad center or cutoff frequency in Hz.",
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 500
+        },
+        "q": {
+          "description": "Biquad Q factor controlling resonance width.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 1.7
+        },
+        "gainDb": {
+          "description": "Biquad gain in dB for filter modes that use gain.",
+          "type": "number",
+          "default": 0.0
+        },
+        "resonant": {
+          "description": "Whether resonance behavior is explicitly enabled for the filter.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "GainConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gain": {
+          "description": "Linear gain multiplier for the gain processor.",
+          "type": "number",
+          "default": 1.0
+        }
+      }
+    },
+    "SaturatorConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "drive": {
+          "description": "Input drive amount applied before saturation.",
+          "type": "number",
+          "minimum": 0,
+          "default": 0.0
+        },
+        "curve": {
+          "description": "Saturation transfer curve model.",
+          "type": "string",
+          "enum": ["soft", "tanh"],
+          "default": "tanh"
+        }
+      }
+    },
+    "DelayConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "delayTimeMs": {
+          "description": "Delay time in milliseconds.",
+          "type": "integer",
+          "minimum": 0,
+          "default": 120
+        },
+        "feedback": {
+          "description": "Feedback amount routed from delay output back to input, from 0 to 1.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.3
+        },
+        "mix": {
+          "description": "Wet mix of delayed signal in the processor output, from 0 to 1.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.2
+        }
+      }
+    },
+    "ModulationConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "description": "Unique identifier of the modulation source within a layer.",
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "description": "Selected modulation source type.",
+          "type": "string",
+          "enum": ["lfo", "random", "drift", "envelope", "burst"]
+        },
+        "amount": {
+          "description": "Global scaling amount applied by this modulation source.",
+          "type": "number",
+          "default": 0.0
+        },
+        "lfoConfig": {
+          "description": "LFO settings, required when type is lfo.",
+          "$ref": "#/$defs/LfoConfig"
+        },
+        "randomConfig": {
+          "description": "Random modulation settings, required when type is random.",
+          "$ref": "#/$defs/RandomConfig"
+        },
+        "driftConfig": {
+          "description": "Drift modulation settings, required when type is drift.",
+          "$ref": "#/$defs/DriftConfig"
+        },
+        "envelopeConfig": {
+          "description": "Envelope modulation settings, required when type is envelope.",
+          "$ref": "#/$defs/EnvelopeConfig"
+        },
+        "burstConfig": {
+          "description": "Burst modulation settings, required when type is burst.",
+          "$ref": "#/$defs/BurstConfig"
+        },
+        "targets": {
+          "description": "List of parameter targets affected by this modulation source.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ModulationTargetConfig"
+          },
+          "default": []
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "lfo"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["lfoConfig"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "random"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["randomConfig"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "drift"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["driftConfig"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "envelope"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["envelopeConfig"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "burst"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["burstConfig"]
+          }
+        }
+      ]
+    },
+    "ModulationTargetConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "description": "Target parameter path to modulate.",
+          "type": "string",
+          "minLength": 1
+        },
+        "amount": {
+          "description": "Per-target scaling amount applied in addition to modulation amount.",
+          "type": "number",
+          "default": 1.0
+        },
+        "mode": {
+          "description": "How modulation is applied to the target parameter value.",
+          "type": "string",
+          "enum": ["additive", "multiplicative"],
+          "default": "additive"
+        },
+        "minValue": {
+          "description": "Optional lower clamp for the modulated target value.",
+          "type": "number"
+        },
+        "maxValue": {
+          "description": "Optional upper clamp for the modulated target value.",
+          "type": "number"
+        }
+      },
+      "$comment": "Runtime rule: when both minValue and maxValue exist, minValue must be <= maxValue."
+    },
+    "LfoConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "description": "LFO waveform shape.",
+          "type": "string",
+          "enum": ["sine", "triangle", "square", "sawtooth"],
+          "default": "sine"
+        },
+        "frequency": {
+          "description": "LFO frequency in Hz.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 1.0
+        },
+        "depth": {
+          "description": "LFO depth amount applied to modulation output.",
+          "type": "number",
+          "minimum": 0,
+          "default": 1.0
+        }
+      }
+    },
+    "RandomConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rateHz": {
+          "description": "Update rate in Hz for random modulation changes.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 0.05
+        },
+        "smooth": {
+          "description": "Smoothing factor for random transitions, from 0 to 1.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.9
+        }
+      }
+    },
+    "DriftConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "speed": {
+          "description": "Rate at which drift evolves over time.",
+          "type": "number",
+          "minimum": 0,
+          "default": 0.01
+        },
+        "range": {
+          "description": "Maximum drift excursion range.",
+          "type": "number",
+          "minimum": 0,
+          "default": 1.0
+        }
+      }
+    },
+    "EnvelopeConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attackMs": {
+          "description": "Attack stage duration in milliseconds.",
+          "type": "integer",
+          "minimum": 0,
+          "default": 50
+        },
+        "decayMs": {
+          "description": "Decay stage duration in milliseconds.",
+          "type": "integer",
+          "minimum": 0,
+          "default": 200
+        },
+        "sustain": {
+          "description": "Sustain level from 0 to 1.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.0
+        },
+        "releaseMs": {
+          "description": "Release stage duration in milliseconds.",
+          "type": "integer",
+          "minimum": 0,
+          "default": 300
+        }
+      }
+    },
+    "BurstConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "durationMs": {
+          "description": "Total burst duration in milliseconds.",
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 120
+        },
+        "intensity": {
+          "description": "Burst intensity from 0 to 1.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1.0
+        },
+        "randomness": {
+          "description": "Random variation amount within bursts, from 0 to 1.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.5
+        },
+        "attackMs": {
+          "description": "Burst attack duration in milliseconds.",
+          "type": "integer",
+          "minimum": 0,
+          "default": 8
+        },
+        "releaseMs": {
+          "description": "Burst release duration in milliseconds.",
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 80
+        },
+        "clusterMin": {
+          "description": "Minimum number of events per burst cluster.",
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 1
+        },
+        "clusterMax": {
+          "description": "Maximum number of events per burst cluster.",
+          "type": "integer",
+          "default": 1
+        },
+        "clusterSpreadMs": {
+          "description": "Temporal spread in milliseconds between clustered events.",
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      },
+      "$comment": "Runtime rule: clusterMax must be >= clusterMin."
+    },
+    "EventConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "trigger", "actions"],
+      "properties": {
+        "id": {
+          "description": "Unique identifier of the event definition within a layer.",
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger": {
+          "description": "Trigger definition controlling when event actions execute.",
+          "$ref": "#/$defs/TriggerConfig"
+        },
+        "actions": {
+          "description": "Actions executed when the trigger fires.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ActionConfig"
+          }
+        }
+      }
+    },
+    "TriggerConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "description": "Trigger behavior type.",
+          "type": "string",
+          "enum": ["poisson", "periodic", "random"],
+          "default": "periodic"
+        },
+        "rate": {
+          "description": "Trigger rate in Hz or equivalent cadence units, depending on type.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 0.2
+        }
+      }
+    },
+    "ActionConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modulatorId"],
+      "properties": {
+        "modulatorId": {
+          "description": "Identifier of the modulation source affected by this action.",
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "description": "Action mode describing how the modulator is controlled.",
+          "type": "string",
+          "enum": ["trigger", "gate"],
+          "default": "trigger"
+        }
+      }
+    }
+  }
+}
