@@ -1,1 +1,1 @@
-{"version":2,"entries":[{"package":"noiselabyrinth_core","rootUri":"../../noiselabyrinth_core/","packageUri":"lib/"},{"package":"noiselabyrinth_test_cli","rootUri":"../","packageUri":"lib/"}]}
+{"version":2,"entries":[{"package":"noiselabyrinth_core","rootUri":"../../noiselabyrinth_core/","packageUri":"lib/"},{"package":"noiselabyrinth_shared","rootUri":"../../noiselabyrinth_shared/","packageUri":"lib/"},{"package":"noiselabyrinth_test_cli","rootUri":"../","packageUri":"lib/"}]}

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 import 'package:noiselabyrinth_gui/state/preset_library_state.dart';
 
 class PresetsPanel extends StatelessWidget {
-  const PresetsPanel({required this.state, super.key});
+  const PresetsPanel({required this.state, this.onOpen, super.key});
 
   final PresetLibraryState state;
+  final ValueChanged<GenerationConfig>? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +22,7 @@ class PresetsPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Presets / Library',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
+                Text('Presets / Library', style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 8),
                 Text(
                   '${presets.length} presets${state.selectedTag == null ? '' : ' tagged "${state.selectedTag}"'}',
@@ -52,10 +51,7 @@ class PresetsPanel extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     child: Center(
-                      child: Text(
-                        'No presets match this tag yet.',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
+                      child: Text('No presets match this tag yet.', style: Theme.of(context).textTheme.bodyLarge),
                     ),
                   )
                 else
@@ -75,16 +71,23 @@ class PresetsPanel extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              preset.metadata.name,
-                              style: Theme.of(context).textTheme.titleMedium,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(preset.metadata.name, style: Theme.of(context).textTheme.titleMedium),
+                                ),
+                                if (onOpen != null)
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined),
+                                    tooltip: 'Open in editor',
+                                    onPressed: () => onOpen!(preset),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                              ],
                             ),
                             if (preset.metadata.description.isNotEmpty) ...[
                               const SizedBox(height: 6),
-                              Text(
-                                preset.metadata.description,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
+                              Text(preset.metadata.description, style: Theme.of(context).textTheme.bodyMedium),
                             ],
                             const SizedBox(height: 10),
                             Wrap(
@@ -92,10 +95,7 @@ class PresetsPanel extends StatelessWidget {
                               runSpacing: 6,
                               children: [
                                 for (final tag in preset.metadata.tags)
-                                  ActionChip(
-                                    label: Text(tag),
-                                    onPressed: () => state.selectTag(tag),
-                                  ),
+                                  ActionChip(label: Text(tag), onPressed: () => state.selectTag(tag)),
                               ],
                             ),
                           ],

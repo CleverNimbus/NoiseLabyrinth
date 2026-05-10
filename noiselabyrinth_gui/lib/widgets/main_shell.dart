@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 import 'package:noiselabyrinth_gui/state/app_persisted_state.dart';
+import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
 import 'package:noiselabyrinth_gui/state/preset_library_state.dart';
 import 'package:noiselabyrinth_gui/widgets/app_header.dart';
 import 'package:noiselabyrinth_gui/widgets/create_panel.dart';
@@ -8,15 +11,23 @@ import 'package:noiselabyrinth_gui/widgets/presets_panel.dart';
 import 'package:noiselabyrinth_gui/widgets/quick_start_panel.dart';
 import 'package:noiselabyrinth_gui/widgets/wellcome_panel.dart';
 
-class MainShell extends StatelessWidget {
-  const MainShell({
-    required this.state,
-    required this.presetLibraryState,
-    super.key,
-  });
+class MainShell extends ConsumerStatefulWidget {
+  const MainShell({required this.state, required this.presetLibraryState, super.key});
 
   final AppPersistedState state;
   final PresetLibraryState presetLibraryState;
+
+  @override
+  ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell> {
+  void _onPresetOpen(GenerationConfig config) {
+    // Open config in editor
+    ref.read(editorNotifierProvider.notifier).openConfig(config);
+    // Switch to Create/Advanced tab (index 2)
+    widget.state.setFooter(2);
+  }
 
   static const _footerItems = <FooterItem>[
     FooterItem(label: 'Quick start', icon: Icons.bolt_outlined),
@@ -26,7 +37,7 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final section = _footerItems[state.selectedFooter].label;
+    final section = _footerItems[widget.state.selectedFooter].label;
 
     return Scaffold(
       endDrawer: _buildDrawer(context),
@@ -35,17 +46,7 @@ class MainShell extends StatelessWidget {
           children: [
             AppHeader(section: section),
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: constraints.maxHeight - 20),
-                      child: _buildMainContent(context),
-                    ),
-                  );
-                },
-              ),
+              child: Padding(padding: const EdgeInsets.fromLTRB(14, 10, 14, 10), child: _buildMainContent(context)),
             ),
           ],
         ),
@@ -55,20 +56,24 @@ class MainShell extends StatelessWidget {
   }
 
   Widget _buildMainContent(BuildContext context) {
-    if (!state.welcomeDismissed) {
-      return WelcomePanel(onStart: () => state.setFooter(state.selectedFooter));
+    if (!widget.state.welcomeDismissed) {
+      return SingleChildScrollView(
+        child: WelcomePanel(onStart: () => widget.state.setFooter(widget.state.selectedFooter)),
+      );
     }
 
-    final panels = <Widget>[
+    // CreatePanel (index 2) needs bounded height for its Expanded internal layout.
+    // Other panels are scrollable.
+    if (widget.state.selectedFooter == 2) {
+      return const CreatePanel();
+    }
+
+    final scrollablePanels = <Widget>[
       const QuickStartPanel(),
-      PresetsPanel(state: presetLibraryState),
-      const CreatePanel(),
+      PresetsPanel(state: widget.presetLibraryState, onOpen: _onPresetOpen),
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [panels[state.selectedFooter]],
-    );
+    return SingleChildScrollView(child: scrollablePanels[widget.state.selectedFooter]);
   }
 
   Widget _buildFooter(BuildContext context) {
@@ -80,10 +85,10 @@ class MainShell extends StatelessWidget {
             Expanded(
               child: IconButton(
                 tooltip: _footerItems[i].label,
-                onPressed: () => state.setFooter(i),
+                onPressed: () => widget.state.setFooter(i),
                 icon: Icon(
                   _footerItems[i].icon,
-                  color: state.selectedFooter == i
+                  color: widget.state.selectedFooter == i
                       ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -120,7 +125,7 @@ class MainShell extends StatelessWidget {
               title: const Text('Show Welcome Again'),
               onTap: () {
                 Navigator.of(context).pop();
-                state.resetWelcome();
+                widget.state.resetWelcome();
               },
             ),
           ],
