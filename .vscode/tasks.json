@@ -27,7 +27,7 @@
       "command": "bash",
       "args": [
         "-c",
-        "cd noiselabyrinth_core && flutter test --coverage && cd ../noiselabyrinth_test_cli && flutter test --coverage && cd ../noiselabyrinth_ui && flutter test --coverage"
+        "cd noiselabyrinth_core && flutter test --coverage && cd ../noiselabyrinth_test_cli && flutter test --coverage && cd ../noiselabyrinth_gui && flutter test --coverage"
       ],
       "presentation": {
         "reveal": "always",
@@ -69,7 +69,7 @@
       "label": "Run UI",
       "type": "shell",
       "command": "bash",
-      "args": ["-c", "cd noiselabyrinth_ui && flutter run"],
+      "args": ["-c", "cd noiselabyrinth_gui && flutter run -d linux"],
       "presentation": {
         "reveal": "always",
         "focus": true,
@@ -90,7 +90,7 @@
       "label": "Run UI (Web - Chrome)",
       "type": "shell",
       "command": "bash",
-      "args": ["-c", "cd noiselabyrinth_ui && flutter run -d chrome"],
+      "args": ["-c", "cd noiselabyrinth_gui && flutter run -d chrome"],
       "presentation": {
         "reveal": "always",
         "focus": true,

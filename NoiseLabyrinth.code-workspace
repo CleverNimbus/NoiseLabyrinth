@@ -17,7 +17,7 @@
     "explorer.confirmDelete": false,
     "explorer.incrementalNaming": "smart",
     "flutter-coverage.coverageFilePaths": [
-      "noiselabyrinth_ui/coverage",
+      "noiselabyrinth_gui/coverage",
       "noiselabyrinth_core/coverage",
       "noiselabyrinth_test_cli/coverage",
     ],

@@ -12,7 +12,7 @@ argument-hint: "Describe the package and task, for example: 'in noiselabyrinth_c
 NoiseLabyrinthFlutter is a Dart/Flutter monorepo for procedural noise and audio generation.
 
 - `noiselabyrinth_core` is the active package. It contains the runtime graph, audio engine, config models, modulation, event scheduling, DSP node stubs/implementations, WAV rendering, and tests.
-- `noiselabyrinth_ui` currently remains close to the default Flutter starter app. Treat UI work as early-stage integration work.
+- `noiselabyrinth_gui` currently remains close to the default Flutter starter app. Treat UI work as early-stage integration work.
 - Dart SDK is `^3.11.5`.
 - Core dependencies currently include Flutter, `flutter_lame`, and `scidart`.
 - Linting uses `flutter_lints` through each package's `analysis_options.yaml`.
@@ -40,7 +40,7 @@ NoiseLabyrinthFlutter/
 │       ├── events/
 │       ├── models/
 │       └── modulation/
-└── noiselabyrinth_ui/
+└── noiselabyrinth_gui/
     └── lib/main.dart
 ```
 
@@ -199,7 +199,7 @@ The UI package is not yet representative of the product. For UI work:
 ## Dependency Guidance
 
 - Add core logic dependencies to `noiselabyrinth_core/pubspec.yaml`.
-- Add application/UI dependencies to `noiselabyrinth_ui/pubspec.yaml`.
+- Add application/UI dependencies to `noiselabyrinth_gui/pubspec.yaml`.
 - Prefer cross-platform packages.
 - Avoid adding dependencies for small utilities that can be implemented clearly in Dart.
 - After changing dependencies, run `flutter pub get` in the affected package.

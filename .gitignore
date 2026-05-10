@@ -4,32 +4,13 @@
 !**/ios/**/default.perspectivev3
 !/dev/ci/**/Gemfile.lock
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
-.atom/
-.build/
-.buildlog/
-.dart_tool/
-.DS_Store
 .flutter-plugins
-.flutter-plugins-dependencies
 .gradle/
-.history
-.idea/
 .packages
 .packages.generated
-.pub-cache/
 .pub-preload-cache/
-.pub/
-.svn/
-.swiftpm/
-*.class
-*.iml
-*.ipr
-*.iws
 *.jks
 *.lock
-*.log
-*.pyc
-*.swp
 **/android/**/GeneratedPluginRegistrant.java
 **/android/**/gradle-wrapper.jar
 **/android/captures/
@@ -37,7 +18,6 @@
 **/android/gradlew.bat
 **/android/key.properties
 **/android/local.properties
-**/doc/api/
 **/Flutter/ephemeral/
 **/generated_plugin_registrant.dart
 **/ios/.generated/
@@ -56,7 +36,6 @@
 **/ios/**/Pods/
 **/ios/**/profile
 **/ios/**/xcuserdata
-**/ios/Flutter/.last_build_id
 **/ios/Flutter/app.flx
 **/ios/Flutter/App.framework
 **/ios/Flutter/app.zip
@@ -78,15 +57,10 @@
 **/windows/flutter/generated_plugin_registrant.h
 **/windows/flutter/generated_plugins.cmake
 **/xcuserdata/
-/android/app/debug
-/android/app/profile
-/android/app/release
 /bin/cache/
 /bin/internal/bootstrap.bat
 /bin/internal/bootstrap.sh
 /bin/mingit/
-/build/
-/coverage/
 /dev/benchmarks/mega_gallery/
 /dev/bots/.recipe_deps
 /dev/bots/android_tools/
@@ -99,32 +73,19 @@
 /dev/integration_tests/**/xcuserdata
 /packages/flutter/coverage/
 /pubspec.lock
-# Android Studio will place build artifacts here
 # Coverage
 # Exceptions to above rules.
-# Flutter/Dart/Pub related
-# IntelliJ related
 # iOS/XCode related
-# is commented out by default.
 # Libraries should not include pubspec.lock, per https://dart.dev/guides/libraries/private-files#pubspeclock.
 # Linux
 # macOS
-# Miscellaneous
-# Obfuscation related
-# Symbolication related
 # Symbols
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
 # Windows
-#.vscode/
 analysis_benchmark.json
-app.*.map.json
-app.*.symbols
 build/
 coverage/
 flutter_*.png
 linked_*.ds
-migrate_working_dir/
 unlinked_spec.ds
 unlinked.ds
 version
