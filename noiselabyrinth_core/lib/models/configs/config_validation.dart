@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
 import 'package:noiselabyrinth_core/models/configs/modulation_config.dart';
+import 'package:noiselabyrinth_core/models/configs/modulation_target_catalog.dart';
 import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
@@ -53,15 +54,14 @@ class GenerationConfigParser {
 
     _validateRoot(config, issues);
 
-    final validTargetPaths = <String>{};
     for (var i = 0; i < config.layers.length; i++) {
       final layer = config.layers[i];
       _validateLayer(layer, i, issues);
-      validTargetPaths.addAll(_buildLayerTargetPaths(layer));
     }
 
     for (var i = 0; i < config.layers.length; i++) {
       final layer = config.layers[i];
+      final validTargetPaths = ModulationTargetCatalog.pathsForLayer(layer);
       _validateLayerCrossReferences(layer, i, validTargetPaths, issues);
     }
 
@@ -823,33 +823,5 @@ class GenerationConfigParser {
         }
       }
     }
-  }
-
-  Set<String> _buildLayerTargetPaths(LayerConfig layer) {
-    final paths = <String>{
-      'layers[${layer.id}].gain',
-      'layers[${layer.id}].pan',
-      'layers[${layer.id}].source.noise.band.low',
-      'layers[${layer.id}].source.noise.band.high',
-      'layers[${layer.id}].source.sine.frequencyHz',
-      'layers[${layer.id}].source.sine.phase',
-      'layers[${layer.id}].source.impulse.density',
-      'layers[${layer.id}].source.impulse.randomness',
-    };
-
-    for (final processor in layer.processors) {
-      paths.addAll({
-        'layers[${layer.id}].processors[${processor.id}].biquad.frequency',
-        'layers[${layer.id}].processors[${processor.id}].biquad.q',
-        'layers[${layer.id}].processors[${processor.id}].biquad.gainDb',
-        'layers[${layer.id}].processors[${processor.id}].gain.gain',
-        'layers[${layer.id}].processors[${processor.id}].saturator.drive',
-        'layers[${layer.id}].processors[${processor.id}].delay.delayTimeMs',
-        'layers[${layer.id}].processors[${processor.id}].delay.feedback',
-        'layers[${layer.id}].processors[${processor.id}].delay.mix',
-      });
-    }
-
-    return paths;
   }
 }

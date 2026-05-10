@@ -6,11 +6,10 @@ import 'package:noiselabyrinth_gui/widgets/editor/inspector_helpers.dart';
 import 'package:noiselabyrinth_gui/widgets/editor/modulation_target_path_options.dart';
 
 class ModulationInspector extends ConsumerWidget {
-  const ModulationInspector({super.key, required this.layer, required this.modulation, required this.config});
+  const ModulationInspector({super.key, required this.layer, required this.modulation});
 
   final LayerConfig layer;
   final ModulationConfig modulation;
-  final GenerationConfig config;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,7 +44,7 @@ class ModulationInspector extends ConsumerWidget {
         if (modulation.type == ModulationType.drift) _DriftSection(modulation, update),
         if (modulation.type == ModulationType.envelope) _EnvelopeSection(modulation, update),
         if (modulation.type == ModulationType.burst) _BurstSection(modulation, update),
-        _TargetsSection(modulation: modulation, onUpdate: update, config: config),
+        _TargetsSection(modulation: modulation, onUpdate: update, layer: layer),
       ],
     );
   }
@@ -367,10 +366,14 @@ class _BurstSection extends StatelessWidget {
 // ── Targets ──────────────────────────────
 
 class _TargetsSection extends StatelessWidget {
-  const _TargetsSection({required this.modulation, required this.onUpdate, required this.config});
+  const _TargetsSection({
+    required this.modulation,
+    required this.onUpdate,
+    required this.layer,
+  });
   final ModulationConfig modulation;
   final ValueChanged<ModulationConfig> onUpdate;
-  final GenerationConfig config;
+  final LayerConfig layer;
 
   void _updateTargets(List<ModulationTargetConfig> targets) {
     modulation.targets = targets;
@@ -379,7 +382,7 @@ class _TargetsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final targetOptions = buildModulationTargetPathOptions(config);
+    final targetOptions = buildModulationTargetPathOptions(layer);
 
     return InspectorSection(
       title: 'TARGETS (${modulation.targets.length})',

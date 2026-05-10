@@ -20,6 +20,7 @@ export 'models/configs/layer_config.dart';
 export 'models/configs/metadata_config.dart';
 export 'models/configs/mix_config.dart';
 export 'models/configs/modulation_config.dart';
+export 'models/configs/modulation_target_catalog.dart';
 export 'models/configs/normalization_config.dart';
 export 'models/configs/processor_config.dart';
 export 'models/configs/render_config.dart';

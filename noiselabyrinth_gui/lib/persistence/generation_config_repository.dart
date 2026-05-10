@@ -58,21 +58,16 @@ class ObjectBoxGenerationConfigRepository
 
   @override
   Future<int> save(GenerationConfig config) async {
-    final existing = _findByName(config.metadata.name);
-    final stored = existing ?? StoredGenerationConfig.fromConfig(config);
-    stored.updateFromConfig(config);
+    final stored = StoredGenerationConfig.fromConfig(config);
     return _box.put(stored);
   }
 
   @override
   Future<void> saveAll(Iterable<GenerationConfig> configs) async {
-    final storedItems = <StoredGenerationConfig>[];
-    for (final config in configs) {
-      final existing = _findByName(config.metadata.name);
-      final stored = existing ?? StoredGenerationConfig.fromConfig(config);
-      stored.updateFromConfig(config);
-      storedItems.add(stored);
-    }
+    final storedItems =
+        configs
+            .map(StoredGenerationConfig.fromConfig)
+            .toList(growable: false);
 
     _box.putMany(storedItems);
   }
@@ -81,15 +76,6 @@ class ObjectBoxGenerationConfigRepository
   Future<void> seedIfEmpty(Iterable<GenerationConfig> configs) async {
     if (_box.isEmpty()) {
       await saveAll(configs);
-    }
-  }
-
-  StoredGenerationConfig? _findByName(String name) {
-    final query = _box.query(StoredGenerationConfig_.name.equals(name)).build();
-    try {
-      return query.findFirst();
-    } finally {
-      query.close();
     }
   }
 }

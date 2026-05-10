@@ -8,18 +8,20 @@ class DriftModulator implements Modulator {
     required this.sampleRate,
     required this.speed,
     required this.range,
+    int seed = 0,
   }) : _stepPerSample = (sampleRate > 0 ? (speed / sampleRate) : 0.0).clamp(
          0.0,
          1.0,
        ),
-       _clampedRange = range.abs();
+       _clampedRange = range.abs(),
+       _rngState = _nonZeroSeed(seed);
   final int sampleRate;
   final double speed;
   final double range;
   final double _stepPerSample;
   final double _clampedRange;
 
-  int _rngState = 0x5F37_59DF;
+  int _rngState;
   double _value = 0;
 
   @override
@@ -51,4 +53,9 @@ class DriftModulator implements Modulator {
 
   @override
   void trigger() {}
+
+  static int _nonZeroSeed(int seed) {
+    final normalized = seed & 0xFFFFFFFF;
+    return normalized == 0 ? 0x5F3759DF : normalized;
+  }
 }

@@ -1,5 +1,7 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'dart:typed_data';
 
+import 'package:flutter_test/flutter_test.dart';
+import 'package:noiselabyrinth_core/engine/modulators/modulator_factory.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
 void main() {
@@ -244,6 +246,66 @@ void main() {
       expect(bandpass.resonant, isTrue);
       expect(peak.mode, BiquadMode.peak);
       expect(peak.resonant, isFalse);
+    });
+
+    test('random modulators with different ids no longer share default seed', () {
+      final configA = ModulationConfig(
+        id: 'random-a',
+        type: ModulationType.random,
+        randomConfig: RandomConfig(rateHz: 0.5, smooth: 0.4),
+        targets: <ModulationTargetConfig>[
+          ModulationTargetConfig(path: 'layers[layer-a].pan'),
+        ],
+      );
+      final configB = ModulationConfig(
+        id: 'random-b',
+        type: ModulationType.random,
+        randomConfig: RandomConfig(rateHz: 0.5, smooth: 0.4),
+        targets: <ModulationTargetConfig>[
+          ModulationTargetConfig(path: 'layers[layer-a].pan'),
+        ],
+      );
+
+      final modA = ModulatorFactory.create(configA, 44100);
+      final modB = ModulatorFactory.create(configB, 44100);
+      final bufferA = Float32List(64);
+      final bufferB = Float32List(64);
+
+      modA.process(64, bufferA);
+      modB.process(64, bufferB);
+
+      expect(bufferA, isNot(equals(bufferB)));
+    });
+
+    test('explicit stochastic seed can intentionally align random modulators', () {
+      final configA = ModulationConfig(
+        id: 'random-a',
+        type: ModulationType.random,
+        seed: 20260511,
+        randomConfig: RandomConfig(rateHz: 0.5, smooth: 0.4),
+        targets: <ModulationTargetConfig>[
+          ModulationTargetConfig(path: 'layers[layer-a].pan'),
+        ],
+      );
+      final configB = ModulationConfig(
+        id: 'random-b',
+        type: ModulationType.random,
+        seed: 20260511,
+        randomConfig: RandomConfig(rateHz: 0.5, smooth: 0.4),
+        targets: <ModulationTargetConfig>[
+          ModulationTargetConfig(path: 'layers[layer-a].pan'),
+        ],
+      );
+
+      final modA = ModulatorFactory.create(configA, 44100);
+      final modB = ModulatorFactory.create(configB, 44100);
+      final bufferA = Float32List(64);
+      final bufferB = Float32List(64);
+
+      modA.process(64, bufferA);
+      modB.process(64, bufferB);
+
+      expect(bufferA, equals(bufferB));
     });
   });
 }

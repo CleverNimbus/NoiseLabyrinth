@@ -12,6 +12,7 @@ import 'package:noiselabyrinth_core/models/configs/event_config.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
 import 'package:noiselabyrinth_core/models/configs/modulation_config.dart';
+import 'package:noiselabyrinth_core/models/configs/modulation_target_catalog.dart';
 import 'package:noiselabyrinth_core/models/configs/processor_config.dart';
 import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
@@ -261,13 +262,13 @@ class RuntimeGraphBuilder {
         config.id,
         'gain',
         layerGain,
-        pathAliases: <String>['layers[${config.id}].gain'],
+        pathAliases: <String>[ModulationTargetCatalog.layerGainPath(config.id)],
       )
       ..register(
         config.id,
         'pan',
         layerPan,
-        pathAliases: <String>['layers[${config.id}].pan'],
+        pathAliases: <String>[ModulationTargetCatalog.layerPanPath(config.id)],
       );
 
     final source = NodeFactory.createSource(config.source)..id = '${config.id}.source';
@@ -449,13 +450,13 @@ class RuntimeGraphBuilder {
           nodeId,
           'bandLow',
           source.parameters['bandLow']!,
-          pathAliases: <String>['layers[$layerId].source.noise.band.low'],
+          pathAliases: <String>[ModulationTargetCatalog.noiseBandLowPath(layerId)],
         )
         ..register(
           nodeId,
           'bandHigh',
           source.parameters['bandHigh']!,
-          pathAliases: <String>['layers[$layerId].source.noise.band.high'],
+          pathAliases: <String>[ModulationTargetCatalog.noiseBandHighPath(layerId)],
         );
       return;
     }
@@ -466,13 +467,13 @@ class RuntimeGraphBuilder {
           nodeId,
           'frequencyHz',
           source.parameters['frequencyHz']!,
-          pathAliases: <String>['layers[$layerId].source.sine.frequencyHz'],
+          pathAliases: <String>[ModulationTargetCatalog.sineFrequencyHzPath(layerId)],
         )
         ..register(
           nodeId,
           'phase',
           source.parameters['phase']!,
-          pathAliases: <String>['layers[$layerId].source.sine.phase'],
+          pathAliases: <String>[ModulationTargetCatalog.sinePhasePath(layerId)],
         );
       return;
     }
@@ -483,13 +484,13 @@ class RuntimeGraphBuilder {
           nodeId,
           'density',
           source.parameters['density']!,
-          pathAliases: <String>['layers[$layerId].source.impulse.density'],
+          pathAliases: <String>[ModulationTargetCatalog.impulseDensityPath(layerId)],
         )
         ..register(
           nodeId,
           'randomness',
           source.parameters['randomness']!,
-          pathAliases: <String>['layers[$layerId].source.impulse.randomness'],
+          pathAliases: <String>[ModulationTargetCatalog.impulseRandomnessPath(layerId)],
         );
     }
   }
@@ -509,7 +510,7 @@ class RuntimeGraphBuilder {
           'frequency',
           processor.parameters['frequency']!,
           pathAliases: <String>[
-            'layers[$layerId].processors[$processorId].biquad.frequency',
+            ModulationTargetCatalog.biquadFrequencyPath(layerId, processorId),
           ],
         )
         ..register(
@@ -517,7 +518,7 @@ class RuntimeGraphBuilder {
           'q',
           processor.parameters['q']!,
           pathAliases: <String>[
-            'layers[$layerId].processors[$processorId].biquad.q',
+            ModulationTargetCatalog.biquadQPath(layerId, processorId),
           ],
         )
         ..register(
@@ -525,7 +526,7 @@ class RuntimeGraphBuilder {
           'gainDb',
           processor.parameters['gainDb']!,
           pathAliases: <String>[
-            'layers[$layerId].processors[$processorId].biquad.gainDb',
+            ModulationTargetCatalog.biquadGainDbPath(layerId, processorId),
           ],
         );
       return;
@@ -537,7 +538,7 @@ class RuntimeGraphBuilder {
         'gain',
         processor.parameters['gain']!,
         pathAliases: <String>[
-          'layers[$layerId].processors[$processorId].gain.gain',
+          ModulationTargetCatalog.gainProcessorGainPath(layerId, processorId),
         ],
       );
       return;
@@ -549,7 +550,7 @@ class RuntimeGraphBuilder {
         'drive',
         processor.parameters['drive']!,
         pathAliases: <String>[
-          'layers[$layerId].processors[$processorId].saturator.drive',
+          ModulationTargetCatalog.saturatorDrivePath(layerId, processorId),
         ],
       );
       return;
@@ -562,7 +563,7 @@ class RuntimeGraphBuilder {
           'delayTimeMs',
           processor.parameters['delayTimeMs']!,
           pathAliases: <String>[
-            'layers[$layerId].processors[$processorId].delay.delayTimeMs',
+            ModulationTargetCatalog.delayTimeMsPath(layerId, processorId),
           ],
         )
         ..register(
@@ -570,7 +571,7 @@ class RuntimeGraphBuilder {
           'feedback',
           processor.parameters['feedback']!,
           pathAliases: <String>[
-            'layers[$layerId].processors[$processorId].delay.feedback',
+            ModulationTargetCatalog.delayFeedbackPath(layerId, processorId),
           ],
         )
         ..register(
@@ -578,7 +579,7 @@ class RuntimeGraphBuilder {
           'mix',
           processor.parameters['mix']!,
           pathAliases: <String>[
-            'layers[$layerId].processors[$processorId].delay.mix',
+            ModulationTargetCatalog.delayMixPath(layerId, processorId),
           ],
         );
     }

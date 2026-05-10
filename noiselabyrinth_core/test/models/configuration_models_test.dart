@@ -131,6 +131,7 @@ void main() {
       final config = ModulationConfig(
         id: 'mod-1',
         type: ModulationType.drift,
+        seed: 4242,
         amount: 12,
         targets: <ModulationTargetConfig>[
           ModulationTargetConfig(
@@ -146,6 +147,7 @@ void main() {
       final restored = ModulationConfig.fromJson(config.toJson());
       expect(restored.id, 'mod-1');
       expect(restored.type, ModulationType.drift);
+      expect(restored.seed, 4242);
       expect(restored.amount, 12);
       expect(
         restored.targets.single.path,

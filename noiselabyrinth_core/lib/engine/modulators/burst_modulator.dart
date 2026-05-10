@@ -15,12 +15,14 @@ class BurstModulator implements Modulator {
     required this.clusterMin,
     required this.clusterMax,
     required this.clusterSpreadMs,
+    int seed = 0,
   }) : _attackSamples = _msToSamplesStatic(sampleRate, attackMs),
        _releaseSamples = _msToSamplesStatic(sampleRate, releaseMs),
        _clusterSpreadSamples = _msToSamplesStatic(sampleRate, clusterSpreadMs),
        _maxLifeSamples = _msToSamplesStatic(sampleRate, durationMs),
        _clampedIntensity = intensity.clamp(0.0, 1.0),
-       _clampedRandomness = randomness.clamp(0.0, 1.0);
+       _clampedRandomness = randomness.clamp(0.0, 1.0),
+       _rngState = _nonZeroSeed(seed);
   final int sampleRate;
   final int durationMs;
   final double intensity;
@@ -38,7 +40,7 @@ class BurstModulator implements Modulator {
   final double _clampedIntensity;
   final double _clampedRandomness;
 
-  int _rngState = 0x7A5B_3C2D;
+  int _rngState;
   final List<_ScheduledBurst> _scheduledBursts = <_ScheduledBurst>[];
   final List<_ActiveBurst> _activeBursts = <_ActiveBurst>[];
 
@@ -143,6 +145,11 @@ class BurstModulator implements Modulator {
   double _nextUnit01() {
     _rngState = nextXorshift32(_rngState);
     return (_rngState & 0x7FFFFFFF) / 2147483647.0;
+  }
+
+  static int _nonZeroSeed(int seed) {
+    final normalized = seed & 0xFFFFFFFF;
+    return normalized == 0 ? 0x7A5B3C2D : normalized;
   }
 }
 

@@ -37,6 +37,8 @@ class RuntimeModulationBinding {
 
 class ModulatorFactory {
   static Modulator create(ModulationConfig config, int sampleRate) {
+    final stochasticSeed = _resolveSeed(config);
+
     switch (config.type) {
       case ModulationType.lfo:
         final lfo = config.lfoConfig;
@@ -57,6 +59,7 @@ class ModulatorFactory {
           sampleRate: sampleRate,
           rateHz: random.rateHz,
           smooth: random.smooth,
+          seed: stochasticSeed,
         );
       case ModulationType.drift:
         final drift = config.driftConfig;
@@ -67,6 +70,7 @@ class ModulatorFactory {
           sampleRate: sampleRate,
           speed: drift.speed,
           range: drift.range,
+          seed: stochasticSeed,
         );
       case ModulationType.envelope:
         final envelope = config.envelopeConfig;
@@ -97,7 +101,23 @@ class ModulatorFactory {
           clusterMin: burst.clusterMin,
           clusterMax: burst.clusterMax,
           clusterSpreadMs: burst.clusterSpreadMs,
+          seed: stochasticSeed,
         );
     }
+  }
+
+  static int _resolveSeed(ModulationConfig config) {
+    if (config.seed != 0) {
+      return config.seed;
+    }
+
+    var hash = 2166136261;
+    final source = '${config.type.name}:${config.id}';
+    for (final codeUnit in source.codeUnits) {
+      hash ^= codeUnit;
+      hash = (hash * 16777619) & 0xFFFFFFFF;
+    }
+
+    return hash == 0 ? 0x13579BDF : hash;
   }
 }

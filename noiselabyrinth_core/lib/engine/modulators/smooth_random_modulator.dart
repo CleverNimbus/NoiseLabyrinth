@@ -9,18 +9,20 @@ class SmoothRandomModulator implements Modulator {
     required this.sampleRate,
     required this.rateHz,
     required this.smooth,
+    int seed = 0,
   }) : _segmentSamples = math.max(
          1,
          (sampleRate / (rateHz <= 0.0 ? 0.01 : rateHz)).round(),
        ),
-       _followFactor = (1.0 - smooth).clamp(0.001, 1.0);
+       _followFactor = (1.0 - smooth).clamp(0.001, 1.0),
+       _rngState = _nonZeroSeed(seed);
   final int sampleRate;
   final double rateHz;
   final double smooth;
   final int _segmentSamples;
   final double _followFactor;
 
-  int _rngState = 0xA3C59AC3;
+  int _rngState;
   double _current = 0;
   double _target = 0;
   int _samplesUntilTarget = 0;
@@ -54,5 +56,10 @@ class SmoothRandomModulator implements Modulator {
   double _nextRandomBiPolar() {
     _rngState = nextXorshift32(_rngState);
     return ((_rngState & 0x7FFFFFFF) / 1073741824.0) - 1.0;
+  }
+
+  static int _nonZeroSeed(int seed) {
+    final normalized = seed & 0xFFFFFFFF;
+    return normalized == 0 ? 0xA3C59AC3 : normalized;
   }
 }

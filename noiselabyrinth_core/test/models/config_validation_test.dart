@@ -479,5 +479,96 @@ void main() {
         isTrue,
       );
     });
+
+    test('validation rejects cross-layer modulation targets', () {
+      final parser = GenerationConfigParser();
+
+      final error = _expectValidationFailure(
+        parser,
+        _validRoot(
+          layers: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'layer-a',
+              'source': <String, dynamic>{
+                'type': 'sine',
+                'sineConfig': <String, dynamic>{'frequencyHz': 220, 'phase': 0},
+              },
+              'modulations': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'mod-1',
+                  'type': 'lfo',
+                  'lfoConfig': <String, dynamic>{'frequency': 1.0, 'depth': 1.0},
+                  'targets': <Map<String, dynamic>>[
+                    <String, dynamic>{'path': 'layers[layer-b].pan'},
+                  ],
+                },
+              ],
+            },
+            <String, dynamic>{
+              'id': 'layer-b',
+              'source': <String, dynamic>{
+                'type': 'sine',
+                'sineConfig': <String, dynamic>{'frequencyHz': 330, 'phase': 0},
+              },
+            },
+          ],
+        ),
+      );
+
+      expect(
+        error.issues.any(
+          (issue) => issue.path == 'layers[0].modulations[0].targets[0].path',
+        ),
+        isTrue,
+      );
+    });
+
+    test('validation rejects targets for inactive processor branches', () {
+      final parser = GenerationConfigParser();
+
+      final error = _expectValidationFailure(
+        parser,
+        _validRoot(
+          layers: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'layer-a',
+              'source': <String, dynamic>{
+                'type': 'noise',
+                'noiseConfig': <String, dynamic>{
+                  'color': 'white',
+                  'band': <String, dynamic>{'low': 20, 'high': 20000},
+                },
+              },
+              'processors': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'gain-1',
+                  'type': 'gain',
+                  'gain': <String, dynamic>{'gain': 1.0},
+                },
+              ],
+              'modulations': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'mod-1',
+                  'type': 'lfo',
+                  'lfoConfig': <String, dynamic>{'frequency': 1.0, 'depth': 1.0},
+                  'targets': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'path': 'layers[layer-a].processors[gain-1].delay.mix',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        ),
+      );
+
+      expect(
+        error.issues.any(
+          (issue) => issue.path == 'layers[0].modulations[0].targets[0].path',
+        ),
+        isTrue,
+      );
+    });
   });
 }

@@ -5,6 +5,7 @@ class ModulationConfig {
   ModulationConfig({
     required this.id,
     required this.type,
+    this.seed = 0,
     this.amount = 0.0,
     this.lfoConfig,
     this.randomConfig,
@@ -20,6 +21,7 @@ class ModulationConfig {
     return ModulationConfig(
       id: json['id'] as String? ?? '',
       type: parsedType,
+      seed: json['seed'] as int? ?? 0,
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       lfoConfig: json['lfoConfig'] != null ? LfoConfig.fromJson(json['lfoConfig'] as Map<String, dynamic>) : null,
       randomConfig: json['randomConfig'] != null
@@ -54,6 +56,9 @@ class ModulationConfig {
   /// Selected modulation source type.
   ModulationType type;
 
+  /// Optional deterministic seed for stochastic modulator variants.
+  int seed;
+
   /// Global scaling amount applied by this modulation source.
   double amount;
 
@@ -79,6 +84,7 @@ class ModulationConfig {
     return {
       'id': id,
       'type': type.name,
+      if (seed != 0) 'seed': seed,
       'amount': amount,
       if (lfoConfig != null) 'lfoConfig': lfoConfig!.toJson(),
       if (randomConfig != null) 'randomConfig': randomConfig!.toJson(),
