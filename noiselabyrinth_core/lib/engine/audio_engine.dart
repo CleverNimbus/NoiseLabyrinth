@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:noiselabyrinth_core/engine/event_engine.dart';
 import 'package:noiselabyrinth_core/engine/modulation_engine.dart';
 import 'package:noiselabyrinth_core/engine/runtime_graph_builder.dart';
-import 'package:noiselabyrinth_core/engine/wav_encoder.dart';
 import 'package:noiselabyrinth_core/models/smoothed_parameter.dart';
 
 /// Container for audio buffers associated with a layer.
@@ -189,28 +188,6 @@ class AudioEngine {
     _applyNormalizationStereo(left, right);
 
     return StereoSamples(left: left, right: right);
-  }
-
-  /// Renders audio to WAV format bytes.
-  ///
-  /// Returns a [Uint8List] containing PCM16 stereo WAV data.
-  /// Throws [ArgumentError] if [durationSeconds] is not positive.
-  Uint8List renderWavBytes({required int durationSeconds}) {
-    if (durationSeconds <= 0) {
-      throw ArgumentError.value(
-        durationSeconds,
-        'durationSeconds',
-        'durationSeconds must be > 0.',
-      );
-    }
-
-    final totalSamples = sampleRate * durationSeconds;
-    final stereo = renderStereoSamples(totalSamples: totalSamples);
-    return WavEncoder.encodePcm16Stereo(
-      left: stereo.left,
-      right: stereo.right,
-      sampleRate: sampleRate,
-    );
   }
 
   /// Allocates audio buffers for all layers and initializes gain/pan smoothing.

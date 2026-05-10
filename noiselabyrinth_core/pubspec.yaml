@@ -10,7 +10,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_lame: ^1.0.3
   scidart: ^0.0.2-dev.12
 
 dev_dependencies:

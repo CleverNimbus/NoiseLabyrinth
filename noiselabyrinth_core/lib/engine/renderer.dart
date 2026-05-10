@@ -1,102 +1,84 @@
+import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:flutter_lame/flutter_lame.dart';
 import 'package:noiselabyrinth_core/engine/audio_engine.dart';
 import 'package:noiselabyrinth_core/engine/runtime_graph_builder.dart';
-import 'package:noiselabyrinth_core/engine/wav_encoder.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
-import 'package:noiselabyrinth_core/models/enums.dart';
 
 /// Render context assembled from a [GenerationConfig] before rendering starts.
 class _RenderContext {
   _RenderContext({
     required this.engine,
     required this.totalSamples,
-    required this.bitRate,
   });
   final AudioEngine engine;
   final int totalSamples;
-  final int bitRate;
 }
 
-/// Top-level output renderer.
+/// Top-level PCM renderer.
 ///
-/// Use [render] to dispatch to WAV or MP3 according to [GenerationConfig.render]
-/// and [RenderConfig.format].
-/// Use [renderWav] or [renderMp3] to target a specific format directly.
+/// Core renders stereo floating-point PCM only. Container and codec
+/// responsibilities (WAV, MP3, etc.) belong to consumer packages.
 class Renderer {
   const Renderer._();
 
-  /// Renders the full output described by [config] and returns the encoded bytes.
+  /// Renders the full output described by [config] as stereo float PCM.
   ///
-  /// The format is determined by [RenderConfig.format]:
-  /// - [RenderFormat.wav] → PCM-16 stereo WAV
-  /// - [RenderFormat.mp3] → MP3 encoded via LAME (async)
-  static Future<Uint8List> render(GenerationConfig config) {
-    return switch (config.render.format) {
-      RenderFormat.wav => Future.value(renderWav(config)),
-      RenderFormat.mp3 => renderMp3(config),
-    };
-  }
-
-  /// Renders to PCM-16 stereo WAV bytes.
-  static Uint8List renderWav(GenerationConfig config) {
+  /// Normalization and DC blocking from [config] are applied before returning.
+  static StereoSamples renderPcm(GenerationConfig config) {
     final ctx = _buildContext(config);
     final stereo = ctx.engine.renderStereoSamples(
       totalSamples: ctx.totalSamples,
     );
     _applyFinalDcBlocker(stereo, enabled: config.render.dcBlockerEnabled);
-    return WavEncoder.encodePcm16Stereo(
-      left: stereo.left,
-      right: stereo.right,
-      sampleRate: config.render.sampleRate,
-    );
+    return stereo;
   }
 
-  /// Renders to MP3 bytes using the LAME encoder.
+  /// Renders stereo float PCM as an async chunk stream.
   ///
-  /// Encoding is async because LAME runs in a separate isolate.
-  static Future<Uint8List> renderMp3(GenerationConfig config) async {
+  /// Each yielded [StereoSamples] covers one engine block worth of samples.
+  /// Normalization and DC blocking are applied incrementally per chunk.
+  static Stream<StereoSamples> renderPcmChunks(GenerationConfig config) async* {
+    final normalizationGain = _resolveNormalizationGain(config);
     final ctx = _buildContext(config);
-    final stereo = ctx.engine.renderStereoSamples(
-      totalSamples: ctx.totalSamples,
-    );
-    _applyFinalDcBlocker(stereo, enabled: config.render.dcBlockerEnabled);
+    final blockSize = ctx.engine.blockSize;
+    var renderedSamples = 0;
+    var previousLeftInput = 0.0;
+    var previousLeftOutput = 0.0;
+    var previousRightInput = 0.0;
+    var previousRightOutput = 0.0;
 
-    final encoder = LameMp3Encoder(
-      sampleRate: config.render.sampleRate,
-      bitRate: ctx.bitRate,
-    );
+    while (renderedSamples < ctx.totalSamples) {
+      ctx.engine.processBlocks(1);
 
-    // Chunk size aligned to sampleRate to keep LAME happy with frame boundaries.
-    final chunkSize = config.render.sampleRate;
-    final leftPcm = Int16List(chunkSize);
-    final rightPcm = Int16List(chunkSize);
-    final builder = BytesBuilder(copy: false);
+      final remaining = ctx.totalSamples - renderedSamples;
+      final copyCount = (remaining < blockSize) ? remaining : blockSize;
+      final left = Float32List(copyCount);
+      final right = Float32List(copyCount);
 
-    try {
-      var offset = 0;
-      while (offset < ctx.totalSamples) {
-        final end = (offset + chunkSize).clamp(0, ctx.totalSamples);
-        final length = end - offset;
-        _fillInt16(stereo.left, offset, end, leftPcm);
-        _fillInt16(stereo.right, offset, end, rightPcm);
-        final leftChunk = Int16List.sublistView(leftPcm, 0, length);
-        final rightChunk = Int16List.sublistView(rightPcm, 0, length);
-        builder.add(
-          await encoder.encode(
-            leftChannel: leftChunk,
-            rightChannel: rightChunk,
-          ),
-        );
-        offset = end;
+      for (var i = 0; i < copyCount; i++) {
+        var l = ctx.engine.masterLeftBuffer[i] * normalizationGain;
+        var r = ctx.engine.masterRightBuffer[i] * normalizationGain;
+
+        if (config.render.dcBlockerEnabled) {
+          final nextLeft = l - previousLeftInput + 0.995 * previousLeftOutput;
+          previousLeftInput = l;
+          previousLeftOutput = nextLeft;
+          l = nextLeft;
+
+          final nextRight = r - previousRightInput + 0.995 * previousRightOutput;
+          previousRightInput = r;
+          previousRightOutput = nextRight;
+          r = nextRight;
+        }
+
+        left[i] = l;
+        right[i] = r;
       }
-      builder.add(await encoder.flush());
-    } finally {
-      await encoder.close();
-    }
 
-    return builder.takeBytes();
+      renderedSamples += copyCount;
+      yield StereoSamples(left: left, right: right);
+    }
   }
 
   static _RenderContext _buildContext(GenerationConfig config) {
@@ -109,18 +91,53 @@ class Renderer {
       blockSize: 512,
     );
     final totalSamples = config.render.sampleRate * config.render.durationMinutes * 60;
-    return _RenderContext(
-      engine: engine,
-      totalSamples: totalSamples,
-      bitRate: config.render.bitRate,
-    );
+    return _RenderContext(engine: engine, totalSamples: totalSamples);
+  }
+
+  static double _resolveNormalizationGain(GenerationConfig config) {
+    final normalization = config.mix.normalization;
+    if (!normalization.enabled) {
+      return 1;
+    }
+
+    final probe = _buildContext(config);
+    final blockSize = probe.engine.blockSize;
+    var renderedSamples = 0;
+    var peak = 0.0;
+
+    while (renderedSamples < probe.totalSamples) {
+      probe.engine.processBlocks(1);
+
+      final remaining = probe.totalSamples - renderedSamples;
+      final copyCount = (remaining < blockSize) ? remaining : blockSize;
+      for (var i = 0; i < copyCount; i++) {
+        final leftAbs = probe.engine.masterLeftBuffer[i].abs();
+        final rightAbs = probe.engine.masterRightBuffer[i].abs();
+        final blockPeak = leftAbs > rightAbs ? leftAbs : rightAbs;
+        if (blockPeak > peak) {
+          peak = blockPeak;
+        }
+      }
+
+      renderedSamples += copyCount;
+    }
+
+    if (peak <= 0.0) {
+      return 1;
+    }
+
+    final targetLinear = _dbToLinear(normalization.targetDb);
+    return targetLinear / peak;
+  }
+
+  static double _dbToLinear(double db) {
+    return pow(10.0, db / 20.0).toDouble();
   }
 
   static void _applyFinalDcBlocker(StereoSamples stereo, {required bool enabled}) {
     if (!enabled) {
       return;
     }
-
     _applyDcBlockerInPlace(stereo.left);
     _applyDcBlockerInPlace(stereo.right);
   }
@@ -129,22 +146,12 @@ class Renderer {
     const feedback = 0.995;
     var previousInput = 0.0;
     var previousOutput = 0.0;
-
     for (var i = 0; i < buffer.length; i++) {
       final input = buffer[i];
       final output = input - previousInput + feedback * previousOutput;
       buffer[i] = output;
       previousInput = input;
       previousOutput = output;
-    }
-  }
-
-  // Fills [out] with PCM-16 values from [src] in [start, end).
-  static void _fillInt16(Float32List src, int start, int end, Int16List out) {
-    for (var i = start; i < end; i++) {
-      final sample = src[i];
-      final clamped = sample < -1.0 ? -1.0 : (sample > 1.0 ? 1.0 : sample);
-      out[i - start] = (clamped * 32767.0).round();
     }
   }
 }

@@ -9,6 +9,7 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
+  flutter_lame: ^1.0.3
   mcfcc_nsn: ^1.0.0
   noiselabyrinth_core:
     path: ../noiselabyrinth_core

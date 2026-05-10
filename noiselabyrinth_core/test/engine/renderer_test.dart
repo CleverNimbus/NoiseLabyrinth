@@ -1,9 +1,7 @@
-import 'dart:typed_data';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 
-// Minimal config shared across tests — 1-second WAV at 8 kHz for speed.
+// Minimal config shared across tests — 1-minute run at 8 kHz for speed.
 GenerationConfig _minimalConfig({
   RenderFormat format = RenderFormat.wav,
   int durationMinutes = 1,
@@ -44,79 +42,47 @@ GenerationConfig _minimalConfig({
   });
 }
 
-double _meanPcmSample(Uint8List wavBytes) {
-  final bd = wavBytes.buffer.asByteData();
+double _meanFloat32(Iterable<double> values) {
   var sum = 0.0;
   var count = 0;
-  for (var i = 44; i + 1 < wavBytes.length; i += 2) {
-    sum += bd.getInt16(i, Endian.little) / 32767.0;
+  for (final v in values) {
+    sum += v;
     count++;
   }
   return count == 0 ? 0.0 : sum / count;
 }
 
 void main() {
-  group('Renderer WAV', () {
-    test('renderWav returns valid PCM-16 stereo WAV bytes', () {
+  group('Renderer PCM', () {
+    test('renderPcm returns StereoSamples with correct sample count', () {
       final config = _minimalConfig();
-      final bytes = Renderer.renderWav(config);
+      final pcm = Renderer.renderPcm(config);
 
-      // RIFF magic
-      expect(bytes[0], equals(0x52)); // R
-      expect(bytes[1], equals(0x49)); // I
-      expect(bytes[2], equals(0x46)); // F
-      expect(bytes[3], equals(0x46)); // F
-
-      // WAVE magic at offset 8
-      expect(bytes[8], equals(0x57)); // W
-      expect(bytes[9], equals(0x41)); // A
-      expect(bytes[10], equals(0x56)); // V
-      expect(bytes[11], equals(0x45)); // E
-
-      // Channel count = 2 (stereo) at offset 22, little-endian uint16
-      final bd = bytes.buffer.asByteData();
-      expect(bd.getUint16(22, Endian.little), equals(2));
-
-      // Sample rate at offset 24
-      expect(bd.getUint32(24, Endian.little), equals(8000));
-
-      // Byte length = header(44) + samples * 4 bytes/frame
-      const totalSamples = 8000 * 1 * 60; // 1 minute
-      expect(bytes.length, equals(44 + totalSamples * 4));
+      const expectedSamples = 8000 * 1 * 60; // 1 minute
+      expect(pcm.left.length, equals(expectedSamples));
+      expect(pcm.right.length, equals(expectedSamples));
     });
 
-    test('renderWav respects very low sample rate in header and size', () {
+    test('renderPcm respects very low sample rate in output length', () {
       final config = _minimalConfig(sampleRate: 64);
-      final bytes = Renderer.renderWav(config);
+      final pcm = Renderer.renderPcm(config);
 
-      final bd = bytes.buffer.asByteData();
-      const totalSamples = 64 * 60;
-      expect(bd.getUint32(24, Endian.little), equals(64));
-      expect(bd.getUint32(40, Endian.little), equals(totalSamples * 4));
-      expect(bytes.length, equals(44 + totalSamples * 4));
+      const expectedSamples = 64 * 60;
+      expect(pcm.left.length, equals(expectedSamples));
+      expect(pcm.right.length, equals(expectedSamples));
     });
 
-    test(
-      'render() with wav format delegates to renderWav synchronously',
-      () async {
-        final config = _minimalConfig();
-        final bytes = await Renderer.render(config);
-        expect(bytes.length, greaterThan(44));
-        // RIFF header confirms WAV
-        expect(bytes[0], equals(0x52));
-      },
-    );
+    test('renderPcm output is non-zero for white noise source', () {
+      final config = _minimalConfig(sampleRate: 512, durationMinutes: 1);
+      final pcm = Renderer.renderPcm(config);
 
-    test('renderWav output is non-zero for white noise source', () {
-      final config = _minimalConfig();
-      final bytes = Renderer.renderWav(config);
-
-      // Check sample data region for non-zero content (noise should not be silent).
-      final sampleRegion = bytes.sublist(44, 44 + 64);
-      expect(sampleRegion.any((b) => b != 0), isTrue);
+      final firstLeft = pcm.left.take(64);
+      expect(firstLeft.any((s) => s != 0.0), isTrue);
     });
 
-    test('renderWav clamps overdriven float samples to PCM-16 limits', () {
+    test('renderPcm preserves float headroom for overdriven sources', () {
+      // In float PCM, overdriven samples are NOT hard-clipped to [-1.0, 1.0].
+      // The consumer is responsible for clamping when converting to integer PCM.
       final config = _minimalConfig(
         sampleRate: 128,
         source: <String, dynamic>{
@@ -126,43 +92,14 @@ void main() {
         layerGain: 4,
       );
 
-      final bytes = Renderer.renderWav(config);
-      final bd = bytes.buffer.asByteData();
+      final pcm = Renderer.renderPcm(config);
 
-      var sawPositiveClip = false;
-      var sawNegativeClip = false;
-
-      for (var i = 44; i + 1 < bytes.length; i += 2) {
-        final sample = bd.getInt16(i, Endian.little);
-        if (sample == 32767) {
-          sawPositiveClip = true;
-        }
-        if (sample == -32767) {
-          sawNegativeClip = true;
-        }
-      }
-
-      expect(sawPositiveClip, isTrue);
-      expect(sawNegativeClip, isTrue);
+      // A 4× overdriven sine should produce peaks well outside [-1.0, 1.0].
+      expect(pcm.left.any((s) => s > 1.0 || s < -1.0), isTrue);
     });
 
-    test('render() wav path returns identical bytes as renderWav()', () async {
-      final config = _minimalConfig(
-        sampleRate: 256,
-        source: <String, dynamic>{
-          'type': 'sine',
-          'sineConfig': <String, dynamic>{'frequencyHz': 64, 'phase': 0},
-        },
-      );
-
-      final direct = Renderer.renderWav(config);
-      final viaDispatch = await Renderer.render(config);
-
-      expect(viaDispatch, orderedEquals(direct));
-    });
-
-    test('renderWav applies final-stage DC blocker by default', () {
-      final withoutDcBlocker = Renderer.renderWav(
+    test('renderPcm applies final-stage DC blocker by default', () {
+      final withoutDcBlocker = Renderer.renderPcm(
         _minimalConfig(
           sampleRate: 256,
           dcBlockerEnabled: false,
@@ -175,7 +112,7 @@ void main() {
           },
         ),
       );
-      final withDcBlocker = Renderer.renderWav(
+      final withDcBlocker = Renderer.renderPcm(
         _minimalConfig(
           sampleRate: 256,
           source: <String, dynamic>{
@@ -188,36 +125,45 @@ void main() {
         ),
       );
 
-      final meanWithout = _meanPcmSample(withoutDcBlocker);
-      final meanWith = _meanPcmSample(withDcBlocker);
+      final meanWithout = _meanFloat32(withoutDcBlocker.left);
+      final meanWith = _meanFloat32(withDcBlocker.left);
 
       expect(meanWithout, greaterThan(0.9));
       expect(meanWith.abs(), lessThan(0.05));
     });
-  });
 
-  group('Renderer MP3', () {
-    test(
-      'render() with mp3 format returns bytes',
-      () async {
-        final config = _minimalConfig(
-          format: RenderFormat.mp3,
-        );
-        final bytes = await Renderer.render(config);
-        expect(bytes.isNotEmpty, isTrue);
-      },
-    );
+    test('renderPcmChunks total sample count matches renderPcm', () async {
+      final config = _minimalConfig(sampleRate: 256);
+      final expected = Renderer.renderPcm(config).left.length;
 
-    test('render() mp3 path does not return a WAV RIFF header', () async {
-      final config = _minimalConfig(
-        format: RenderFormat.mp3,
-      );
-      final bytes = await Renderer.render(config);
-
-      if (bytes.length >= 4) {
-        final isRiff = bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46;
-        expect(isRiff, isFalse);
+      var streamedSamples = 0;
+      await for (final chunk in Renderer.renderPcmChunks(config)) {
+        streamedSamples += chunk.left.length;
       }
+
+      expect(streamedSamples, equals(expected));
+    });
+
+    test('renderPcmChunks produces samples identical to renderPcm', () async {
+      final config = _minimalConfig(
+        sampleRate: 256,
+        source: <String, dynamic>{
+          'type': 'sine',
+          'sineConfig': <String, dynamic>{'frequencyHz': 64, 'phase': 0},
+        },
+      );
+
+      final direct = Renderer.renderPcm(config);
+
+      final leftFromChunks = <double>[];
+      final rightFromChunks = <double>[];
+      await for (final chunk in Renderer.renderPcmChunks(config)) {
+        leftFromChunks.addAll(chunk.left);
+        rightFromChunks.addAll(chunk.right);
+      }
+
+      expect(leftFromChunks, orderedEquals(direct.left));
+      expect(rightFromChunks, orderedEquals(direct.right));
     });
   });
 

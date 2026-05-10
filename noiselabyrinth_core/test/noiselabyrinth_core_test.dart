@@ -1065,12 +1065,12 @@ void main() {
       expect(audiblePeak, greaterThan(0.0));
     });
 
-    test('engine can render raw noise WAV bytes', () {
+    test('engine can render stereo PCM samples for one second', () {
       final parser = GenerationConfigParser();
       const graphBuilder = RuntimeGraphBuilder();
 
       final config = parser.parseJsonMap(<String, dynamic>{
-        'metadata': <String, dynamic>{'name': 'WAV Patch'},
+        'metadata': <String, dynamic>{'name': 'PCM Patch'},
         'render': <String, dynamic>{
           'durationMinutes': 1,
           'sampleRate': 44100,
@@ -1105,16 +1105,12 @@ void main() {
         blockSize: 128,
       );
 
-      final wav = engine.renderWavBytes(durationSeconds: 1);
-      final header = ByteData.sublistView(wav, 0, 44);
+      const expectedSamples = 44100;
+      final stereo = engine.renderStereoSamples(totalSamples: expectedSamples);
 
-      expect(String.fromCharCodes(wav.sublist(0, 4)), 'RIFF');
-      expect(String.fromCharCodes(wav.sublist(8, 12)), 'WAVE');
-      expect(String.fromCharCodes(wav.sublist(36, 40)), 'data');
-      expect(header.getUint16(22, Endian.little), 2); // stereo
-      expect(header.getUint16(34, Endian.little), 16); // 16-bit pcm
-      expect(header.getUint32(24, Endian.little), 44100);
-      expect(wav.length, 44 + (44100 * 4));
+      expect(stereo.left.length, equals(expectedSamples));
+      expect(stereo.right.length, equals(expectedSamples));
+      expect(stereo.left.any((s) => s != 0.0), isTrue);
     });
 
     test('engine renders filtered low-passed noise waveform', () {

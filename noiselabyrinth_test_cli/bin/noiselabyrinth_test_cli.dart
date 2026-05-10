@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter_lame/flutter_lame.dart';
 import 'package:mcfcc_nsn/mcfcc_nsn.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 import 'package:noiselabyrinth_test_cli/noiselabyrinth_test_cli.dart';
@@ -57,7 +58,7 @@ Future<void> main(List<String> arguments) async {
     try {
       await outputDirectory.create(recursive: true);
       final generationStopwatch = Stopwatch()..start();
-      final bytes = await Renderer.renderMp3(config);
+      final bytes = await _renderMp3(config);
       await File(outputPath).writeAsBytes(bytes, flush: true);
       generationStopwatch.stop();
       final generationDuration = generationStopwatch.elapsed;
@@ -77,6 +78,40 @@ Future<void> main(List<String> arguments) async {
 
     stdout.writeln();
   }
+}
+
+/// Renders [config] to MP3 bytes by consuming stereo float PCM chunks
+/// from core and encoding them directly with LAME.
+Future<Uint8List> _renderMp3(GenerationConfig config) async {
+  final encoder = LameMp3Encoder(
+    sampleRate: config.render.sampleRate,
+    bitRate: config.render.bitRate,
+  );
+  final encoded = BytesBuilder(copy: false);
+
+  try {
+    await for (final chunk in Renderer.renderPcmChunks(config)) {
+      final sampleCount = chunk.left.length;
+      final left = Int16List(sampleCount);
+      final right = Int16List(sampleCount);
+      for (var i = 0; i < sampleCount; i++) {
+        left[i] = _toPcm16(chunk.left[i]);
+        right[i] = _toPcm16(chunk.right[i]);
+      }
+      encoded.add(await encoder.encode(leftChannel: left, rightChannel: right));
+    }
+
+    encoded.add(await encoder.flush());
+    return encoded.takeBytes();
+  } finally {
+    await encoder.close();
+  }
+}
+
+/// Converts a normalized float sample [-1.0, 1.0] to a signed 16-bit integer.
+int _toPcm16(double sample) {
+  final clamped = sample < -1.0 ? -1.0 : (sample > 1.0 ? 1.0 : sample);
+  return (clamped * 32767.0).round();
 }
 
 Future<bool> writeId3Tags(
@@ -118,6 +153,9 @@ Future<bool> writeId3Tags(
   }
 }
 
+/// Extracts MFCC features from the rendered audio described by [config].
+///
+/// Audio is rendered as float stereo PCM directly; no WAV encode/decode round-trip.
 Map<String, Object?> extractMfccPayload(GenerationConfig config) {
   final sampleRate = config.render.sampleRate;
   final windowLength = max(1, (sampleRate * 0.025).round());
@@ -126,9 +164,10 @@ Map<String, Object?> extractMfccPayload(GenerationConfig config) {
   const numFilters = 40;
   const numCoefs = 13;
 
-  final wavBytes = Renderer.renderWav(config);
-  final monoSignal = _decodeMonoSignalFromPcm16StereoWav(wavBytes);
-  if (monoSignal.length < windowLength) {
+  final stereo = Renderer.renderPcm(config);
+  final totalSamples = stereo.left.length;
+
+  if (totalSamples < windowLength) {
     return {
       'sampleRate': sampleRate,
       'windowLength': windowLength,
@@ -139,6 +178,13 @@ Map<String, Object?> extractMfccPayload(GenerationConfig config) {
       'features': <List<double>>[],
     };
   }
+
+  // Mix stereo to mono directly in the float domain.
+  final monoSignal = List<double>.generate(
+    totalSamples,
+    (i) => (stereo.left[i] + stereo.right[i]) * 0.5,
+    growable: false,
+  );
 
   final features = MFCC.mfccFeats(
     monoSignal,
@@ -159,36 +205,6 @@ Map<String, Object?> extractMfccPayload(GenerationConfig config) {
     'numCoefs': numCoefs,
     'features': features,
   };
-}
-
-List<double> _decodeMonoSignalFromPcm16StereoWav(Uint8List wavBytes) {
-  if (wavBytes.lengthInBytes < 44) {
-    throw const FormatException('Invalid WAV data: header is too short.');
-  }
-
-  final byteData = ByteData.sublistView(wavBytes);
-  final channels = byteData.getUint16(22, Endian.little);
-  final bitsPerSample = byteData.getUint16(34, Endian.little);
-  if (channels != 2 || bitsPerSample != 16) {
-    throw FormatException(
-      'Unsupported WAV format for MFCC extraction: '
-      'channels=$channels, bitsPerSample=$bitsPerSample.',
-    );
-  }
-
-  final dataSize = byteData.getUint32(40, Endian.little);
-  final sampleCount = dataSize ~/ 4;
-  final mono = List<double>.filled(sampleCount, 0);
-
-  var offset = 44;
-  for (var i = 0; i < sampleCount; i++) {
-    final left = byteData.getInt16(offset, Endian.little) / 32768.0;
-    final right = byteData.getInt16(offset + 2, Endian.little) / 32768.0;
-    mono[i] = (left + right) * 0.5;
-    offset += 4;
-  }
-
-  return mono;
 }
 
 int _nextPowerOfTwo(int value) {
