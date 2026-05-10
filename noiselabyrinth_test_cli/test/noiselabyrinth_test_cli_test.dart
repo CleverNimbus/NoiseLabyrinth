@@ -1,3 +1,4 @@
+import 'package:noiselabyrinth_shared/noiselabyrinth_shared.dart';
 import 'package:noiselabyrinth_test_cli/noiselabyrinth_test_cli.dart';
 import 'package:test/test.dart';
 
@@ -15,7 +16,8 @@ void main() {
   });
 
   test('output filename includes menu entry and timestamp', () {
-    final filename = outputFilename(2, DateTime(2026, 5, 1, 9, 8, 7));
+    const outputPathPolicy = OutputPathPolicy();
+    final filename = outputPathPolicy.outputFilename(2, DateTime(2026, 5, 1, 9, 8, 7));
 
     expect(filename, '2_20260501_090807.mp3');
   });

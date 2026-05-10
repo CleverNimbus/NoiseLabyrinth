@@ -11,6 +11,8 @@
 .pub-preload-cache/
 *.jks
 *.lock
+**/.dart_tool/
+**/.flutter-plugins-dependencies
 **/android/**/GeneratedPluginRegistrant.java
 **/android/**/gradle-wrapper.jar
 **/android/captures/

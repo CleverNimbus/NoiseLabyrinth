@@ -12,10 +12,11 @@
       "console": "externalTerminal"
     },
     {
-      "name": "noiselabyrinth_gui",
+      "name": "noiselabyrinth_gui (Linux)",
       "cwd": "noiselabyrinth_gui",
       "request": "launch",
-      "type": "dart"
+      "type": "dart",
+      "deviceId": "linux"
     }
   ]
 }

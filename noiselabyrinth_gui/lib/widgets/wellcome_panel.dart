@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class WelcomePanelWidget extends StatelessWidget {
-  const WelcomePanelWidget({required this.onStart, super.key});
+class WelcomePanel extends StatelessWidget {
+  const WelcomePanel({required this.onStart, super.key});
 
   final VoidCallback onStart;
 

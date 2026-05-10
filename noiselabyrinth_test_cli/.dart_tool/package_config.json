@@ -212,6 +212,12 @@
       "languageVersion": "3.11"
     },
     {
+      "name": "noiselabyrinth_shared",
+      "rootUri": "../../noiselabyrinth_shared",
+      "packageUri": "lib/",
+      "languageVersion": "3.11"
+    },
+    {
       "name": "package_config",
       "rootUri": "file:///home/sefe/.pub-cache/hosted/pub.dev/package_config-2.2.0",
       "packageUri": "lib/",

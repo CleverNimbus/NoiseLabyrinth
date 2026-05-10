@@ -7,11 +7,8 @@
       "name": "noiselabyrinth_test_cli",
       "version": "1.0.0",
       "dependencies": [
-        "flutter_lame",
-        "mcfcc_nsn",
         "noiselabyrinth_core",
-        "path",
-        "phonic"
+        "noiselabyrinth_shared"
       ],
       "devDependencies": [
         "lints",
@@ -61,18 +58,16 @@
       "dependencies": []
     },
     {
-      "name": "phonic",
-      "version": "1.3.0",
+      "name": "noiselabyrinth_shared",
+      "version": "0.0.1",
       "dependencies": [
-        "collection",
-        "convert",
-        "equatable"
+        "flutter",
+        "flutter_lame",
+        "mcfcc_nsn",
+        "noiselabyrinth_core",
+        "path",
+        "phonic"
       ]
-    },
-    {
-      "name": "path",
-      "version": "1.9.1",
-      "dependencies": []
     },
     {
       "name": "noiselabyrinth_core",
@@ -80,23 +75,6 @@
       "dependencies": [
         "flutter",
         "scidart"
-      ]
-    },
-    {
-      "name": "mcfcc_nsn",
-      "version": "1.0.0",
-      "dependencies": [
-        "fft_nullsafety",
-        "js_interop"
-      ]
-    },
-    {
-      "name": "flutter_lame",
-      "version": "1.0.3",
-      "dependencies": [
-        "dart_lame",
-        "flutter",
-        "plugin_platform_interface"
       ]
     },
     {
@@ -248,6 +226,11 @@
       ]
     },
     {
+      "name": "path",
+      "version": "1.9.1",
+      "dependencies": []
+    },
+    {
       "name": "package_config",
       "version": "2.2.0",
       "dependencies": [
@@ -343,24 +326,30 @@
       ]
     },
     {
-      "name": "equatable",
-      "version": "2.0.8",
+      "name": "phonic",
+      "version": "1.3.0",
       "dependencies": [
         "collection",
-        "meta"
+        "convert",
+        "equatable"
       ]
     },
     {
-      "name": "convert",
-      "version": "3.1.2",
+      "name": "mcfcc_nsn",
+      "version": "1.0.0",
       "dependencies": [
-        "typed_data"
+        "fft_nullsafety",
+        "js_interop"
       ]
     },
     {
-      "name": "scidart",
-      "version": "0.0.2-dev.12",
-      "dependencies": []
+      "name": "flutter_lame",
+      "version": "1.0.3",
+      "dependencies": [
+        "dart_lame",
+        "flutter",
+        "plugin_platform_interface"
+      ]
     },
     {
       "name": "flutter",
@@ -375,33 +364,9 @@
       ]
     },
     {
-      "name": "js_interop",
-      "version": "0.0.1",
-      "dependencies": [
-        "js"
-      ]
-    },
-    {
-      "name": "fft_nullsafety",
-      "version": "0.2.1",
-      "dependencies": [
-        "my_complex_nullsafety",
-        "tuple"
-      ]
-    },
-    {
-      "name": "dart_lame",
-      "version": "1.0.3",
-      "dependencies": [
-        "ffi"
-      ]
-    },
-    {
-      "name": "plugin_platform_interface",
-      "version": "2.1.8",
-      "dependencies": [
-        "meta"
-      ]
+      "name": "scidart",
+      "version": "0.0.2-dev.12",
+      "dependencies": []
     },
     {
       "name": "string_scanner",
@@ -505,6 +470,13 @@
       ]
     },
     {
+      "name": "convert",
+      "version": "3.1.2",
+      "dependencies": [
+        "typed_data"
+      ]
+    },
+    {
       "name": "cli_config",
       "version": "0.2.0",
       "dependencies": [
@@ -536,6 +508,43 @@
       ]
     },
     {
+      "name": "equatable",
+      "version": "2.0.8",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
+      "name": "js_interop",
+      "version": "0.0.1",
+      "dependencies": [
+        "js"
+      ]
+    },
+    {
+      "name": "fft_nullsafety",
+      "version": "0.2.1",
+      "dependencies": [
+        "my_complex_nullsafety",
+        "tuple"
+      ]
+    },
+    {
+      "name": "dart_lame",
+      "version": "1.0.3",
+      "dependencies": [
+        "ffi"
+      ]
+    },
+    {
+      "name": "plugin_platform_interface",
+      "version": "2.1.8",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
       "name": "sky_engine",
       "version": "0.0.0",
       "dependencies": []
@@ -558,6 +567,14 @@
       "dependencies": []
     },
     {
+      "name": "file",
+      "version": "7.0.1",
+      "dependencies": [
+        "meta",
+        "path"
+      ]
+    },
+    {
       "name": "js",
       "version": "0.6.7",
       "dependencies": [
@@ -578,14 +595,6 @@
       "name": "ffi",
       "version": "2.2.0",
       "dependencies": []
-    },
-    {
-      "name": "file",
-      "version": "7.0.1",
-      "dependencies": [
-        "meta",
-        "path"
-      ]
     }
   ],
   "configVersion": 1
