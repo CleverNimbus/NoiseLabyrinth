@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart' hide SourceNode, ProcessorNode;
 import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
 import 'package:noiselabyrinth_gui/widgets/editor/inspector_helpers.dart';
+import 'package:noiselabyrinth_gui/widgets/editor/modulation_target_path_options.dart';
 
 class ModulationInspector extends ConsumerWidget {
-  const ModulationInspector({super.key, required this.layer, required this.modulation});
+  const ModulationInspector({super.key, required this.layer, required this.modulation, required this.config});
 
   final LayerConfig layer;
   final ModulationConfig modulation;
+  final GenerationConfig config;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,7 +45,7 @@ class ModulationInspector extends ConsumerWidget {
         if (modulation.type == ModulationType.drift) _DriftSection(modulation, update),
         if (modulation.type == ModulationType.envelope) _EnvelopeSection(modulation, update),
         if (modulation.type == ModulationType.burst) _BurstSection(modulation, update),
-        _TargetsSection(modulation: modulation, onUpdate: update),
+        _TargetsSection(modulation: modulation, onUpdate: update, config: config),
       ],
     );
   }
@@ -206,21 +208,25 @@ class _EnvelopeSection extends StatelessWidget {
     return InspectorSection(
       title: 'ENVELOPE',
       children: [
-        LabeledIntField(
+        LabeledSlider(
           label: 'Attack (ms)',
-          value: e.attackMs,
+          value: e.attackMs.toDouble().clamp(0.0, 2000.0),
           min: 0,
+          max: 2000,
+          displayValue: '${e.attackMs.round()} ms',
           onChanged: (v) {
-            e.attackMs = v;
+            e.attackMs = v.round();
             update(mod);
           },
         ),
-        LabeledIntField(
+        LabeledSlider(
           label: 'Decay (ms)',
-          value: e.decayMs,
+          value: e.decayMs.toDouble().clamp(0.0, 2000.0),
           min: 0,
+          max: 2000,
+          displayValue: '${e.decayMs.round()} ms',
           onChanged: (v) {
-            e.decayMs = v;
+            e.decayMs = v.round();
             update(mod);
           },
         ),
@@ -235,12 +241,14 @@ class _EnvelopeSection extends StatelessWidget {
             update(mod);
           },
         ),
-        LabeledIntField(
+        LabeledSlider(
           label: 'Release (ms)',
-          value: e.releaseMs,
+          value: e.releaseMs.toDouble().clamp(0.0, 2000.0),
           min: 0,
+          max: 2000,
+          displayValue: '${e.releaseMs.round()} ms',
           onChanged: (v) {
-            e.releaseMs = v;
+            e.releaseMs = v.round();
             update(mod);
           },
         ),
@@ -263,12 +271,14 @@ class _BurstSection extends StatelessWidget {
     return InspectorSection(
       title: 'BURST',
       children: [
-        LabeledIntField(
+        LabeledSlider(
           label: 'Duration (ms)',
-          value: b.durationMs,
+          value: b.durationMs.toDouble().clamp(1.0, 2000.0),
           min: 1,
+          max: 2000,
+          displayValue: '${b.durationMs.round()} ms',
           onChanged: (v) {
-            b.durationMs = v;
+            b.durationMs = v.round();
             update(mod);
           },
         ),
@@ -294,48 +304,58 @@ class _BurstSection extends StatelessWidget {
             update(mod);
           },
         ),
-        LabeledIntField(
+        LabeledSlider(
           label: 'Attack (ms)',
-          value: b.attackMs,
+          value: b.attackMs.toDouble().clamp(0.0, 500.0),
           min: 0,
+          max: 500,
+          displayValue: '${b.attackMs.round()} ms',
           onChanged: (v) {
-            b.attackMs = v;
+            b.attackMs = v.round();
             update(mod);
           },
         ),
-        LabeledIntField(
+        LabeledSlider(
           label: 'Release (ms)',
-          value: b.releaseMs,
+          value: b.releaseMs.toDouble().clamp(1.0, 500.0),
           min: 1,
+          max: 500,
+          displayValue: '${b.releaseMs.round()} ms',
           onChanged: (v) {
-            b.releaseMs = v;
+            b.releaseMs = v.round();
             update(mod);
           },
         ),
-        LabeledIntField(
+        LabeledSlider(
           label: 'Cluster Min',
-          value: b.clusterMin,
+          value: b.clusterMin.toDouble().clamp(1.0, 50.0),
           min: 1,
+          max: 50,
+          displayValue: '${b.clusterMin.round()}',
           onChanged: (v) {
-            b.clusterMin = v;
+            b.clusterMin = v.round();
             update(mod);
           },
         ),
-        LabeledIntField(
+        LabeledSlider(
           label: 'Cluster Max',
-          value: b.clusterMax,
+          value: b.clusterMax.toDouble().clamp(1.0, 50.0),
           min: 1,
+          max: 50,
+          displayValue: '${b.clusterMax.round()}',
           onChanged: (v) {
-            b.clusterMax = v;
+            b.clusterMax = v.round();
             update(mod);
           },
         ),
-        LabeledIntField(
+        LabeledSlider(
           label: 'Spread (ms)',
-          value: b.clusterSpreadMs,
+          value: b.clusterSpreadMs.toDouble().clamp(0.0, 1000.0),
           min: 0,
+          max: 1000,
+          displayValue: '${b.clusterSpreadMs.round()} ms',
           onChanged: (v) {
-            b.clusterSpreadMs = v;
+            b.clusterSpreadMs = v.round();
             update(mod);
           },
         ),
@@ -347,9 +367,10 @@ class _BurstSection extends StatelessWidget {
 // ── Targets ──────────────────────────────
 
 class _TargetsSection extends StatelessWidget {
-  const _TargetsSection({required this.modulation, required this.onUpdate});
+  const _TargetsSection({required this.modulation, required this.onUpdate, required this.config});
   final ModulationConfig modulation;
   final ValueChanged<ModulationConfig> onUpdate;
+  final GenerationConfig config;
 
   void _updateTargets(List<ModulationTargetConfig> targets) {
     modulation.targets = targets;
@@ -358,6 +379,8 @@ class _TargetsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final targetOptions = buildModulationTargetPathOptions(config);
+
     return InspectorSection(
       title: 'TARGETS (${modulation.targets.length})',
       children: [
@@ -376,6 +399,7 @@ class _TargetsSection extends StatelessWidget {
           _TargetCard(
             target: modulation.targets[i],
             index: i,
+            targetOptions: targetOptions,
             onChanged: (t) {
               final list = [...modulation.targets];
               list[i] = t;
@@ -391,7 +415,7 @@ class _TargetsSection extends StatelessWidget {
           icon: const Icon(Icons.add, size: 16),
           label: const Text('Add Target'),
           onPressed: () {
-            final newTarget = ModulationTargetConfig(path: '');
+            final newTarget = ModulationTargetConfig(path: targetOptions.isNotEmpty ? targetOptions.first.path : '');
             _updateTargets([...modulation.targets, newTarget]);
           },
         ),
@@ -401,15 +425,50 @@ class _TargetsSection extends StatelessWidget {
 }
 
 class _TargetCard extends StatelessWidget {
-  const _TargetCard({required this.target, required this.index, required this.onChanged, required this.onRemove});
+  const _TargetCard({
+    required this.target,
+    required this.index,
+    required this.targetOptions,
+    required this.onChanged,
+    required this.onRemove,
+  });
 
   final ModulationTargetConfig target;
   final int index;
+  final List<ModulationTargetPathOption> targetOptions;
   final ValueChanged<ModulationTargetConfig> onChanged;
   final VoidCallback onRemove;
 
+  ModulationTargetPathOption _resolveSelectedOption() {
+    for (final option in targetOptions) {
+      if (option.path == target.path) {
+        return option;
+      }
+    }
+
+    return ModulationTargetPathOption(
+      path: target.path,
+      label: target.path.isEmpty ? 'Select target' : 'Custom: ${target.path}',
+    );
+  }
+
+  List<ModulationTargetPathOption> _buildDropdownOptions(ModulationTargetPathOption selected) {
+    final options = [...targetOptions];
+    final hasSelected = options.any((option) => option.path == selected.path);
+    if (!hasSelected) {
+      return [selected, ...options];
+    }
+    if (selected.path.isEmpty) {
+      return [selected, ...options];
+    }
+    return options;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final selectedOption = _resolveSelectedOption();
+    final dropdownOptions = _buildDropdownOptions(selectedOption);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.all(8),
@@ -435,12 +494,13 @@ class _TargetCard extends StatelessWidget {
               ),
             ],
           ),
-          LabeledTextField(
+          LabeledDropdown<ModulationTargetPathOption>(
             label: 'Path',
-            value: target.path,
-            hint: 'e.g. layers[0].processors[0].biquad.frequency',
-            onChanged: (v) {
-              target.path = v;
+            value: selectedOption,
+            items: dropdownOptions,
+            itemLabel: (option) => option.label,
+            onChanged: (option) {
+              target.path = option.path;
               onChanged(target);
             },
           ),

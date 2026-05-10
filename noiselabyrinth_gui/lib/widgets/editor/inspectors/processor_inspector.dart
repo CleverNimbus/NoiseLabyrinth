@@ -72,27 +72,34 @@ class _BiquadSection extends StatelessWidget {
             update(processor);
           },
         ),
-        LabeledIntField(
+        LabeledSlider(
           label: 'Frequency (Hz)',
-          value: b.frequency,
-          min: 1,
+          value: b.frequency.toDouble().clamp(20.0, 20000.0),
+          min: 20,
+          max: 20000,
+          displayValue: '${b.frequency.round()} Hz',
           onChanged: (v) {
-            b.frequency = v;
+            b.frequency = v.round();
             update(processor);
           },
         ),
-        LabeledDoubleField(
+        LabeledSlider(
           label: 'Q',
-          value: b.q,
-          hint: '> 0',
+          value: b.q.clamp(0.1, 10.0),
+          min: 0.1,
+          max: 10,
+          displayValue: b.q.toStringAsFixed(2),
           onChanged: (v) {
             b.q = v;
             update(processor);
           },
         ),
-        LabeledDoubleField(
+        LabeledSlider(
           label: 'Gain (dB)',
-          value: b.gainDb,
+          value: b.gainDb.clamp(-12.0, 12.0),
+          min: -12,
+          max: 12,
+          displayValue: b.gainDb.toStringAsFixed(1),
           onChanged: (v) {
             b.gainDb = v;
             update(processor);
@@ -125,9 +132,12 @@ class _GainSection extends StatelessWidget {
     return InspectorSection(
       title: 'GAIN',
       children: [
-        LabeledDoubleField(
+        LabeledSlider(
           label: 'Gain',
-          value: g.gain,
+          value: g.gain.clamp(-60.0, 60.0),
+          min: -60,
+          max: 60,
+          displayValue: g.gain.toStringAsFixed(1),
           onChanged: (v) {
             g.gain = v;
             update(processor);
@@ -192,12 +202,14 @@ class _DelaySection extends StatelessWidget {
     return InspectorSection(
       title: 'DELAY',
       children: [
-        LabeledIntField(
+        LabeledSlider(
           label: 'Time (ms)',
-          value: d.delayTimeMs,
+          value: d.delayTimeMs.toDouble().clamp(0.0, 500.0),
           min: 0,
+          max: 500,
+          displayValue: '${d.delayTimeMs.round()} ms',
           onChanged: (v) {
-            d.delayTimeMs = v;
+            d.delayTimeMs = v.round();
             update(processor);
           },
         ),

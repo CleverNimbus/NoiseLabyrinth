@@ -20,7 +20,11 @@ abstract final class ConfigEditorFactory {
       LayerNode(:final layer) => LayerInspector(layer: layer),
       SourceNode(:final layer) => SourceInspector(layer: layer),
       ProcessorNode(:final layer, :final processor) => ProcessorInspector(layer: layer, processor: processor),
-      ModulationNode(:final layer, :final modulation) => ModulationInspector(layer: layer, modulation: modulation),
+      ModulationNode(:final layer, :final modulation) => ModulationInspector(
+        layer: layer,
+        modulation: modulation,
+        config: config,
+      ),
       EventNode(:final layer, :final event) => EventInspector(layer: layer, event: event),
     };
   }

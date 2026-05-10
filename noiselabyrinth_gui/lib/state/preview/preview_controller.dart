@@ -68,8 +68,9 @@ class PreviewController extends StateNotifier<PreviewState> {
       unawaited(stop());
       return;
     }
+    final config = next.config!;
     if (state.boundRevision != null && next.configRevision != state.boundRevision) {
-      unawaited(stop());
+      unawaited(_restart(config, next.configRevision));
     }
   }
 
@@ -100,6 +101,11 @@ class PreviewController extends StateNotifier<PreviewState> {
     _producerDone = true;
     await _player?.stop();
     state = const PreviewState.idle();
+  }
+
+  Future<void> _restart(GenerationConfig config, int configRevision) async {
+    await stop();
+    await start(config, configRevision);
   }
 
   @override

@@ -77,21 +77,25 @@ class _NoiseSection extends StatelessWidget {
         InspectorSection(
           title: 'BAND',
           children: [
-            LabeledIntField(
+            LabeledSlider(
               label: 'Low (Hz)',
-              value: noise.band.low,
+              value: noise.band.low.toDouble().clamp(0.0, 20000.0),
               min: 0,
+              max: 20000,
+              displayValue: '${noise.band.low.round()} Hz',
               onChanged: (v) {
-                noise.band.low = v;
+                noise.band.low = v.round();
                 update(source);
               },
             ),
-            LabeledIntField(
+            LabeledSlider(
               label: 'High (Hz)',
-              value: noise.band.high,
-              min: 1,
+              value: noise.band.high.toDouble().clamp(0.0, 20000.0),
+              min: 0,
+              max: 20000,
+              displayValue: '${noise.band.high.round()} Hz',
               onChanged: (v) {
-                noise.band.high = v;
+                noise.band.high = v.round();
                 update(source);
               },
             ),
@@ -156,19 +160,23 @@ class _SineSection extends StatelessWidget {
     return InspectorSection(
       title: 'SINE',
       children: [
-        LabeledIntField(
+        LabeledSlider(
           label: 'Frequency (Hz)',
-          value: cfg.frequencyHz,
-          min: 1,
+          value: cfg.frequencyHz.toDouble().clamp(20.0, 20000.0),
+          min: 20,
+          max: 20000,
+          displayValue: '${cfg.frequencyHz.round()} Hz',
           onChanged: (v) {
-            cfg.frequencyHz = v;
+            cfg.frequencyHz = v.round();
             update(source);
           },
         ),
-        LabeledDoubleField(
+        LabeledSlider(
           label: 'Phase',
-          value: cfg.phase,
-          hint: '0.0',
+          value: cfg.phase.clamp(0.0, 1.0),
+          min: 0,
+          max: 1,
+          displayValue: (cfg.phase * 360).toStringAsFixed(1),
           onChanged: (v) {
             cfg.phase = v;
             update(source);
