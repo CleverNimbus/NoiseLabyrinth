@@ -2,7 +2,7 @@ import 'package:noiselabyrinth_core/models/enums.dart';
 
 /// Rendering output settings.
 class RenderConfig {
-  const RenderConfig({
+  RenderConfig({
     this.durationMinutes = 120,
     this.sampleRate = 44100,
     this.bitRate = 192,
@@ -26,19 +26,19 @@ class RenderConfig {
   }
 
   /// Total render duration in minutes.
-  final int durationMinutes;
+  int durationMinutes;
 
   /// Audio sample rate in Hz.
-  final int sampleRate;
+  int sampleRate;
 
   /// Target encoded bitrate in kbps.
-  final int bitRate;
+  int bitRate;
 
   /// Output file format for rendered audio.
-  final RenderFormat format;
+  RenderFormat format;
 
   /// Enables final-stage DC offset removal on the rendered stereo output.
-  final bool dcBlockerEnabled;
+  bool dcBlockerEnabled;
 
   Map<String, dynamic> toJson() {
     return {

@@ -12,7 +12,7 @@ import 'package:noiselabyrinth_core/models/configs/source_config.dart';
 import 'package:noiselabyrinth_core/models/enums.dart';
 
 class NatureConfigTests {
-  static const RenderConfig _render = RenderConfig(durationMinutes: 30);
+  static final RenderConfig _render = RenderConfig(durationMinutes: 30);
 
   static MixConfig _mix() {
     return MixConfig(

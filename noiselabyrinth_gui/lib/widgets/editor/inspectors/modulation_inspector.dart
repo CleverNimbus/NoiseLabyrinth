@@ -20,11 +20,7 @@ class ModulationInspector extends ConsumerWidget {
         InspectorSection(
           title: 'MODULATION',
           children: [
-            LabeledTextField(
-              label: 'ID',
-              value: modulation.id,
-              onChanged: (v) => update(_copy(modulation, id: v)),
-            ),
+            LabeledTextField(label: 'ID', value: modulation.id, onChanged: (v) => update(modulation..id = v)),
             LabeledDropdown<ModulationType>(
               label: 'Type',
               value: modulation.type,
@@ -38,7 +34,7 @@ class ModulationInspector extends ConsumerWidget {
               min: -1,
               max: 1,
               displayValue: modulation.amount.toStringAsFixed(2),
-              onChanged: (v) => update(_copy(modulation, amount: v)),
+              onChanged: (v) => update(modulation..amount = v),
             ),
           ],
         ),
@@ -53,31 +49,13 @@ class ModulationInspector extends ConsumerWidget {
   }
 
   ModulationConfig _switchType(ModulationConfig m, ModulationType t) {
-    return ModulationConfig(
-      id: m.id,
-      type: t,
-      amount: m.amount,
-      lfoConfig: t == ModulationType.lfo ? (m.lfoConfig ?? LfoConfig()) : null,
-      randomConfig: t == ModulationType.random ? (m.randomConfig ?? RandomConfig()) : null,
-      driftConfig: t == ModulationType.drift ? (m.driftConfig ?? DriftConfig()) : null,
-      envelopeConfig: t == ModulationType.envelope ? (m.envelopeConfig ?? EnvelopeConfig()) : null,
-      burstConfig: t == ModulationType.burst ? (m.burstConfig ?? BurstConfig()) : null,
-      targets: m.targets,
-    );
-  }
-
-  ModulationConfig _copy(ModulationConfig m, {String? id, double? amount}) {
-    return ModulationConfig(
-      id: id ?? m.id,
-      type: m.type,
-      amount: amount ?? m.amount,
-      lfoConfig: m.lfoConfig,
-      randomConfig: m.randomConfig,
-      driftConfig: m.driftConfig,
-      envelopeConfig: m.envelopeConfig,
-      burstConfig: m.burstConfig,
-      targets: m.targets,
-    );
+    m.type = t;
+    m.lfoConfig = t == ModulationType.lfo ? (m.lfoConfig ?? LfoConfig()) : null;
+    m.randomConfig = t == ModulationType.random ? (m.randomConfig ?? RandomConfig()) : null;
+    m.driftConfig = t == ModulationType.drift ? (m.driftConfig ?? DriftConfig()) : null;
+    m.envelopeConfig = t == ModulationType.envelope ? (m.envelopeConfig ?? EnvelopeConfig()) : null;
+    m.burstConfig = t == ModulationType.burst ? (m.burstConfig ?? BurstConfig()) : null;
+    return m;
   }
 }
 
@@ -88,10 +66,7 @@ class _LfoSection extends StatelessWidget {
   final ModulationConfig mod;
   final ValueChanged<ModulationConfig> update;
 
-  LfoConfig get lfo => mod.lfoConfig ?? LfoConfig();
-
-  void _updateLfo(LfoConfig l) =>
-      update(ModulationConfig(id: mod.id, type: mod.type, amount: mod.amount, lfoConfig: l, targets: mod.targets));
+  LfoConfig get lfo => mod.lfoConfig!;
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +78,10 @@ class _LfoSection extends StatelessWidget {
           value: lfo.type,
           items: LFOType.values,
           itemLabel: (t) => t.name,
-          onChanged: (t) => _updateLfo(LfoConfig(type: t, frequency: lfo.frequency, depth: lfo.depth)),
+          onChanged: (t) {
+            lfo.type = t;
+            update(mod);
+          },
         ),
         LabeledSlider(
           label: 'Frequency (Hz)',
@@ -111,7 +89,10 @@ class _LfoSection extends StatelessWidget {
           min: 0.001,
           max: 20,
           displayValue: '${lfo.frequency.toStringAsFixed(3)} Hz',
-          onChanged: (v) => _updateLfo(LfoConfig(type: lfo.type, frequency: v, depth: lfo.depth)),
+          onChanged: (v) {
+            lfo.frequency = v;
+            update(mod);
+          },
         ),
         LabeledSlider(
           label: 'Depth',
@@ -119,7 +100,10 @@ class _LfoSection extends StatelessWidget {
           min: 0,
           max: 2,
           displayValue: lfo.depth.toStringAsFixed(2),
-          onChanged: (v) => _updateLfo(LfoConfig(type: lfo.type, frequency: lfo.frequency, depth: v)),
+          onChanged: (v) {
+            lfo.depth = v;
+            update(mod);
+          },
         ),
       ],
     );
@@ -133,10 +117,7 @@ class _RandomSection extends StatelessWidget {
   final ModulationConfig mod;
   final ValueChanged<ModulationConfig> update;
 
-  RandomConfig get r => mod.randomConfig ?? RandomConfig();
-
-  void _updateRandom(RandomConfig nr) =>
-      update(ModulationConfig(id: mod.id, type: mod.type, amount: mod.amount, randomConfig: nr, targets: mod.targets));
+  RandomConfig get r => mod.randomConfig!;
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +130,10 @@ class _RandomSection extends StatelessWidget {
           min: 0.001,
           max: 10,
           displayValue: '${r.rateHz.toStringAsFixed(3)} Hz',
-          onChanged: (v) => _updateRandom(RandomConfig(rateHz: v, smooth: r.smooth)),
+          onChanged: (v) {
+            r.rateHz = v;
+            update(mod);
+          },
         ),
         LabeledSlider(
           label: 'Smooth',
@@ -157,7 +141,10 @@ class _RandomSection extends StatelessWidget {
           min: 0,
           max: 1,
           displayValue: r.smooth.toStringAsFixed(2),
-          onChanged: (v) => _updateRandom(RandomConfig(rateHz: r.rateHz, smooth: v)),
+          onChanged: (v) {
+            r.smooth = v;
+            update(mod);
+          },
         ),
       ],
     );
@@ -171,10 +158,7 @@ class _DriftSection extends StatelessWidget {
   final ModulationConfig mod;
   final ValueChanged<ModulationConfig> update;
 
-  DriftConfig get d => mod.driftConfig ?? DriftConfig();
-
-  void _updateDrift(DriftConfig nd) =>
-      update(ModulationConfig(id: mod.id, type: mod.type, amount: mod.amount, driftConfig: nd, targets: mod.targets));
+  DriftConfig get d => mod.driftConfig!;
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +171,10 @@ class _DriftSection extends StatelessWidget {
           min: 0,
           max: 1,
           displayValue: d.speed.toStringAsFixed(3),
-          onChanged: (v) => _updateDrift(DriftConfig(speed: v, range: d.range)),
+          onChanged: (v) {
+            d.speed = v;
+            update(mod);
+          },
         ),
         LabeledSlider(
           label: 'Range',
@@ -195,7 +182,10 @@ class _DriftSection extends StatelessWidget {
           min: 0,
           max: 2,
           displayValue: d.range.toStringAsFixed(2),
-          onChanged: (v) => _updateDrift(DriftConfig(speed: d.speed, range: v)),
+          onChanged: (v) {
+            d.range = v;
+            update(mod);
+          },
         ),
       ],
     );
@@ -209,11 +199,7 @@ class _EnvelopeSection extends StatelessWidget {
   final ModulationConfig mod;
   final ValueChanged<ModulationConfig> update;
 
-  EnvelopeConfig get e => mod.envelopeConfig ?? EnvelopeConfig();
-
-  void _updateEnvelope(EnvelopeConfig ne) => update(
-    ModulationConfig(id: mod.id, type: mod.type, amount: mod.amount, envelopeConfig: ne, targets: mod.targets),
-  );
+  EnvelopeConfig get e => mod.envelopeConfig!;
 
   @override
   Widget build(BuildContext context) {
@@ -224,17 +210,19 @@ class _EnvelopeSection extends StatelessWidget {
           label: 'Attack (ms)',
           value: e.attackMs,
           min: 0,
-          onChanged: (v) => _updateEnvelope(
-            EnvelopeConfig(attackMs: v, decayMs: e.decayMs, sustain: e.sustain, releaseMs: e.releaseMs),
-          ),
+          onChanged: (v) {
+            e.attackMs = v;
+            update(mod);
+          },
         ),
         LabeledIntField(
           label: 'Decay (ms)',
           value: e.decayMs,
           min: 0,
-          onChanged: (v) => _updateEnvelope(
-            EnvelopeConfig(attackMs: e.attackMs, decayMs: v, sustain: e.sustain, releaseMs: e.releaseMs),
-          ),
+          onChanged: (v) {
+            e.decayMs = v;
+            update(mod);
+          },
         ),
         LabeledSlider(
           label: 'Sustain',
@@ -242,17 +230,19 @@ class _EnvelopeSection extends StatelessWidget {
           min: 0,
           max: 1,
           displayValue: e.sustain.toStringAsFixed(2),
-          onChanged: (v) => _updateEnvelope(
-            EnvelopeConfig(attackMs: e.attackMs, decayMs: e.decayMs, sustain: v, releaseMs: e.releaseMs),
-          ),
+          onChanged: (v) {
+            e.sustain = v;
+            update(mod);
+          },
         ),
         LabeledIntField(
           label: 'Release (ms)',
           value: e.releaseMs,
           min: 0,
-          onChanged: (v) => _updateEnvelope(
-            EnvelopeConfig(attackMs: e.attackMs, decayMs: e.decayMs, sustain: e.sustain, releaseMs: v),
-          ),
+          onChanged: (v) {
+            e.releaseMs = v;
+            update(mod);
+          },
         ),
       ],
     );
@@ -266,32 +256,7 @@ class _BurstSection extends StatelessWidget {
   final ModulationConfig mod;
   final ValueChanged<ModulationConfig> update;
 
-  BurstConfig get b => mod.burstConfig ?? BurstConfig();
-
-  void _updateBurst(BurstConfig nb) =>
-      update(ModulationConfig(id: mod.id, type: mod.type, amount: mod.amount, burstConfig: nb, targets: mod.targets));
-
-  BurstConfig _copy({
-    int? durationMs,
-    double? intensity,
-    double? randomness,
-    int? attackMs,
-    int? releaseMs,
-    int? clusterMin,
-    int? clusterMax,
-    int? clusterSpreadMs,
-  }) {
-    return BurstConfig(
-      durationMs: durationMs ?? b.durationMs,
-      intensity: intensity ?? b.intensity,
-      randomness: randomness ?? b.randomness,
-      attackMs: attackMs ?? b.attackMs,
-      releaseMs: releaseMs ?? b.releaseMs,
-      clusterMin: clusterMin ?? b.clusterMin,
-      clusterMax: clusterMax ?? b.clusterMax,
-      clusterSpreadMs: clusterSpreadMs ?? b.clusterSpreadMs,
-    );
-  }
+  BurstConfig get b => mod.burstConfig!;
 
   @override
   Widget build(BuildContext context) {
@@ -302,7 +267,10 @@ class _BurstSection extends StatelessWidget {
           label: 'Duration (ms)',
           value: b.durationMs,
           min: 1,
-          onChanged: (v) => _updateBurst(_copy(durationMs: v)),
+          onChanged: (v) {
+            b.durationMs = v;
+            update(mod);
+          },
         ),
         LabeledSlider(
           label: 'Intensity',
@@ -310,7 +278,10 @@ class _BurstSection extends StatelessWidget {
           min: 0,
           max: 1,
           displayValue: b.intensity.toStringAsFixed(2),
-          onChanged: (v) => _updateBurst(_copy(intensity: v)),
+          onChanged: (v) {
+            b.intensity = v;
+            update(mod);
+          },
         ),
         LabeledSlider(
           label: 'Randomness',
@@ -318,37 +289,55 @@ class _BurstSection extends StatelessWidget {
           min: 0,
           max: 1,
           displayValue: b.randomness.toStringAsFixed(2),
-          onChanged: (v) => _updateBurst(_copy(randomness: v)),
+          onChanged: (v) {
+            b.randomness = v;
+            update(mod);
+          },
         ),
         LabeledIntField(
           label: 'Attack (ms)',
           value: b.attackMs,
           min: 0,
-          onChanged: (v) => _updateBurst(_copy(attackMs: v)),
+          onChanged: (v) {
+            b.attackMs = v;
+            update(mod);
+          },
         ),
         LabeledIntField(
           label: 'Release (ms)',
           value: b.releaseMs,
           min: 1,
-          onChanged: (v) => _updateBurst(_copy(releaseMs: v)),
+          onChanged: (v) {
+            b.releaseMs = v;
+            update(mod);
+          },
         ),
         LabeledIntField(
           label: 'Cluster Min',
           value: b.clusterMin,
           min: 1,
-          onChanged: (v) => _updateBurst(_copy(clusterMin: v)),
+          onChanged: (v) {
+            b.clusterMin = v;
+            update(mod);
+          },
         ),
         LabeledIntField(
           label: 'Cluster Max',
           value: b.clusterMax,
           min: 1,
-          onChanged: (v) => _updateBurst(_copy(clusterMax: v)),
+          onChanged: (v) {
+            b.clusterMax = v;
+            update(mod);
+          },
         ),
         LabeledIntField(
           label: 'Spread (ms)',
           value: b.clusterSpreadMs,
           min: 0,
-          onChanged: (v) => _updateBurst(_copy(clusterSpreadMs: v)),
+          onChanged: (v) {
+            b.clusterSpreadMs = v;
+            update(mod);
+          },
         ),
       ],
     );
@@ -363,19 +352,8 @@ class _TargetsSection extends StatelessWidget {
   final ValueChanged<ModulationConfig> onUpdate;
 
   void _updateTargets(List<ModulationTargetConfig> targets) {
-    onUpdate(
-      ModulationConfig(
-        id: modulation.id,
-        type: modulation.type,
-        amount: modulation.amount,
-        lfoConfig: modulation.lfoConfig,
-        randomConfig: modulation.randomConfig,
-        driftConfig: modulation.driftConfig,
-        envelopeConfig: modulation.envelopeConfig,
-        burstConfig: modulation.burstConfig,
-        targets: targets,
-      ),
-    );
+    modulation.targets = targets;
+    onUpdate(modulation);
   }
 
   @override
@@ -461,15 +439,10 @@ class _TargetCard extends StatelessWidget {
             label: 'Path',
             value: target.path,
             hint: 'e.g. layers[0].processors[0].biquad.frequency',
-            onChanged: (v) => onChanged(
-              ModulationTargetConfig(
-                path: v,
-                amount: target.amount,
-                mode: target.mode,
-                minValue: target.minValue,
-                maxValue: target.maxValue,
-              ),
-            ),
+            onChanged: (v) {
+              target.path = v;
+              onChanged(target);
+            },
           ),
           LabeledSlider(
             label: 'Amount',
@@ -477,30 +450,20 @@ class _TargetCard extends StatelessWidget {
             min: -2,
             max: 2,
             displayValue: target.amount.toStringAsFixed(2),
-            onChanged: (v) => onChanged(
-              ModulationTargetConfig(
-                path: target.path,
-                amount: v,
-                mode: target.mode,
-                minValue: target.minValue,
-                maxValue: target.maxValue,
-              ),
-            ),
+            onChanged: (v) {
+              target.amount = v;
+              onChanged(target);
+            },
           ),
           LabeledDropdown<ModulationApplyMode>(
             label: 'Mode',
             value: target.mode,
             items: ModulationApplyMode.values,
             itemLabel: (m) => m.name,
-            onChanged: (m) => onChanged(
-              ModulationTargetConfig(
-                path: target.path,
-                amount: target.amount,
-                mode: m,
-                minValue: target.minValue,
-                maxValue: target.maxValue,
-              ),
-            ),
+            onChanged: (m) {
+              target.mode = m;
+              onChanged(target);
+            },
           ),
         ],
       ),

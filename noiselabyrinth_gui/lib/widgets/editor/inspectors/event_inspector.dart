@@ -19,13 +19,7 @@ class EventInspector extends ConsumerWidget {
       children: [
         InspectorSection(
           title: 'EVENT',
-          children: [
-            LabeledTextField(
-              label: 'ID',
-              value: event.id,
-              onChanged: (v) => update(EventConfig(id: v, trigger: event.trigger, actions: event.actions)),
-            ),
-          ],
+          children: [LabeledTextField(label: 'ID', value: event.id, onChanged: (v) => update(event..id = v))],
         ),
         InspectorSection(
           title: 'TRIGGER',
@@ -35,13 +29,10 @@ class EventInspector extends ConsumerWidget {
               value: event.trigger.type,
               items: TriggerType.values,
               itemLabel: (t) => t.name,
-              onChanged: (t) => update(
-                EventConfig(
-                  id: event.id,
-                  trigger: TriggerConfig(type: t, rate: event.trigger.rate),
-                  actions: event.actions,
-                ),
-              ),
+              onChanged: (t) {
+                event.trigger.type = t;
+                update(event);
+              },
             ),
             LabeledSlider(
               label: 'Rate (Hz)',
@@ -49,13 +40,10 @@ class EventInspector extends ConsumerWidget {
               min: 0.001,
               max: 10,
               displayValue: '${event.trigger.rate.toStringAsFixed(3)} Hz',
-              onChanged: (v) => update(
-                EventConfig(
-                  id: event.id,
-                  trigger: TriggerConfig(type: event.trigger.type, rate: v),
-                  actions: event.actions,
-                ),
-              ),
+              onChanged: (v) {
+                event.trigger.rate = v;
+                update(event);
+              },
             ),
           ],
         ),
@@ -73,7 +61,8 @@ class _ActionsSection extends StatelessWidget {
   final ValueChanged<EventConfig> onUpdate;
 
   void _updateActions(List<ActionConfig> actions) {
-    onUpdate(EventConfig(id: event.id, trigger: event.trigger, actions: actions));
+    event.actions = actions;
+    onUpdate(event);
   }
 
   @override
@@ -170,21 +159,30 @@ class _ActionCard extends StatelessWidget {
               label: 'Modulator',
               value: availableModIds.contains(action.modulatorId) ? action.modulatorId : availableModIds.first,
               items: availableModIds,
-              onChanged: (v) => onChanged(ActionConfig(modulatorId: v, mode: action.mode)),
+              onChanged: (v) {
+                action.modulatorId = v;
+                onChanged(action);
+              },
             )
           else
             LabeledTextField(
               label: 'Modulator ID',
               value: action.modulatorId,
               hint: 'Modulation ID in this layer',
-              onChanged: (v) => onChanged(ActionConfig(modulatorId: v, mode: action.mode)),
+              onChanged: (v) {
+                action.modulatorId = v;
+                onChanged(action);
+              },
             ),
           LabeledDropdown<ActionMode>(
             label: 'Mode',
             value: action.mode,
             items: ActionMode.values,
             itemLabel: (m) => m.name,
-            onChanged: (m) => onChanged(ActionConfig(modulatorId: action.modulatorId, mode: m)),
+            onChanged: (m) {
+              action.mode = m;
+              onChanged(action);
+            },
           ),
         ],
       ),

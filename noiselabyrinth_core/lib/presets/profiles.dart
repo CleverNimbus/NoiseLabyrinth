@@ -17,7 +17,7 @@ GenerationConfig pinkNoiseBed = GenerationConfig(
     tags: <String>['debug', 'noise', 'pink'],
     version: 1,
   ),
-  render: const RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
+  render: RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
   mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.75),
   layers: <LayerConfig>[
     LayerConfig(
@@ -51,7 +51,7 @@ GenerationConfig stereoBandlimitedHiss = GenerationConfig(
     tags: <String>['debug', 'stereo', 'bandlimited'],
     version: 1,
   ),
-  render: const RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
+  render: RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
   mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.65),
   layers: <LayerConfig>[
     LayerConfig(
@@ -88,13 +88,13 @@ GenerationConfig sineDroneWithDelay = GenerationConfig(
     tags: <String>['debug', 'sine', 'delay'],
     version: 1,
   ),
-  render: const RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
+  render: RenderConfig(format: RenderFormat.mp3, durationMinutes: 5),
   mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.5),
   layers: <LayerConfig>[
     LayerConfig(
       id: 'sine-drone',
       gain: 0.45,
-      source: const SourceConfig(
+      source: SourceConfig(
         type: SourceType.sine,
         sineConfig: SineConfig(frequencyHz: 110),
       ),

@@ -24,7 +24,7 @@ class MixInspector extends ConsumerWidget {
               min: 0,
               max: 1,
               displayValue: mix.mix.toStringAsFixed(2),
-              onChanged: (v) => update(_copyMix(mix, mixLevel: v)),
+              onChanged: (v) => update(mix..mix = v),
             ),
           ],
         ),
@@ -34,7 +34,10 @@ class MixInspector extends ConsumerWidget {
             LabeledSwitch(
               label: 'Enabled',
               value: mix.dither.enabled,
-              onChanged: (v) => update(_copyMix(mix, ditherEnabled: v)),
+              onChanged: (v) {
+                mix.dither.enabled = v;
+                update(mix);
+              },
             ),
             if (mix.dither.enabled) ...[
               LabeledDropdown<DitherType>(
@@ -42,14 +45,20 @@ class MixInspector extends ConsumerWidget {
                 value: mix.dither.type,
                 items: DitherType.values,
                 itemLabel: (t) => t.name.toUpperCase(),
-                onChanged: (v) => update(_copyMix(mix, ditherType: v)),
+                onChanged: (v) {
+                  mix.dither.type = v;
+                  update(mix);
+                },
               ),
               LabeledIntField(
                 label: 'Bit Depth',
                 value: mix.dither.bitDepth,
                 min: 1,
                 max: 32,
-                onChanged: (v) => update(_copyMix(mix, ditherBitDepth: v)),
+                onChanged: (v) {
+                  mix.dither.bitDepth = v;
+                  update(mix);
+                },
               ),
               LabeledSlider(
                 label: 'Amount',
@@ -57,7 +66,10 @@ class MixInspector extends ConsumerWidget {
                 min: 0,
                 max: 2,
                 displayValue: mix.dither.amount.toStringAsFixed(2),
-                onChanged: (v) => update(_copyMix(mix, ditherAmount: v)),
+                onChanged: (v) {
+                  mix.dither.amount = v;
+                  update(mix);
+                },
               ),
             ],
           ],
@@ -68,7 +80,10 @@ class MixInspector extends ConsumerWidget {
             LabeledSwitch(
               label: 'Enabled',
               value: mix.normalization.enabled,
-              onChanged: (v) => update(_copyMix(mix, normEnabled: v)),
+              onChanged: (v) {
+                mix.normalization.enabled = v;
+                update(mix);
+              },
             ),
             if (mix.normalization.enabled)
               LabeledSlider(
@@ -77,34 +92,14 @@ class MixInspector extends ConsumerWidget {
                 min: -120,
                 max: 0,
                 displayValue: '${mix.normalization.targetDb.toStringAsFixed(1)} dB',
-                onChanged: (v) => update(_copyMix(mix, normTargetDb: v)),
+                onChanged: (v) {
+                  mix.normalization.targetDb = v;
+                  update(mix);
+                },
               ),
           ],
         ),
       ],
     );
-  }
-
-  MixConfig _copyMix(
-    MixConfig m, {
-    double? mixLevel,
-    bool? ditherEnabled,
-    DitherType? ditherType,
-    int? ditherBitDepth,
-    double? ditherAmount,
-    bool? normEnabled,
-    double? normTargetDb,
-  }) {
-    final dither = DitherConfig(
-      enabled: ditherEnabled ?? m.dither.enabled,
-      type: ditherType ?? m.dither.type,
-      bitDepth: ditherBitDepth ?? m.dither.bitDepth,
-      amount: ditherAmount ?? m.dither.amount,
-    );
-    final norm = NormalizationConfig(
-      enabled: normEnabled ?? m.normalization.enabled,
-      targetDb: normTargetDb ?? m.normalization.targetDb,
-    );
-    return MixConfig(mix: mixLevel ?? m.mix, dither: dither, normalization: norm);
   }
 }

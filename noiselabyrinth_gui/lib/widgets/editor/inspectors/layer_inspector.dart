@@ -25,7 +25,7 @@ class LayerInspector extends ConsumerWidget {
               label: 'ID',
               value: layer.id,
               hint: 'Unique layer identifier',
-              onChanged: (v) => commit(_copyLayer(layer, id: v)),
+              onChanged: (v) => commit(layer..id = v),
             ),
             LabeledSlider(
               label: 'Gain',
@@ -33,7 +33,7 @@ class LayerInspector extends ConsumerWidget {
               min: 0,
               max: 4,
               displayValue: layer.gain.toStringAsFixed(2),
-              onChanged: (v) => commit(_copyLayer(layer, gain: v)),
+              onChanged: (v) => commit(layer..gain = v),
             ),
             LabeledSlider(
               label: 'Pan',
@@ -41,7 +41,7 @@ class LayerInspector extends ConsumerWidget {
               min: -1,
               max: 1,
               displayValue: layer.pan.toStringAsFixed(2),
-              onChanged: (v) => commit(_copyLayer(layer, pan: v)),
+              onChanged: (v) => commit(layer..pan = v),
             ),
           ],
         ),
@@ -109,18 +109,6 @@ class LayerInspector extends ConsumerWidget {
           ],
         ),
       ],
-    );
-  }
-
-  LayerConfig _copyLayer(LayerConfig l, {String? id, double? gain, double? pan}) {
-    return LayerConfig(
-      id: id ?? l.id,
-      gain: gain ?? l.gain,
-      pan: pan ?? l.pan,
-      source: l.source,
-      processors: l.processors,
-      modulations: l.modulations,
-      events: l.events,
     );
   }
 }

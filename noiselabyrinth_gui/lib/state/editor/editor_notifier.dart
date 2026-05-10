@@ -45,10 +45,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
   void updateMetadata(MetadataConfig metadata) {
     if (state.config == null) return;
     final config = state.config!;
-    config.metadata.name = metadata.name;
-    config.metadata.description = metadata.description;
-    config.metadata.tags = metadata.tags;
-    config.metadata.version = metadata.version;
+    config.metadata = metadata;
     _commit(config);
   }
 
@@ -66,13 +63,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
   void updateMix(MixConfig mix) {
     if (state.config == null) return;
     final config = state.config!;
-    config.mix.mix = mix.mix;
-    config.mix.dither.enabled = mix.dither.enabled;
-    config.mix.dither.type = mix.dither.type;
-    config.mix.dither.bitDepth = mix.dither.bitDepth;
-    config.mix.dither.amount = mix.dither.amount;
-    config.mix.normalization.enabled = mix.normalization.enabled;
-    config.mix.normalization.targetDb = mix.normalization.targetDb;
+    config.mix = mix;
     _commit(config);
   }
 
@@ -147,17 +138,8 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layer = config.layers[layerIdx];
     final id = _uniqueId('processor', layer.processors.map((p) => p.id).toSet());
     final proc = ProcessorConfig(id: id, type: ProcessorType.biquad, biquad: BiquadConfig());
-    final updated = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: [...layer.processors, proc],
-      modulations: layer.modulations,
-      events: layer.events,
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updated : l];
-    _commit(config, selectedNode: ProcessorNode(updated, proc));
+    layer.processors = [...layer.processors, proc];
+    _commit(config, selectedNode: ProcessorNode(layer, proc));
   }
 
   void updateProcessor(String layerId, ProcessorConfig updated) {
@@ -166,21 +148,11 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layerIdx = config.layers.indexWhere((l) => l.id == layerId);
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
-    final updatedLayer = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: [for (final p in layer.processors) p.id == updated.id ? updated : p],
-      modulations: layer.modulations,
-      events: layer.events,
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updatedLayer : l];
+    layer.processors = [for (final p in layer.processors) p.id == updated.id ? updated : p];
     final sel = state.selectedNode;
-    EditorNode? newSel;
-    if (sel is ProcessorNode && sel.layer.id == layerId && sel.processor.id == updated.id) {
-      newSel = ProcessorNode(updatedLayer, updated);
-    }
+    final newSel = (sel is ProcessorNode && sel.layer.id == layerId && sel.processor.id == updated.id)
+        ? ProcessorNode(layer, updated)
+        : null;
     _commit(config, selectedNode: newSel ?? sel);
   }
 
@@ -190,16 +162,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layerIdx = config.layers.indexWhere((l) => l.id == layerId);
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
-    final updatedLayer = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: layer.processors.where((p) => p.id != processorId).toList(),
-      modulations: layer.modulations,
-      events: layer.events,
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updatedLayer : l];
+    layer.processors = layer.processors.where((p) => p.id != processorId).toList();
     final sel = state.selectedNode;
     final clearSel = sel is ProcessorNode && sel.layer.id == layerId && sel.processor.id == processorId;
     _commit(config, selectedNode: clearSel ? null : sel, clearSel: clearSel);
@@ -214,16 +177,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final procs = [...layer.processors];
     final item = procs.removeAt(oldIndex);
     procs.insert(newIndex > oldIndex ? newIndex - 1 : newIndex, item);
-    final updatedLayer = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: procs,
-      modulations: layer.modulations,
-      events: layer.events,
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updatedLayer : l];
+    layer.processors = procs;
     _commit(config);
   }
 
@@ -237,17 +191,8 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layer = config.layers[layerIdx];
     final id = _uniqueId('mod', layer.modulations.map((m) => m.id).toSet());
     final mod = ModulationConfig(id: id, type: ModulationType.lfo, lfoConfig: LfoConfig(), targets: const []);
-    final updated = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: layer.processors,
-      modulations: [...layer.modulations, mod],
-      events: layer.events,
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updated : l];
-    _commit(config, selectedNode: ModulationNode(updated, mod));
+    layer.modulations = [...layer.modulations, mod];
+    _commit(config, selectedNode: ModulationNode(layer, mod));
   }
 
   void updateModulation(String layerId, ModulationConfig updated) {
@@ -256,21 +201,11 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layerIdx = config.layers.indexWhere((l) => l.id == layerId);
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
-    final updatedLayer = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: layer.processors,
-      modulations: [for (final m in layer.modulations) m.id == updated.id ? updated : m],
-      events: layer.events,
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updatedLayer : l];
+    layer.modulations = [for (final m in layer.modulations) m.id == updated.id ? updated : m];
     final sel = state.selectedNode;
-    EditorNode? newSel;
-    if (sel is ModulationNode && sel.layer.id == layerId && sel.modulation.id == updated.id) {
-      newSel = ModulationNode(updatedLayer, updated);
-    }
+    final newSel = (sel is ModulationNode && sel.layer.id == layerId && sel.modulation.id == updated.id)
+        ? ModulationNode(layer, updated)
+        : null;
     _commit(config, selectedNode: newSel ?? sel);
   }
 
@@ -280,16 +215,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layerIdx = config.layers.indexWhere((l) => l.id == layerId);
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
-    final updatedLayer = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: layer.processors,
-      modulations: layer.modulations.where((m) => m.id != modulationId).toList(),
-      events: layer.events,
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updatedLayer : l];
+    layer.modulations = layer.modulations.where((m) => m.id != modulationId).toList();
     final sel = state.selectedNode;
     final clearSel = sel is ModulationNode && sel.layer.id == layerId && sel.modulation.id == modulationId;
     _commit(config, selectedNode: clearSel ? null : sel, clearSel: clearSel);
@@ -305,17 +231,8 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layer = config.layers[layerIdx];
     final id = _uniqueId('event', layer.events.map((e) => e.id).toSet());
     final event = EventConfig(id: id, trigger: TriggerConfig(), actions: const []);
-    final updated = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: layer.processors,
-      modulations: layer.modulations,
-      events: [...layer.events, event],
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updated : l];
-    _commit(config, selectedNode: EventNode(updated, event));
+    layer.events = [...layer.events, event];
+    _commit(config, selectedNode: EventNode(layer, event));
   }
 
   void updateEvent(String layerId, EventConfig updated) {
@@ -324,21 +241,11 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layerIdx = config.layers.indexWhere((l) => l.id == layerId);
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
-    final updatedLayer = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: layer.processors,
-      modulations: layer.modulations,
-      events: [for (final e in layer.events) e.id == updated.id ? updated : e],
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updatedLayer : l];
+    layer.events = [for (final e in layer.events) e.id == updated.id ? updated : e];
     final sel = state.selectedNode;
-    EditorNode? newSel;
-    if (sel is EventNode && sel.layer.id == layerId && sel.event.id == updated.id) {
-      newSel = EventNode(updatedLayer, updated);
-    }
+    final newSel = (sel is EventNode && sel.layer.id == layerId && sel.event.id == updated.id)
+        ? EventNode(layer, updated)
+        : null;
     _commit(config, selectedNode: newSel ?? sel);
   }
 
@@ -348,16 +255,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layerIdx = config.layers.indexWhere((l) => l.id == layerId);
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
-    final updatedLayer = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: layer.source,
-      processors: layer.processors,
-      modulations: layer.modulations,
-      events: layer.events.where((e) => e.id != eventId).toList(),
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updatedLayer : l];
+    layer.events = layer.events.where((e) => e.id != eventId).toList();
     final sel = state.selectedNode;
     final clearSel = sel is EventNode && sel.layer.id == layerId && sel.event.id == eventId;
     _commit(config, selectedNode: clearSel ? null : sel, clearSel: clearSel);
@@ -371,21 +269,9 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final layerIdx = config.layers.indexWhere((l) => l.id == layerId);
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
-    final updatedLayer = LayerConfig(
-      id: layer.id,
-      gain: layer.gain,
-      pan: layer.pan,
-      source: updated,
-      processors: layer.processors,
-      modulations: layer.modulations,
-      events: layer.events,
-    );
-    config.layers = [for (final l in config.layers) l.id == layerId ? updatedLayer : l];
+    layer.source = updated;
     final sel = state.selectedNode;
-    EditorNode? newSel;
-    if (sel is SourceNode && sel.layer.id == layerId) {
-      newSel = SourceNode(updatedLayer);
-    }
+    final newSel = (sel is SourceNode && sel.layer.id == layerId) ? SourceNode(layer) : null;
     _commit(config, selectedNode: newSel ?? sel);
   }
 

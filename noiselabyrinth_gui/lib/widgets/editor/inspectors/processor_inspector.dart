@@ -20,11 +20,7 @@ class ProcessorInspector extends ConsumerWidget {
         InspectorSection(
           title: 'PROCESSOR',
           children: [
-            LabeledTextField(
-              label: 'ID',
-              value: processor.id,
-              onChanged: (v) => update(_copy(processor, id: v)),
-            ),
+            LabeledTextField(label: 'ID', value: processor.id, onChanged: (v) => update(processor..id = v)),
             LabeledDropdown<ProcessorType>(
               label: 'Type',
               value: processor.type,
@@ -43,25 +39,12 @@ class ProcessorInspector extends ConsumerWidget {
   }
 
   ProcessorConfig _switchType(ProcessorConfig p, ProcessorType t) {
-    return ProcessorConfig(
-      id: p.id,
-      type: t,
-      biquad: t == ProcessorType.biquad ? (p.biquad ?? BiquadConfig()) : null,
-      gain: t == ProcessorType.gain ? (p.gain ?? GainConfig()) : null,
-      saturator: t == ProcessorType.saturator ? (p.saturator ?? SaturatorConfig()) : null,
-      delay: t == ProcessorType.delay ? (p.delay ?? DelayConfig()) : null,
-    );
-  }
-
-  ProcessorConfig _copy(ProcessorConfig p, {String? id}) {
-    return ProcessorConfig(
-      id: id ?? p.id,
-      type: p.type,
-      biquad: p.biquad,
-      gain: p.gain,
-      saturator: p.saturator,
-      delay: p.delay,
-    );
+    p.type = t;
+    p.biquad = t == ProcessorType.biquad ? (p.biquad ?? BiquadConfig()) : null;
+    p.gain = t == ProcessorType.gain ? (p.gain ?? GainConfig()) : null;
+    p.saturator = t == ProcessorType.saturator ? (p.saturator ?? SaturatorConfig()) : null;
+    p.delay = t == ProcessorType.delay ? (p.delay ?? DelayConfig()) : null;
+    return p;
   }
 }
 
@@ -72,9 +55,7 @@ class _BiquadSection extends StatelessWidget {
   final ProcessorConfig processor;
   final ValueChanged<ProcessorConfig> update;
 
-  BiquadConfig get b => processor.biquad ?? BiquadConfig();
-
-  void _updateBiquad(BiquadConfig nb) => update(ProcessorConfig(id: processor.id, type: processor.type, biquad: nb));
+  BiquadConfig get b => processor.biquad!;
 
   @override
   Widget build(BuildContext context) {
@@ -86,45 +67,44 @@ class _BiquadSection extends StatelessWidget {
           value: b.biquadMode,
           items: BiquadMode.values,
           itemLabel: (m) => m.name,
-          onChanged: (m) => _updateBiquad(
-            BiquadConfig(biquadMode: m, frequency: b.frequency, q: b.q, gainDb: b.gainDb, resonant: b.resonant),
-          ),
+          onChanged: (m) {
+            b.biquadMode = m;
+            update(processor);
+          },
         ),
         LabeledIntField(
           label: 'Frequency (Hz)',
           value: b.frequency,
           min: 1,
-          onChanged: (v) => _updateBiquad(
-            BiquadConfig(biquadMode: b.biquadMode, frequency: v, q: b.q, gainDb: b.gainDb, resonant: b.resonant),
-          ),
+          onChanged: (v) {
+            b.frequency = v;
+            update(processor);
+          },
         ),
         LabeledDoubleField(
           label: 'Q',
           value: b.q,
           hint: '> 0',
-          onChanged: (v) => _updateBiquad(
-            BiquadConfig(
-              biquadMode: b.biquadMode,
-              frequency: b.frequency,
-              q: v,
-              gainDb: b.gainDb,
-              resonant: b.resonant,
-            ),
-          ),
+          onChanged: (v) {
+            b.q = v;
+            update(processor);
+          },
         ),
         LabeledDoubleField(
           label: 'Gain (dB)',
           value: b.gainDb,
-          onChanged: (v) => _updateBiquad(
-            BiquadConfig(biquadMode: b.biquadMode, frequency: b.frequency, q: b.q, gainDb: v, resonant: b.resonant),
-          ),
+          onChanged: (v) {
+            b.gainDb = v;
+            update(processor);
+          },
         ),
         LabeledSwitch(
           label: 'Resonant',
           value: b.resonant,
-          onChanged: (v) => _updateBiquad(
-            BiquadConfig(biquadMode: b.biquadMode, frequency: b.frequency, q: b.q, gainDb: b.gainDb, resonant: v),
-          ),
+          onChanged: (v) {
+            b.resonant = v;
+            update(processor);
+          },
         ),
       ],
     );
@@ -138,7 +118,7 @@ class _GainSection extends StatelessWidget {
   final ProcessorConfig processor;
   final ValueChanged<ProcessorConfig> update;
 
-  GainConfig get g => processor.gain ?? GainConfig();
+  GainConfig get g => processor.gain!;
 
   @override
   Widget build(BuildContext context) {
@@ -148,13 +128,10 @@ class _GainSection extends StatelessWidget {
         LabeledDoubleField(
           label: 'Gain',
           value: g.gain,
-          onChanged: (v) => update(
-            ProcessorConfig(
-              id: processor.id,
-              type: processor.type,
-              gain: GainConfig(gain: v),
-            ),
-          ),
+          onChanged: (v) {
+            g.gain = v;
+            update(processor);
+          },
         ),
       ],
     );
@@ -168,9 +145,7 @@ class _SaturatorSection extends StatelessWidget {
   final ProcessorConfig processor;
   final ValueChanged<ProcessorConfig> update;
 
-  SaturatorConfig get s => processor.saturator ?? SaturatorConfig();
-
-  void _updateSat(SaturatorConfig ns) => update(ProcessorConfig(id: processor.id, type: processor.type, saturator: ns));
+  SaturatorConfig get s => processor.saturator!;
 
   @override
   Widget build(BuildContext context) {
@@ -183,14 +158,20 @@ class _SaturatorSection extends StatelessWidget {
           min: 0,
           max: 10,
           displayValue: s.drive.toStringAsFixed(2),
-          onChanged: (v) => _updateSat(SaturatorConfig(drive: v, curve: s.curve)),
+          onChanged: (v) {
+            s.drive = v;
+            update(processor);
+          },
         ),
         LabeledDropdown<SaturatorCurve>(
           label: 'Curve',
           value: s.curve,
           items: SaturatorCurve.values,
           itemLabel: (c) => c.name,
-          onChanged: (c) => _updateSat(SaturatorConfig(drive: s.drive, curve: c)),
+          onChanged: (c) {
+            s.curve = c;
+            update(processor);
+          },
         ),
       ],
     );
@@ -204,9 +185,7 @@ class _DelaySection extends StatelessWidget {
   final ProcessorConfig processor;
   final ValueChanged<ProcessorConfig> update;
 
-  DelayConfig get d => processor.delay ?? DelayConfig();
-
-  void _updateDelay(DelayConfig nd) => update(ProcessorConfig(id: processor.id, type: processor.type, delay: nd));
+  DelayConfig get d => processor.delay!;
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +196,10 @@ class _DelaySection extends StatelessWidget {
           label: 'Time (ms)',
           value: d.delayTimeMs,
           min: 0,
-          onChanged: (v) => _updateDelay(DelayConfig(delayTimeMs: v, feedback: d.feedback, mix: d.mix)),
+          onChanged: (v) {
+            d.delayTimeMs = v;
+            update(processor);
+          },
         ),
         LabeledSlider(
           label: 'Feedback',
@@ -225,7 +207,10 @@ class _DelaySection extends StatelessWidget {
           min: 0,
           max: 1,
           displayValue: d.feedback.toStringAsFixed(2),
-          onChanged: (v) => _updateDelay(DelayConfig(delayTimeMs: d.delayTimeMs, feedback: v, mix: d.mix)),
+          onChanged: (v) {
+            d.feedback = v;
+            update(processor);
+          },
         ),
         LabeledSlider(
           label: 'Mix',
@@ -233,7 +218,10 @@ class _DelaySection extends StatelessWidget {
           min: 0,
           max: 1,
           displayValue: d.mix.toStringAsFixed(2),
-          onChanged: (v) => _updateDelay(DelayConfig(delayTimeMs: d.delayTimeMs, feedback: d.feedback, mix: v)),
+          onChanged: (v) {
+            d.mix = v;
+            update(processor);
+          },
         ),
       ],
     );

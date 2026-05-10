@@ -1,15 +1,15 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_gui/my_app.dart';
 import 'package:noiselabyrinth_gui/persistence/generation_config_repository.dart';
 import 'package:noiselabyrinth_gui/persistence/stored_generation_config.dart';
 import 'package:noiselabyrinth_gui/state/app_persisted_state.dart';
-import 'package:noiselabyrinth_gui/state/preset_library_state.dart';
+import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
 import 'package:noiselabyrinth_gui/widgets/quick_start_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _InMemoryGenerationConfigRepository
-    implements GenerationConfigRepository {
+class _InMemoryGenerationConfigRepository implements GenerationConfigRepository {
   final List<StoredGenerationConfig> _items = <StoredGenerationConfig>[];
 
   @override
@@ -38,11 +38,7 @@ class _InMemoryGenerationConfigRepository
   List<GenerationConfig> getConfigsByTag(String tag) {
     final normalizedTag = tag.trim().toLowerCase();
     return _items
-        .where(
-          (item) => item.tags.any(
-            (itemTag) => itemTag.trim().toLowerCase() == normalizedTag,
-          ),
-        )
+        .where((item) => item.tags.any((itemTag) => itemTag.trim().toLowerCase() == normalizedTag))
         .map((item) => item.toConfig())
         .toList(growable: false);
   }
@@ -79,15 +75,12 @@ void main() {
   testWidgets('shows welcome on first run and switches to main panel', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final state = AppPersistedState.load(prefs);
-    final presetLibraryState = PresetLibraryState(
-      _InMemoryGenerationConfigRepository(),
-    );
+    final repo = _InMemoryGenerationConfigRepository();
 
     await tester.pumpWidget(
-      MyApp(
-        state: state,
-        presetLibraryState: presetLibraryState,
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs), repositoryProvider.overrideWithValue(repo)],
+        child: const MyApp(),
       ),
     );
     await tester.pumpAndSettle();

@@ -17,7 +17,7 @@ GenerationConfig whiteNoiseProfile = GenerationConfig(
     tags: <String>['preset', 'noise', 'white', 'spectrum'],
     version: 1,
   ),
-  render: const RenderConfig(durationMinutes: 5),
+  render: RenderConfig(durationMinutes: 5),
   mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.9),
   layers: <LayerConfig>[
     LayerConfig(
@@ -48,7 +48,7 @@ GenerationConfig pinkNoiseProfile = GenerationConfig(
     tags: <String>['preset', 'noise', 'pink', 'spectrum'],
     version: 1,
   ),
-  render: const RenderConfig(durationMinutes: 5),
+  render: RenderConfig(durationMinutes: 5),
   mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.9),
   layers: <LayerConfig>[
     LayerConfig(
@@ -79,7 +79,7 @@ GenerationConfig brownNoiseProfile = GenerationConfig(
     tags: <String>['preset', 'noise', 'brown', 'spectrum'],
     version: 1,
   ),
-  render: const RenderConfig(durationMinutes: 5),
+  render: RenderConfig(durationMinutes: 5),
   mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.9),
   layers: <LayerConfig>[
     LayerConfig(
@@ -110,7 +110,7 @@ GenerationConfig bandlimitedNoiseProfile = GenerationConfig(
     tags: <String>['preset', 'noise', 'bandlimited', 'spectrum'],
     version: 1,
   ),
-  render: const RenderConfig(durationMinutes: 5),
+  render: RenderConfig(durationMinutes: 5),
   mix: MixConfig(dither: DitherConfig(), normalization: NormalizationConfig(), mix: 0.9),
   layers: <LayerConfig>[
     LayerConfig(

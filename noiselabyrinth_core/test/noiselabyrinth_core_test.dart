@@ -35,7 +35,7 @@ void main() {
       expect(restored.dcBlockerEnabled, isTrue);
 
       expect(
-        const RenderConfig(
+        RenderConfig(
           durationMinutes: 10,
           sampleRate: 48000,
           bitRate: 256,

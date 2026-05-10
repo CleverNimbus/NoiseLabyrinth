@@ -56,7 +56,7 @@ void main() {
       expect(restored.dcBlockerEnabled, isTrue);
 
       expect(
-        const RenderConfig(
+        RenderConfig(
           durationMinutes: 10,
           sampleRate: 48000,
           bitRate: 256,
@@ -73,7 +73,7 @@ void main() {
     });
 
     test('RenderConfig round-trips mp3 format', () {
-      const config = RenderConfig(
+      final config = RenderConfig(
         durationMinutes: 5,
         bitRate: 128,
         format: RenderFormat.mp3,

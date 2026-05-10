@@ -28,7 +28,7 @@ class BrownConfigTests {
       tags: <String>['preset', 'noise', 'brown', 'spectrum'],
       version: 1,
     ),
-    render: const RenderConfig(durationMinutes: 30),
+    render: RenderConfig(durationMinutes: 30),
     mix: MixConfig(
       mix: 0.9,
       normalization: NormalizationConfig(enabled: true, targetDb: -1.2),
@@ -102,7 +102,7 @@ class BrownConfigTests {
         tags: <String>['preset', 'noise', 'brown', 'animated', 'spectrum'],
         version: 1,
       ),
-      render: const RenderConfig(durationMinutes: 30),
+      render: RenderConfig(durationMinutes: 30),
       mix: MixConfig(
         mix: 0.9,
         normalization: NormalizationConfig(enabled: true, targetDb: -1.2),

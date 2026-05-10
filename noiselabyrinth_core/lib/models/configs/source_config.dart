@@ -3,7 +3,7 @@ import 'package:noiselabyrinth_core/models/enums.dart';
 
 /// Primary source definition for a layer.
 class SourceConfig {
-  const SourceConfig({
+  SourceConfig({
     required this.type,
     this.noiseConfig,
     this.impulseConfig,
@@ -29,16 +29,16 @@ class SourceConfig {
   }
 
   /// Selected source generator type for this layer.
-  final SourceType type;
+  SourceType type;
 
   /// Configuration for noise source generation, required when type is noise.
-  final NoiseConfig? noiseConfig;
+  NoiseConfig? noiseConfig;
 
   /// Configuration for impulse source generation, required when type is impulse.
-  final ImpulseConfig? impulseConfig;
+  ImpulseConfig? impulseConfig;
 
   /// Configuration for sine source generation, required when type is sine.
-  final SineConfig? sineConfig;
+  SineConfig? sineConfig;
 
   Map<String, dynamic> toJson() {
     return {
@@ -52,7 +52,7 @@ class SourceConfig {
 
 /// Noise source generation settings.
 class NoiseConfig {
-  const NoiseConfig({required this.color, required this.band});
+  NoiseConfig({required this.color, required this.band});
 
   factory NoiseConfig.fromJson(Map<String, dynamic> json) {
     return NoiseConfig(
@@ -67,10 +67,10 @@ class NoiseConfig {
   }
 
   /// Noise color algorithm used to shape spectral distribution.
-  final NoiseColor color;
+  NoiseColor color;
 
   /// Frequency band limits applied to band-limited noise generation.
-  final BandConfig band;
+  BandConfig band;
 
   Map<String, dynamic> toJson() {
     return {'color': color.name, 'band': band.toJson()};
@@ -79,7 +79,7 @@ class NoiseConfig {
 
 /// Sine source generation settings.
 class SineConfig {
-  const SineConfig({this.frequencyHz = 100, this.phase = 0.0});
+  SineConfig({this.frequencyHz = 100, this.phase = 0.0});
 
   factory SineConfig.fromJson(Map<String, dynamic> json) {
     return SineConfig(
@@ -89,10 +89,10 @@ class SineConfig {
   }
 
   /// Sine oscillator frequency in Hz.
-  final int frequencyHz;
+  int frequencyHz;
 
   /// Initial sine oscillator phase offset in normalized phase units.
-  final double phase;
+  double phase;
 
   Map<String, dynamic> toJson() {
     return {'frequencyHz': frequencyHz, 'phase': phase};
@@ -101,7 +101,7 @@ class SineConfig {
 
 /// Impulse source generation settings.
 class ImpulseConfig {
-  const ImpulseConfig({this.density = 0.2, this.randomness = 0.5});
+  ImpulseConfig({this.density = 0.2, this.randomness = 0.5});
 
   factory ImpulseConfig.fromJson(Map<String, dynamic> json) {
     return ImpulseConfig(
@@ -111,10 +111,10 @@ class ImpulseConfig {
   }
 
   /// Average impulse density, from 0 to 1.
-  final double density;
+  double density;
 
   /// Randomness applied to impulse timing or distribution, from 0 to 1.
-  final double randomness;
+  double randomness;
 
   Map<String, dynamic> toJson() {
     return {'density': density, 'randomness': randomness};

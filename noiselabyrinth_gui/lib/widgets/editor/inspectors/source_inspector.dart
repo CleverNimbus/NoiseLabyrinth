@@ -37,17 +37,16 @@ class SourceInspector extends ConsumerWidget {
   }
 
   SourceConfig _switchType(SourceType t) {
+    source.type = t;
     switch (t) {
       case SourceType.noise:
-        return SourceConfig(
-          type: t,
-          noiseConfig: source.noiseConfig ?? NoiseConfig(color: NoiseColor.white, band: BandConfig()),
-        );
+        source.noiseConfig ??= NoiseConfig(color: NoiseColor.white, band: BandConfig());
       case SourceType.impulse:
-        return SourceConfig(type: t, impulseConfig: source.impulseConfig ?? const ImpulseConfig());
+        source.impulseConfig ??= ImpulseConfig();
       case SourceType.sine:
-        return SourceConfig(type: t, sineConfig: source.sineConfig ?? const SineConfig());
+        source.sineConfig ??= SineConfig();
     }
+    return source;
   }
 }
 
@@ -58,9 +57,7 @@ class _NoiseSection extends StatelessWidget {
   final SourceConfig source;
   final ValueChanged<SourceConfig> update;
 
-  NoiseConfig get noise => source.noiseConfig ?? NoiseConfig(color: NoiseColor.white, band: BandConfig());
-
-  void _updateNoise(NoiseConfig n) => update(SourceConfig(type: source.type, noiseConfig: n));
+  NoiseConfig get noise => source.noiseConfig!;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +69,10 @@ class _NoiseSection extends StatelessWidget {
           value: noise.color,
           items: NoiseColor.values,
           itemLabel: (c) => c.name,
-          onChanged: (c) => _updateNoise(NoiseConfig(color: c, band: noise.band)),
+          onChanged: (c) {
+            noise.color = c;
+            update(source);
+          },
         ),
         InspectorSection(
           title: 'BAND',
@@ -81,23 +81,19 @@ class _NoiseSection extends StatelessWidget {
               label: 'Low (Hz)',
               value: noise.band.low,
               min: 0,
-              onChanged: (v) => _updateNoise(
-                NoiseConfig(
-                  color: noise.color,
-                  band: BandConfig(low: v, high: noise.band.high),
-                ),
-              ),
+              onChanged: (v) {
+                noise.band.low = v;
+                update(source);
+              },
             ),
             LabeledIntField(
               label: 'High (Hz)',
               value: noise.band.high,
               min: 1,
-              onChanged: (v) => _updateNoise(
-                NoiseConfig(
-                  color: noise.color,
-                  band: BandConfig(low: noise.band.low, high: v),
-                ),
-              ),
+              onChanged: (v) {
+                noise.band.high = v;
+                update(source);
+              },
             ),
           ],
         ),
@@ -113,9 +109,7 @@ class _ImpulseSection extends StatelessWidget {
   final SourceConfig source;
   final ValueChanged<SourceConfig> update;
 
-  ImpulseConfig get cfg => source.impulseConfig ?? ImpulseConfig();
-
-  void _updateImpulse(ImpulseConfig c) => update(SourceConfig(type: source.type, impulseConfig: c));
+  ImpulseConfig get cfg => source.impulseConfig!;
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +122,10 @@ class _ImpulseSection extends StatelessWidget {
           min: 0,
           max: 1,
           displayValue: cfg.density.toStringAsFixed(2),
-          onChanged: (v) => _updateImpulse(ImpulseConfig(density: v, randomness: cfg.randomness)),
+          onChanged: (v) {
+            cfg.density = v;
+            update(source);
+          },
         ),
         LabeledSlider(
           label: 'Randomness',
@@ -136,7 +133,10 @@ class _ImpulseSection extends StatelessWidget {
           min: 0,
           max: 1,
           displayValue: cfg.randomness.toStringAsFixed(2),
-          onChanged: (v) => _updateImpulse(ImpulseConfig(density: cfg.density, randomness: v)),
+          onChanged: (v) {
+            cfg.randomness = v;
+            update(source);
+          },
         ),
       ],
     );
@@ -150,10 +150,7 @@ class _SineSection extends StatelessWidget {
   final SourceConfig source;
   final ValueChanged<SourceConfig> update;
 
-  SineConfig get cfg => source.sineConfig ?? const SineConfig();
-
-  void _updateSine(SineConfig c) => update(SourceConfig(type: source.type, sineConfig: c));
-
+  SineConfig get cfg => source.sineConfig!;
   @override
   Widget build(BuildContext context) {
     return InspectorSection(
@@ -163,13 +160,19 @@ class _SineSection extends StatelessWidget {
           label: 'Frequency (Hz)',
           value: cfg.frequencyHz,
           min: 1,
-          onChanged: (v) => _updateSine(SineConfig(frequencyHz: v, phase: cfg.phase)),
+          onChanged: (v) {
+            cfg.frequencyHz = v;
+            update(source);
+          },
         ),
         LabeledDoubleField(
           label: 'Phase',
           value: cfg.phase,
           hint: '0.0',
-          onChanged: (v) => _updateSine(SineConfig(frequencyHz: cfg.frequencyHz, phase: v)),
+          onChanged: (v) {
+            cfg.phase = v;
+            update(source);
+          },
         ),
       ],
     );

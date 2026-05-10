@@ -6,7 +6,6 @@ import 'package:noiselabyrinth_gui/persistence/generation_config_repository.dart
 import 'package:noiselabyrinth_gui/persistence/objectbox_store.dart';
 import 'package:noiselabyrinth_gui/state/app_persisted_state.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
-import 'package:noiselabyrinth_gui/state/preset_library_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
@@ -14,18 +13,16 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final objectBox = await ObjectBoxStore.create();
   final repo = ObjectBoxGenerationConfigRepository(objectBox.store);
-  final presetLibraryState = PresetLibraryState(repo);
-  await presetLibraryState.seedDefaults(<GenerationConfig>[
+  await repo.seedIfEmpty(<GenerationConfig>[
     ...basicNoiseSpectrumProfiles,
     pinkNoiseBed,
     stereoBandlimitedHiss,
     sineDroneWithDelay,
   ]);
-  final state = AppPersistedState.load(prefs);
   runApp(
     ProviderScope(
-      overrides: [repositoryProvider.overrideWithValue(repo)],
-      child: MyApp(state: state, presetLibraryState: presetLibraryState),
+      overrides: [repositoryProvider.overrideWithValue(repo), sharedPreferencesProvider.overrideWithValue(prefs)],
+      child: const MyApp(),
     ),
   );
 }

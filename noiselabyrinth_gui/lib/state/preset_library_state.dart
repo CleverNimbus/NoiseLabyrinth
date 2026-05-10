@@ -1,19 +1,42 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_gui/persistence/generation_config_repository.dart';
+import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
 
-class PresetLibraryState extends ChangeNotifier {
-  PresetLibraryState(this._repository);
+final presetLibraryProvider = StateNotifierProvider<PresetLibraryNotifier, PresetLibraryState>((ref) {
+  final repo = ref.watch(repositoryProvider);
+  return PresetLibraryNotifier(repo);
+});
+
+class PresetLibraryState {
+  const PresetLibraryState({this.presets = const <GenerationConfig>[], this.tags = const <String>[], this.selectedTag});
+
+  final List<GenerationConfig> presets;
+  final List<String> tags;
+  final String? selectedTag;
+
+  PresetLibraryState copyWith({
+    List<GenerationConfig>? presets,
+    List<String>? tags,
+    String? selectedTag,
+    bool clearSelectedTag = false,
+  }) {
+    return PresetLibraryState(
+      presets: presets ?? this.presets,
+      tags: tags ?? this.tags,
+      selectedTag: clearSelectedTag ? null : (selectedTag ?? this.selectedTag),
+    );
+  }
+}
+
+class PresetLibraryNotifier extends StateNotifier<PresetLibraryState> {
+  PresetLibraryNotifier(this._repository) : super(const PresetLibraryState()) {
+    unawaited(reload());
+  }
 
   final GenerationConfigRepository _repository;
-
-  List<GenerationConfig> _presets = const <GenerationConfig>[];
-  List<String> _tags = const <String>[];
-  String? _selectedTag;
-
-  List<GenerationConfig> get presets => _presets;
-  List<String> get tags => _tags;
-  String? get selectedTag => _selectedTag;
 
   Future<void> seedDefaults(Iterable<GenerationConfig> defaults) async {
     await _repository.seedIfEmpty(defaults);
@@ -26,18 +49,17 @@ class PresetLibraryState extends ChangeNotifier {
   }
 
   Future<void> reload() async {
-    _tags = _repository.getAllTags();
-    if (_selectedTag != null && !_tags.contains(_selectedTag)) {
-      _selectedTag = null;
+    final tags = _repository.getAllTags();
+    var selectedTag = state.selectedTag;
+    if (selectedTag != null && !tags.contains(selectedTag)) {
+      selectedTag = null;
     }
-    _presets = _selectedTag == null
-        ? _repository.getAllConfigs()
-        : _repository.getConfigsByTag(_selectedTag!);
-    notifyListeners();
+    final presets = selectedTag == null ? _repository.getAllConfigs() : _repository.getConfigsByTag(selectedTag);
+    state = PresetLibraryState(presets: presets, tags: tags, selectedTag: selectedTag);
   }
 
   Future<void> selectTag(String? tag) async {
-    _selectedTag = tag;
+    state = state.copyWith(selectedTag: tag, clearSelectedTag: tag == null);
     await reload();
   }
 }

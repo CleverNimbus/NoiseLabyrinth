@@ -1,35 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:noiselabyrinth_gui/state/app_persisted_state.dart';
-import 'package:noiselabyrinth_gui/state/preset_library_state.dart';
 import 'package:noiselabyrinth_gui/widgets/main_shell.dart';
 
 class MyApp extends StatelessWidget {
-  const MyApp({
-    required this.state,
-    required this.presetLibraryState,
-    super.key,
-  });
-
-  final AppPersistedState state;
-  final PresetLibraryState presetLibraryState;
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge(<Listenable>[state, presetLibraryState]),
-      builder: (context, _) {
-        return MaterialApp(
-          title: 'NoiseLabyrinth',
-          debugShowCheckedModeBanner: false,
-          themeMode: ThemeMode.system,
-          theme: _buildLightTheme(),
-          darkTheme: _buildDarkTheme(),
-          home: MainShell(
-            state: state,
-            presetLibraryState: presetLibraryState,
-          ),
-        );
-      },
+    return MaterialApp(
+      title: 'NoiseLabyrinth',
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
+      theme: _buildLightTheme(),
+      darkTheme: _buildDarkTheme(),
+      home: const MainShell(),
     );
   }
 

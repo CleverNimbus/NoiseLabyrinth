@@ -23,13 +23,13 @@ class RenderInspector extends ConsumerWidget {
               value: render.format,
               items: RenderFormat.values,
               itemLabel: (f) => f.name.toUpperCase(),
-              onChanged: (v) => update(_copy(render, format: v)),
+              onChanged: (v) => update(render..format = v),
             ),
             LabeledIntField(
               label: 'Duration (min)',
               value: render.durationMinutes,
               min: 1,
-              onChanged: (v) => update(_copy(render, durationMinutes: v)),
+              onChanged: (v) => update(render..durationMinutes = v),
             ),
           ],
         ),
@@ -41,14 +41,14 @@ class RenderInspector extends ConsumerWidget {
               value: render.sampleRate,
               items: const [22050, 44100, 48000, 96000],
               itemLabel: (v) => '$v Hz',
-              onChanged: (v) => update(_copy(render, sampleRate: v)),
+              onChanged: (v) => update(render..sampleRate = v),
             ),
             LabeledIntField(
               label: 'Bit Rate (kbps)',
               value: render.bitRate,
               min: 64,
               max: 320,
-              onChanged: (v) => update(_copy(render, bitRate: v)),
+              onChanged: (v) => update(render..bitRate = v),
             ),
           ],
         ),
@@ -58,28 +58,11 @@ class RenderInspector extends ConsumerWidget {
             LabeledSwitch(
               label: 'DC Blocker',
               value: render.dcBlockerEnabled,
-              onChanged: (v) => update(_copy(render, dcBlockerEnabled: v)),
+              onChanged: (v) => update(render..dcBlockerEnabled = v),
             ),
           ],
         ),
       ],
-    );
-  }
-
-  RenderConfig _copy(
-    RenderConfig r, {
-    int? durationMinutes,
-    int? sampleRate,
-    int? bitRate,
-    RenderFormat? format,
-    bool? dcBlockerEnabled,
-  }) {
-    return RenderConfig(
-      durationMinutes: durationMinutes ?? r.durationMinutes,
-      sampleRate: sampleRate ?? r.sampleRate,
-      bitRate: bitRate ?? r.bitRate,
-      format: format ?? r.format,
-      dcBlockerEnabled: dcBlockerEnabled ?? r.dcBlockerEnabled,
     );
   }
 }

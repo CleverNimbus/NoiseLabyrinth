@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 import 'package:noiselabyrinth_gui/state/app_persisted_state.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
-import 'package:noiselabyrinth_gui/state/preset_library_state.dart';
 import 'package:noiselabyrinth_gui/widgets/app_header.dart';
 import 'package:noiselabyrinth_gui/widgets/create_panel.dart';
 import 'package:noiselabyrinth_gui/widgets/footer_item.dart';
@@ -11,22 +10,14 @@ import 'package:noiselabyrinth_gui/widgets/presets_panel.dart';
 import 'package:noiselabyrinth_gui/widgets/quick_start_panel.dart';
 import 'package:noiselabyrinth_gui/widgets/wellcome_panel.dart';
 
-class MainShell extends ConsumerStatefulWidget {
-  const MainShell({required this.state, required this.presetLibraryState, super.key});
+class MainShell extends ConsumerWidget {
+  const MainShell({super.key});
 
-  final AppPersistedState state;
-  final PresetLibraryState presetLibraryState;
-
-  @override
-  ConsumerState<MainShell> createState() => _MainShellState();
-}
-
-class _MainShellState extends ConsumerState<MainShell> {
-  void _onPresetOpen(GenerationConfig config) {
+  void _onPresetOpen(WidgetRef ref, GenerationConfig config) {
     // Open config in editor
     ref.read(editorNotifierProvider.notifier).openConfig(config);
     // Switch to Create/Advanced tab (index 2)
-    widget.state.setFooter(2);
+    ref.read(appPersistedProvider.notifier).setFooter(2);
   }
 
   static const _footerItems = <FooterItem>[
@@ -36,47 +27,51 @@ class _MainShellState extends ConsumerState<MainShell> {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final section = _footerItems[widget.state.selectedFooter].label;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appState = ref.watch(appPersistedProvider);
+    final section = _footerItems[appState.selectedFooter].label;
 
     return Scaffold(
-      endDrawer: _buildDrawer(context),
+      endDrawer: _buildDrawer(context, ref),
       body: SafeArea(
         child: Column(
           children: [
             AppHeader(section: section),
             Expanded(
-              child: Padding(padding: const EdgeInsets.fromLTRB(14, 10, 14, 10), child: _buildMainContent(context)),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                child: _buildMainContent(context, ref, appState),
+              ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: _buildFooter(context),
+      bottomNavigationBar: _buildFooter(context, ref, appState),
     );
   }
 
-  Widget _buildMainContent(BuildContext context) {
-    if (!widget.state.welcomeDismissed) {
+  Widget _buildMainContent(BuildContext context, WidgetRef ref, AppPersistedState appState) {
+    if (!appState.welcomeDismissed) {
       return SingleChildScrollView(
-        child: WelcomePanel(onStart: () => widget.state.setFooter(widget.state.selectedFooter)),
+        child: WelcomePanel(onStart: () => ref.read(appPersistedProvider.notifier).setFooter(appState.selectedFooter)),
       );
     }
 
     // CreatePanel (index 2) needs bounded height for its Expanded internal layout.
     // Other panels are scrollable.
-    if (widget.state.selectedFooter == 2) {
+    if (appState.selectedFooter == 2) {
       return const CreatePanel();
     }
 
     final scrollablePanels = <Widget>[
       const QuickStartPanel(),
-      PresetsPanel(state: widget.presetLibraryState, onOpen: _onPresetOpen),
+      PresetsPanel(onOpen: (config) => _onPresetOpen(ref, config)),
     ];
 
-    return SingleChildScrollView(child: scrollablePanels[widget.state.selectedFooter]);
+    return SingleChildScrollView(child: scrollablePanels[appState.selectedFooter]);
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _buildFooter(BuildContext context, WidgetRef ref, AppPersistedState appState) {
     return BottomAppBar(
       height: 72,
       child: Row(
@@ -85,10 +80,10 @@ class _MainShellState extends ConsumerState<MainShell> {
             Expanded(
               child: IconButton(
                 tooltip: _footerItems[i].label,
-                onPressed: () => widget.state.setFooter(i),
+                onPressed: () => ref.read(appPersistedProvider.notifier).setFooter(i),
                 icon: Icon(
                   _footerItems[i].icon,
-                  color: widget.state.selectedFooter == i
+                  color: appState.selectedFooter == i
                       ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -110,7 +105,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
+  Widget _buildDrawer(BuildContext context, WidgetRef ref) {
     return Drawer(
       child: SafeArea(
         child: ListView(
@@ -125,7 +120,7 @@ class _MainShellState extends ConsumerState<MainShell> {
               title: const Text('Show Welcome Again'),
               onTap: () {
                 Navigator.of(context).pop();
-                widget.state.resetWelcome();
+                ref.read(appPersistedProvider.notifier).resetWelcome();
               },
             ),
           ],

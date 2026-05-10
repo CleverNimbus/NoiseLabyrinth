@@ -176,15 +176,15 @@ void main() {
     });
 
     test('RenderConfig default format is mp3', () {
-      expect(const RenderConfig().format, RenderFormat.mp3);
+      expect(RenderConfig().format, RenderFormat.mp3);
     });
 
     test('RenderConfig enables DC blocker by default', () {
-      expect(const RenderConfig().dcBlockerEnabled, isTrue);
+      expect(RenderConfig().dcBlockerEnabled, isTrue);
     });
 
     test('RenderConfig toJson includes format name', () {
-      const config = RenderConfig(format: RenderFormat.mp3, bitRate: 320);
+      final config = RenderConfig(format: RenderFormat.mp3, bitRate: 320);
       expect(config.toJson()['format'], equals('mp3'));
       expect(config.toJson()['dcBlockerEnabled'], isTrue);
     });
