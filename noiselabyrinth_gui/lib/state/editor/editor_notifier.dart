@@ -139,6 +139,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     config.layers = config.layers.where((l) => l.id != layerId).toList();
     final sel = state.selectedNode;
     final clearSel = _selectionBelongsToLayer(sel, layerId);
+    _removeLayerPreviewState(layerId);
     _commit(config, selectedNode: clearSel ? null : sel, clearSel: clearSel);
   }
 
@@ -188,6 +189,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
     layer.processors = layer.processors.where((p) => p.id != processorId).toList();
+    _removePreviewProcessor(layerId, processorId);
     final sel = state.selectedNode;
     final clearSel = sel is ProcessorNode && sel.layer.id == layerId && sel.processor.id == processorId;
     _commit(config, selectedNode: clearSel ? null : sel, clearSel: clearSel);
@@ -241,6 +243,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
     layer.modulations = layer.modulations.where((m) => m.id != modulationId).toList();
+    _removePreviewModulation(layerId, modulationId);
     final sel = state.selectedNode;
     final clearSel = sel is ModulationNode && sel.layer.id == layerId && sel.modulation.id == modulationId;
     _commit(config, selectedNode: clearSel ? null : sel, clearSel: clearSel);
@@ -281,9 +284,41 @@ class EditorNotifier extends StateNotifier<EditorState> {
     if (layerIdx < 0) return;
     final layer = config.layers[layerIdx];
     layer.events = layer.events.where((e) => e.id != eventId).toList();
+    _removePreviewEvent(layerId, eventId);
     final sel = state.selectedNode;
     final clearSel = sel is EventNode && sel.layer.id == layerId && sel.event.id == eventId;
     _commit(config, selectedNode: clearSel ? null : sel, clearSel: clearSel);
+  }
+
+  // ---------- preview toggles ----------
+
+  void toggleProcessorPreviewEnabled(String layerId, String processorId) {
+    state = state.copyWith(
+      previewDisabledProcessorsByLayer: _togglePreviewDisabledId(
+        state.previewDisabledProcessorsByLayer,
+        layerId,
+        processorId,
+      ),
+      configRevision: state.configRevision + 1,
+    );
+  }
+
+  void toggleModulationPreviewEnabled(String layerId, String modulationId) {
+    state = state.copyWith(
+      previewDisabledModulationsByLayer: _togglePreviewDisabledId(
+        state.previewDisabledModulationsByLayer,
+        layerId,
+        modulationId,
+      ),
+      configRevision: state.configRevision + 1,
+    );
+  }
+
+  void toggleEventPreviewEnabled(String layerId, String eventId) {
+    state = state.copyWith(
+      previewDisabledEventsByLayer: _togglePreviewDisabledId(state.previewDisabledEventsByLayer, layerId, eventId),
+      configRevision: state.configRevision + 1,
+    );
   }
 
   // ---------- update source ----------
@@ -318,8 +353,83 @@ class EditorNotifier extends StateNotifier<EditorState> {
       selectedNode: clearSel ? null : (selectedNode ?? state.selectedNode),
       isDirty: true,
       validationIssues: issues,
+      previewDisabledProcessorsByLayer: state.previewDisabledProcessorsByLayer,
+      previewDisabledModulationsByLayer: state.previewDisabledModulationsByLayer,
+      previewDisabledEventsByLayer: state.previewDisabledEventsByLayer,
       configRevision: state.configRevision + 1,
     );
+  }
+
+  Map<String, Set<String>> _togglePreviewDisabledId(Map<String, Set<String>> source, String layerId, String itemId) {
+    final next = _clonePreviewDisabledMap(source);
+    final ids = Set<String>.from(next[layerId] ?? const <String>{});
+    if (ids.contains(itemId)) {
+      ids.remove(itemId);
+    } else {
+      ids.add(itemId);
+    }
+
+    if (ids.isEmpty) {
+      next.remove(layerId);
+    } else {
+      next[layerId] = ids;
+    }
+    return next;
+  }
+
+  void _removeLayerPreviewState(String layerId) {
+    final processors = _clonePreviewDisabledMap(state.previewDisabledProcessorsByLayer)..remove(layerId);
+    final modulations = _clonePreviewDisabledMap(state.previewDisabledModulationsByLayer)..remove(layerId);
+    final events = _clonePreviewDisabledMap(state.previewDisabledEventsByLayer)..remove(layerId);
+    state = state.copyWith(
+      previewDisabledProcessorsByLayer: processors,
+      previewDisabledModulationsByLayer: modulations,
+      previewDisabledEventsByLayer: events,
+    );
+  }
+
+  void _removePreviewProcessor(String layerId, String processorId) {
+    state = state.copyWith(
+      previewDisabledProcessorsByLayer: _removePreviewDisabledId(
+        state.previewDisabledProcessorsByLayer,
+        layerId,
+        processorId,
+      ),
+    );
+  }
+
+  void _removePreviewModulation(String layerId, String modulationId) {
+    state = state.copyWith(
+      previewDisabledModulationsByLayer: _removePreviewDisabledId(
+        state.previewDisabledModulationsByLayer,
+        layerId,
+        modulationId,
+      ),
+    );
+  }
+
+  void _removePreviewEvent(String layerId, String eventId) {
+    state = state.copyWith(
+      previewDisabledEventsByLayer: _removePreviewDisabledId(state.previewDisabledEventsByLayer, layerId, eventId),
+    );
+  }
+
+  Map<String, Set<String>> _removePreviewDisabledId(Map<String, Set<String>> source, String layerId, String itemId) {
+    final next = _clonePreviewDisabledMap(source);
+    final ids = Set<String>.from(next[layerId] ?? const <String>{});
+    if (!ids.remove(itemId)) {
+      return source;
+    }
+    if (ids.isEmpty) {
+      next.remove(layerId);
+    } else {
+      next[layerId] = ids;
+    }
+    return next;
+  }
+
+  Map<String, Set<String>> _clonePreviewDisabledMap(Map<String, Set<String>> source) {
+    return {for (final entry in source.entries) entry.key: Set<String>.from(entry.value)};
   }
 
   List<EditorValidationIssue> _buildValidationIssues(GenerationConfig config) {

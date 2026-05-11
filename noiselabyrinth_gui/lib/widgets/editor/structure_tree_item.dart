@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 class TreeItemAction {
-  const TreeItemAction({required this.icon, required this.tooltip, required this.onPressed});
+  const TreeItemAction({required this.icon, required this.tooltip, required this.onPressed, this.isDestructive = true});
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+  final bool isDestructive;
 }
 
 class StructureTreeItem extends StatelessWidget {
@@ -18,6 +19,7 @@ class StructureTreeItem extends StatelessWidget {
     this.isExpandable = false,
     this.isExpanded = false,
     this.hasError = false,
+    this.isPreviewDisabled = false,
     this.onTap,
     this.onToggleExpand,
     this.trailingActions = const [],
@@ -30,6 +32,7 @@ class StructureTreeItem extends StatelessWidget {
   final bool isExpandable;
   final bool isExpanded;
   final bool hasError;
+  final bool isPreviewDisabled;
   final VoidCallback? onTap;
   final VoidCallback? onToggleExpand;
   final List<TreeItemAction> trailingActions;
@@ -42,6 +45,8 @@ class StructureTreeItem extends StatelessWidget {
     final indent = 8.0 + (depth * 16.0);
     final selectedBg = colorScheme.primary.withValues(alpha: 0.12);
     final hoverBg = colorScheme.onSurface.withValues(alpha: 0.06);
+
+    final disabledOpacity = isPreviewDisabled ? 0.45 : 1.0;
 
     final iconColor = hasError
         ? colorScheme.error
@@ -75,30 +80,39 @@ class StructureTreeItem extends StatelessWidget {
             children: [
               SizedBox(width: indent),
 
-              // Expand/collapse toggle
-              if (isExpandable)
-                GestureDetector(
-                  onTap: onToggleExpand,
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      isExpanded ? Icons.expand_more : Icons.chevron_right,
-                      size: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                )
-              else
-                const SizedBox(width: 22),
-
-              // Node icon
-              Icon(icon, size: 14, color: iconColor),
-              const SizedBox(width: 6),
-
-              // Label
               Expanded(
-                child: Text(label, style: labelStyle, overflow: TextOverflow.ellipsis, maxLines: 1),
+                child: Opacity(
+                  opacity: disabledOpacity,
+                  child: Row(
+                    children: [
+                      // Expand/collapse toggle
+                      if (isExpandable)
+                        GestureDetector(
+                          onTap: onToggleExpand,
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              isExpanded ? Icons.expand_more : Icons.chevron_right,
+                              size: 14,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        )
+                      else
+                        const SizedBox(width: 22),
+
+                      // Node icon
+                      Icon(icon, size: 14, color: iconColor),
+                      const SizedBox(width: 6),
+
+                      // Label
+                      Expanded(
+                        child: Text(label, style: labelStyle, overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
               // Error indicator
@@ -133,6 +147,8 @@ class _HoverableActionState extends State<_HoverableAction> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hoveredColor = widget.action.isDestructive ? colorScheme.error : colorScheme.primary;
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
@@ -145,9 +161,7 @@ class _HoverableActionState extends State<_HoverableAction> {
             child: Icon(
               widget.action.icon,
               size: 13,
-              color: _hovered
-                  ? Theme.of(context).colorScheme.error
-                  : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+              color: _hovered ? hoveredColor : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
             ),
           ),
         ),

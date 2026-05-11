@@ -70,22 +70,25 @@ class PreviewController extends StateNotifier<PreviewState> {
       unawaited(stop());
       return;
     }
-    final config = next.config!;
     if (state.boundRevision != null && next.configRevision != state.boundRevision) {
-      unawaited(_restart(config, next.configRevision));
+      unawaited(_restart(next));
     }
   }
 
-  Future<void> start(GenerationConfig config, int configRevision) async {
+  Future<void> start(EditorState editorState) async {
     if (state.isActive) {
       return;
     }
-    final snapshot = GenerationConfig.fromJson(config.toJson());
+    final config = editorState.config;
+    if (config == null) {
+      return;
+    }
+    final snapshot = buildPreviewConfigSnapshot(editorState);
     final session = ++_sessionId;
     _producerDone = false;
     _enqueuedSegments = 0;
     _opened = false;
-    state = PreviewState(isPreparing: true, isPlaying: false, boundRevision: configRevision);
+    state = PreviewState(isPreparing: true, isPlaying: false, boundRevision: editorState.configRevision);
 
     _player ??= Player();
     await _completedSubscription?.cancel();
@@ -105,9 +108,9 @@ class PreviewController extends StateNotifier<PreviewState> {
     state = const PreviewState.idle();
   }
 
-  Future<void> _restart(GenerationConfig config, int configRevision) async {
+  Future<void> _restart(EditorState editorState) async {
     await stop();
-    await start(config, configRevision);
+    await start(editorState);
   }
 
   @override
@@ -327,6 +330,70 @@ class PreviewController extends StateNotifier<PreviewState> {
 
     return bytes;
   }
+}
+
+GenerationConfig buildPreviewConfigSnapshot(EditorState editorState) {
+  final config = editorState.config;
+  if (config == null) {
+    throw StateError('Cannot build preview snapshot without an open config.');
+  }
+
+  final snapshot = GenerationConfig.fromJson(config.toJson());
+  final disabledProcessorsByLayer = editorState.previewDisabledProcessorsByLayer;
+  final disabledModulationsByLayer = editorState.previewDisabledModulationsByLayer;
+  final disabledEventsByLayer = editorState.previewDisabledEventsByLayer;
+
+  for (final layer in snapshot.layers) {
+    final disabledProcessorIds = disabledProcessorsByLayer[layer.id] ?? const <String>{};
+    if (disabledProcessorIds.isNotEmpty) {
+      layer.processors = [
+        for (final processor in layer.processors)
+          if (!disabledProcessorIds.contains(processor.id)) processor,
+      ];
+    }
+
+    final allowedTargetPaths = ModulationTargetCatalog.pathsForLayer(layer);
+
+    final disabledModulationIds = disabledModulationsByLayer[layer.id] ?? const <String>{};
+    if (disabledModulationIds.isNotEmpty) {
+      layer.modulations = [
+        for (final modulation in layer.modulations)
+          if (!disabledModulationIds.contains(modulation.id)) modulation,
+      ];
+    }
+
+    layer.modulations = [
+      for (final modulation in layer.modulations)
+        modulation
+          ..targets = [
+            for (final target in modulation.targets)
+              if (allowedTargetPaths.contains(target.path)) target,
+          ],
+    ];
+
+    final activeModulationIds = layer.modulations.map((modulation) => modulation.id).toSet();
+
+    final disabledEventIds = disabledEventsByLayer[layer.id] ?? const <String>{};
+    if (disabledEventIds.isNotEmpty) {
+      layer.events = [
+        for (final event in layer.events)
+          if (!disabledEventIds.contains(event.id)) event,
+      ];
+    }
+
+    layer.events = [
+      for (final event in layer.events)
+        () {
+          final actions = [
+            for (final action in event.actions)
+              if (activeModulationIds.contains(action.modulatorId)) action,
+          ];
+          return event..actions = actions;
+        }(),
+    ].where((event) => event.actions.isNotEmpty).toList(growable: false);
+  }
+
+  return snapshot;
 }
 
 /// Top-level function to calculate normalization gain in a background isolate.

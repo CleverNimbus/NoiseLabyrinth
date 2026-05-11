@@ -65,8 +65,7 @@ class StructureTree extends ConsumerWidget {
                 // ── Layers ──
                 _LayersSectionHeader(config: config),
 
-                for (final layer in config.layers)
-                  _LayerSubtree(layer: layer, selectedNode: selectedNode, issues: issues),
+                for (final layer in config.layers) _LayerSubtree(layer: layer, editorState: editorState),
               ],
             ),
           ),
@@ -140,11 +139,10 @@ class _LayersSectionHeader extends ConsumerWidget {
 // ──────────────────────────────────────────
 
 class _LayerSubtree extends ConsumerStatefulWidget {
-  const _LayerSubtree({required this.layer, required this.selectedNode, required this.issues});
+  const _LayerSubtree({required this.layer, required this.editorState});
 
   final LayerConfig layer;
-  final EditorNode? selectedNode;
-  final List<EditorValidationIssue> issues;
+  final EditorState editorState;
 
   @override
   ConsumerState<_LayerSubtree> createState() => _LayerSubtreeState();
@@ -156,10 +154,11 @@ class _LayerSubtreeState extends ConsumerState<_LayerSubtree> {
   @override
   Widget build(BuildContext context) {
     final layer = widget.layer;
-    final sel = widget.selectedNode;
+    final sel = widget.editorState.selectedNode;
+    final issues = widget.editorState.validationIssues;
     final notifier = ref.read(editorNotifierProvider.notifier);
 
-    bool layerHasIssue() => widget.issues.any((i) {
+    bool layerHasIssue() => issues.any((i) {
       final n = i.node;
       return (n is LayerNode && n.layer.id == layer.id) ||
           (n is SourceNode && n.layer.id == layer.id) ||
@@ -198,7 +197,7 @@ class _LayerSubtreeState extends ConsumerState<_LayerSubtree> {
             icon: Icons.waves_outlined,
             depth: 2,
             isSelected: sel is SourceNode && sel.layer.id == layer.id,
-            hasError: widget.issues.any((i) => i.node is SourceNode && (i.node as SourceNode).layer.id == layer.id),
+            hasError: issues.any((i) => i.node is SourceNode && (i.node as SourceNode).layer.id == layer.id),
             onTap: () => notifier.selectNode(SourceNode(layer)),
           ),
 
@@ -211,26 +210,36 @@ class _LayerSubtreeState extends ConsumerState<_LayerSubtree> {
             onAdd: () => notifier.addProcessor(layer.id),
             children: [
               for (final proc in layer.processors)
-                StructureTreeItem(
-                  label: '${proc.id} (${proc.type.name})',
-                  icon: _processorIcon(proc.type),
-                  depth: 3,
-                  isSelected: sel is ProcessorNode && sel.layer.id == layer.id && sel.processor.id == proc.id,
-                  hasError: widget.issues.any(
-                    (i) =>
-                        i.node is ProcessorNode &&
-                        (i.node as ProcessorNode).layer.id == layer.id &&
-                        (i.node as ProcessorNode).processor.id == proc.id,
-                  ),
-                  onTap: () => notifier.selectNode(ProcessorNode(layer, proc)),
-                  trailingActions: [
-                    TreeItemAction(
-                      icon: Icons.delete_outline,
-                      tooltip: 'Remove Processor',
-                      onPressed: () => notifier.removeProcessor(layer.id, proc.id),
+                () {
+                  final previewEnabled = widget.editorState.isProcessorPreviewEnabled(layer.id, proc.id);
+                  return StructureTreeItem(
+                    label: '${proc.id} (${proc.type.name})',
+                    icon: _processorIcon(proc.type),
+                    depth: 3,
+                    isSelected: sel is ProcessorNode && sel.layer.id == layer.id && sel.processor.id == proc.id,
+                    hasError: issues.any(
+                      (i) =>
+                          i.node is ProcessorNode &&
+                          (i.node as ProcessorNode).layer.id == layer.id &&
+                          (i.node as ProcessorNode).processor.id == proc.id,
                     ),
-                  ],
-                ),
+                    isPreviewDisabled: !previewEnabled,
+                    onTap: () => notifier.selectNode(ProcessorNode(layer, proc)),
+                    trailingActions: [
+                      TreeItemAction(
+                        icon: previewEnabled ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        tooltip: previewEnabled ? 'Disable in Preview' : 'Enable in Preview',
+                        onPressed: () => notifier.toggleProcessorPreviewEnabled(layer.id, proc.id),
+                        isDestructive: false,
+                      ),
+                      TreeItemAction(
+                        icon: Icons.delete_outline,
+                        tooltip: 'Remove Processor',
+                        onPressed: () => notifier.removeProcessor(layer.id, proc.id),
+                      ),
+                    ],
+                  );
+                }(),
             ],
           ),
 
@@ -243,26 +252,36 @@ class _LayerSubtreeState extends ConsumerState<_LayerSubtree> {
             onAdd: () => notifier.addModulation(layer.id),
             children: [
               for (final mod in layer.modulations)
-                StructureTreeItem(
-                  label: '${mod.id} (${mod.type.name})',
-                  icon: _modulationIcon(mod.type),
-                  depth: 3,
-                  isSelected: sel is ModulationNode && sel.layer.id == layer.id && sel.modulation.id == mod.id,
-                  hasError: widget.issues.any(
-                    (i) =>
-                        i.node is ModulationNode &&
-                        (i.node as ModulationNode).layer.id == layer.id &&
-                        (i.node as ModulationNode).modulation.id == mod.id,
-                  ),
-                  onTap: () => notifier.selectNode(ModulationNode(layer, mod)),
-                  trailingActions: [
-                    TreeItemAction(
-                      icon: Icons.delete_outline,
-                      tooltip: 'Remove Modulation',
-                      onPressed: () => notifier.removeModulation(layer.id, mod.id),
+                () {
+                  final previewEnabled = widget.editorState.isModulationPreviewEnabled(layer.id, mod.id);
+                  return StructureTreeItem(
+                    label: '${mod.id} (${mod.type.name})',
+                    icon: _modulationIcon(mod.type),
+                    depth: 3,
+                    isSelected: sel is ModulationNode && sel.layer.id == layer.id && sel.modulation.id == mod.id,
+                    hasError: issues.any(
+                      (i) =>
+                          i.node is ModulationNode &&
+                          (i.node as ModulationNode).layer.id == layer.id &&
+                          (i.node as ModulationNode).modulation.id == mod.id,
                     ),
-                  ],
-                ),
+                    isPreviewDisabled: !previewEnabled,
+                    onTap: () => notifier.selectNode(ModulationNode(layer, mod)),
+                    trailingActions: [
+                      TreeItemAction(
+                        icon: previewEnabled ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        tooltip: previewEnabled ? 'Disable in Preview' : 'Enable in Preview',
+                        onPressed: () => notifier.toggleModulationPreviewEnabled(layer.id, mod.id),
+                        isDestructive: false,
+                      ),
+                      TreeItemAction(
+                        icon: Icons.delete_outline,
+                        tooltip: 'Remove Modulation',
+                        onPressed: () => notifier.removeModulation(layer.id, mod.id),
+                      ),
+                    ],
+                  );
+                }(),
             ],
           ),
 
@@ -275,26 +294,36 @@ class _LayerSubtreeState extends ConsumerState<_LayerSubtree> {
             onAdd: () => notifier.addEvent(layer.id),
             children: [
               for (final event in layer.events)
-                StructureTreeItem(
-                  label: '${event.id} (${event.trigger.type.name})',
-                  icon: Icons.flash_on_outlined,
-                  depth: 3,
-                  isSelected: sel is EventNode && sel.layer.id == layer.id && sel.event.id == event.id,
-                  hasError: widget.issues.any(
-                    (i) =>
-                        i.node is EventNode &&
-                        (i.node as EventNode).layer.id == layer.id &&
-                        (i.node as EventNode).event.id == event.id,
-                  ),
-                  onTap: () => notifier.selectNode(EventNode(layer, event)),
-                  trailingActions: [
-                    TreeItemAction(
-                      icon: Icons.delete_outline,
-                      tooltip: 'Remove Event',
-                      onPressed: () => notifier.removeEvent(layer.id, event.id),
+                () {
+                  final previewEnabled = widget.editorState.isEventPreviewEnabled(layer.id, event.id);
+                  return StructureTreeItem(
+                    label: '${event.id} (${event.trigger.type.name})',
+                    icon: Icons.flash_on_outlined,
+                    depth: 3,
+                    isSelected: sel is EventNode && sel.layer.id == layer.id && sel.event.id == event.id,
+                    hasError: issues.any(
+                      (i) =>
+                          i.node is EventNode &&
+                          (i.node as EventNode).layer.id == layer.id &&
+                          (i.node as EventNode).event.id == event.id,
                     ),
-                  ],
-                ),
+                    isPreviewDisabled: !previewEnabled,
+                    onTap: () => notifier.selectNode(EventNode(layer, event)),
+                    trailingActions: [
+                      TreeItemAction(
+                        icon: previewEnabled ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        tooltip: previewEnabled ? 'Disable in Preview' : 'Enable in Preview',
+                        onPressed: () => notifier.toggleEventPreviewEnabled(layer.id, event.id),
+                        isDestructive: false,
+                      ),
+                      TreeItemAction(
+                        icon: Icons.delete_outline,
+                        tooltip: 'Remove Event',
+                        onPressed: () => notifier.removeEvent(layer.id, event.id),
+                      ),
+                    ],
+                  );
+                }(),
             ],
           ),
         ],

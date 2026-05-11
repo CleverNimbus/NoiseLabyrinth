@@ -70,7 +70,7 @@ class AppHeader extends ConsumerWidget {
                     }
                     final config = editorState.config;
                     if (config != null) {
-                      notifier.start(config, editorState.configRevision);
+                      notifier.start(editorState);
                     }
                   }
                 : null,
