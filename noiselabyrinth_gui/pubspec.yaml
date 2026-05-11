@@ -36,6 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   noiselabyrinth_core:
     path: ../noiselabyrinth_core
+  noiselabyrinth_shared:
+    path: ../noiselabyrinth_shared
   sembast: ^3.7.2
   sembast_web: ^2.4.4+1
   path_provider: ^2.1.5

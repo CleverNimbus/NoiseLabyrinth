@@ -96,19 +96,15 @@ class BiquadDesigner {
 }
 
 class BiquadSection {
-  BiquadCoefficients _coefficients = const BiquadCoefficients.identity();
+  BiquadCoefficients coefficients = const BiquadCoefficients.identity();
 
   double _x1 = 0;
   double _x2 = 0;
   double _y1 = 0;
   double _y2 = 0;
 
-  void configure(BiquadCoefficients coefficients) {
-    _coefficients = coefficients;
-  }
-
   void bypass() {
-    _coefficients = const BiquadCoefficients.identity();
+    coefficients = const BiquadCoefficients.identity();
   }
 
   void reset() {
@@ -120,11 +116,11 @@ class BiquadSection {
 
   double process(double input) {
     final output =
-        (_coefficients.b0 * input) +
-        (_coefficients.b1 * _x1) +
-        (_coefficients.b2 * _x2) -
-        (_coefficients.a1 * _y1) -
-        (_coefficients.a2 * _y2);
+        (coefficients.b0 * input) +
+        (coefficients.b1 * _x1) +
+        (coefficients.b2 * _x2) -
+        (coefficients.a1 * _y1) -
+        (coefficients.a2 * _y2);
     _x2 = _x1;
     _x1 = input;
     _y2 = _y1;

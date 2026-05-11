@@ -155,6 +155,70 @@ void main() {
       },
       tags: _smokeTag,
     );
+
+    test(
+      'runtime graph ignores blank event action modulator ids during editing',
+      () {
+        const graphBuilder = RuntimeGraphBuilder();
+
+        final config = GenerationConfig.fromJson(<String, dynamic>{
+          'metadata': <String, dynamic>{'name': 'Event Editing Patch'},
+          'render': <String, dynamic>{
+            'durationMinutes': 1,
+            'sampleRate': 44100,
+            'bitRate': 192,
+          },
+          'mix': <String, dynamic>{'mix': 1.0},
+          'layers': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'layer-a',
+              'source': <String, dynamic>{
+                'type': 'noise',
+                'noiseConfig': <String, dynamic>{
+                  'color': 'white',
+                  'band': <String, dynamic>{'low': 20, 'high': 20000},
+                },
+              },
+              'modulations': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'mod-random',
+                  'type': 'random',
+                  'amount': 1.0,
+                  'randomConfig': <String, dynamic>{
+                    'rateHz': 0.2,
+                    'smooth': 0.95,
+                  },
+                  'targets': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'path': 'layers[layer-a].gain',
+                      'amount': 1.0,
+                    },
+                  ],
+                },
+              ],
+              'events': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'evt-blank',
+                  'trigger': <String, dynamic>{'type': 'periodic', 'rate': 1.0},
+                  'actions': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'modulatorId': '',
+                      'mode': 'trigger',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        });
+
+        final graph = graphBuilder.build(config);
+        final layer = graph.layers.single;
+
+        expect(layer.eventBindings, isEmpty);
+      },
+      tags: _smokeTag,
+    );
   });
 
   group('event scheduling quality', () {

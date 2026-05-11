@@ -57,21 +57,6 @@ double _peakFrequencyHz(WelchPsdResult psd) {
   return psd.frequenciesHz[peakBin];
 }
 
-Float32List _renderFromConfig(
-  GenerationConfig config, {
-  required int totalSamples,
-  int blockSize = 256,
-}) {
-  final builder = RuntimeGraphBuilder(sampleRate: config.render.sampleRate);
-  final graph = builder.build(config);
-  final engine = AudioEngine(
-    graph: graph,
-    sampleRate: config.render.sampleRate,
-    blockSize: blockSize,
-  );
-  return engine.renderSamples(totalSamples: totalSamples);
-}
-
 double _peakAbs(Float32List samples) {
   var peak = 0.0;
   for (final sample in samples) {

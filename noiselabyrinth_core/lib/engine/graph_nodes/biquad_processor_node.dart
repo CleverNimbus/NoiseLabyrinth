@@ -89,14 +89,12 @@ class BiquadProcessorNode extends ProcessorNode {
       return;
     }
 
-    _section.configure(
-      BiquadDesigner.design(
-        mode: mode,
-        sampleRate: sampleRate.toDouble(),
-        frequency: frequency,
-        q: q,
-        gainDb: gainDb,
-      ),
+    _section.coefficients = BiquadDesigner.design(
+      mode: mode,
+      sampleRate: sampleRate.toDouble(),
+      frequency: frequency,
+      q: q,
+      gainDb: gainDb,
     );
 
     _lastFrequency = frequency;

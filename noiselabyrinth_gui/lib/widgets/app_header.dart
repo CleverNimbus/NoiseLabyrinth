@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
+import 'package:noiselabyrinth_gui/state/export/export_controller.dart';
 import 'package:noiselabyrinth_gui/state/preview/preview_controller.dart';
 
 class AppHeader extends ConsumerWidget {
@@ -13,10 +14,12 @@ class AppHeader extends ConsumerWidget {
     final colors = Theme.of(context).colorScheme;
     final editorState = ref.watch(editorNotifierProvider);
     final previewState = ref.watch(previewControllerProvider);
+    final isExporting = ref.watch(exportControllerProvider);
     final hasConfig = editorState.config != null;
     final isActive = previewState.isActive;
     final canPlay = hasConfig && !isActive;
     final canStop = isActive;
+    final canExport = (canPlay || canStop) && !isExporting;
 
     return Container(
       height: 58,
@@ -73,6 +76,37 @@ class AppHeader extends ConsumerWidget {
                 : null,
             tooltip: canStop ? 'Stop preview' : 'Play preview',
             icon: Icon(canStop ? Icons.stop : Icons.play_arrow),
+          ),
+          IconButton(
+            onPressed: canExport
+                ? () async {
+                    final config = editorState.config;
+                    if (config == null) {
+                      return;
+                    }
+
+                    try {
+                      final message = await ref.read(exportControllerProvider.notifier).export(config);
+                      if (!context.mounted || message == null) {
+                        return;
+                      }
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(message), duration: const Duration(seconds: 3)));
+                    } catch (error) {
+                      if (!context.mounted) {
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Export failed: $error'), duration: const Duration(seconds: 4)),
+                      );
+                    }
+                  }
+                : null,
+            tooltip: 'Export render',
+            icon: isExporting
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.download_outlined),
           ),
         ],
       ),

@@ -338,6 +338,10 @@ class RuntimeGraphBuilder {
     for (final event in events) {
       final actions = <RuntimeEventAction>[];
       for (final action in event.actions) {
+        if (action.modulatorId.trim().isEmpty) {
+          continue;
+        }
+
         final modulation = modulationById[action.modulatorId];
         if (modulation == null) {
           throw StateError(
@@ -348,6 +352,10 @@ class RuntimeGraphBuilder {
         actions.add(
           RuntimeEventAction(mode: action.mode, modulation: modulation),
         );
+      }
+
+      if (actions.isEmpty) {
+        continue;
       }
 
       bindings.add(

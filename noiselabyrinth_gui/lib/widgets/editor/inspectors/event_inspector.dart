@@ -68,6 +68,7 @@ class _ActionsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final availableModIds = layer.modulations.map((m) => m.id).toList();
+    final hasAvailableModulators = availableModIds.isNotEmpty;
 
     return InspectorSection(
       title: 'ACTIONS (${event.actions.length})',
@@ -77,6 +78,17 @@ class _ActionsSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Text(
               'No actions. Add one below.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.error.withValues(alpha: 0.8),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        if (!hasAvailableModulators)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              'Add a modulation to this layer before creating event actions.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.error.withValues(alpha: 0.8),
                 fontStyle: FontStyle.italic,
@@ -102,10 +114,11 @@ class _ActionsSection extends StatelessWidget {
         TextButton.icon(
           icon: const Icon(Icons.add, size: 16),
           label: const Text('Add Action'),
-          onPressed: () {
-            final defaultId = availableModIds.isNotEmpty ? availableModIds.first : '';
-            _updateActions([...event.actions, ActionConfig(modulatorId: defaultId)]);
-          },
+          onPressed: hasAvailableModulators
+              ? () {
+                  _updateActions([...event.actions, ActionConfig(modulatorId: availableModIds.first)]);
+                }
+              : null,
         ),
       ],
     );

@@ -25,6 +25,7 @@ class _ValidationPanelState extends ConsumerState<ValidationPanel> {
         border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header / toggle
@@ -75,8 +76,10 @@ class _ValidationPanelState extends ConsumerState<ValidationPanel> {
             ),
           ),
           if (_expanded && issues.isNotEmpty)
-            Expanded(
+            Flexible(
+              fit: FlexFit.loose,
               child: ListView.separated(
+                shrinkWrap: true,
                 padding: const EdgeInsets.all(8),
                 itemCount: issues.length,
                 separatorBuilder: (_, _) => const Divider(height: 1),

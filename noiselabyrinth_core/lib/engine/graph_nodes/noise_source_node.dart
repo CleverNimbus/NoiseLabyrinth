@@ -129,27 +129,21 @@ class NoiseSourceNode extends SourceNode {
       }
     } else {
       for (var i = 0; i < _bandHighpassStages.length; i++) {
-        final stage = _bandHighpassStages[i];
-        stage.configure(
-          BiquadDesigner.design(
-            mode: BiquadMode.highpass,
-            sampleRate: effectiveSampleRate,
-            frequency: low,
-            q: _butterworthOrder4Qs[i],
-          ),
+        _bandHighpassStages[i].coefficients = BiquadDesigner.design(
+          mode: BiquadMode.highpass,
+          sampleRate: effectiveSampleRate,
+          frequency: low,
+          q: _butterworthOrder4Qs[i],
         );
       }
     }
 
     for (var i = 0; i < _bandLowpassStages.length; i++) {
-      final stage = _bandLowpassStages[i];
-      stage.configure(
-        BiquadDesigner.design(
-          mode: BiquadMode.lowpass,
-          sampleRate: effectiveSampleRate,
-          frequency: high,
-          q: _butterworthOrder4Qs[i],
-        ),
+      _bandLowpassStages[i].coefficients = BiquadDesigner.design(
+        mode: BiquadMode.lowpass,
+        sampleRate: effectiveSampleRate,
+        frequency: high,
+        q: _butterworthOrder4Qs[i],
       );
     }
 

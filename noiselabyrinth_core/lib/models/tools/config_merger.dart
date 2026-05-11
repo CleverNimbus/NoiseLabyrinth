@@ -2,11 +2,6 @@ import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_core/models/configs/layer_config.dart';
 
 /// Merges two or more [GenerationConfig] objects into the first one.
-///
-/// - Layers whose [id] does not exist in [base] are appended.
-/// - For layers that already exist in [base] (matched by id), processors,
-///   modulations, and events whose [id] is not already present are appended.
-///   Existing items are left untouched.
 class ConfigMerger {
   /// Merges [others] into [base] and returns [base].
   static GenerationConfig merge(
