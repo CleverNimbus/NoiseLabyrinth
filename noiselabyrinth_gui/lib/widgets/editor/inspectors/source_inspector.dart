@@ -74,33 +74,34 @@ class _NoiseSection extends StatelessWidget {
             update(source);
           },
         ),
-        InspectorSection(
-          title: 'BAND',
-          children: [
-            LabeledSlider(
-              label: 'Low (Hz)',
-              value: noise.band.low.toDouble().clamp(0.0, 20000.0),
-              min: 0,
-              max: 20000,
-              displayValue: '${noise.band.low.round()} Hz',
-              onChanged: (v) {
-                noise.band.low = v.round();
-                update(source);
-              },
-            ),
-            LabeledSlider(
-              label: 'High (Hz)',
-              value: noise.band.high.toDouble().clamp(0.0, 20000.0),
-              min: 0,
-              max: 20000,
-              displayValue: '${noise.band.high.round()} Hz',
-              onChanged: (v) {
-                noise.band.high = v.round();
-                update(source);
-              },
-            ),
-          ],
-        ),
+        if (noise.color == NoiseColor.bandlimited)
+          InspectorSection(
+            title: 'BAND',
+            children: [
+              LabeledSlider(
+                label: 'Low (Hz)',
+                value: noise.band.low.toDouble().clamp(0.0, 20000.0),
+                min: 0,
+                max: 20000,
+                displayValue: '${noise.band.low.round()} Hz',
+                onChanged: (v) {
+                  noise.band.low = v.round();
+                  update(source);
+                },
+              ),
+              LabeledSlider(
+                label: 'High (Hz)',
+                value: noise.band.high.toDouble().clamp(0.0, 20000.0),
+                min: 0,
+                max: 20000,
+                displayValue: '${noise.band.high.round()} Hz',
+                onChanged: (v) {
+                  noise.band.high = v.round();
+                  update(source);
+                },
+              ),
+            ],
+          ),
       ],
     );
   }

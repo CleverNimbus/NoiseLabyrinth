@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart'
     hide SourceNode, ProcessorNode; // Hide to avoid conflicts with our editor nodes
 import 'package:noiselabyrinth_gui/persistence/generation_config_repository.dart';
+import 'package:noiselabyrinth_gui/persistence/stored_generation_config.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_node.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_state.dart';
 
@@ -28,6 +29,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final issues = _buildValidationIssues(config);
     state = EditorState(
       config: config,
+      storedConfigId: null,
       isDirty: true,
       validationIssues: issues,
       configRevision: state.configRevision + 1,
@@ -38,6 +40,19 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final issues = _buildValidationIssues(config);
     state = EditorState(
       config: config,
+      storedConfigId: null,
+      isDirty: false,
+      validationIssues: issues,
+      configRevision: state.configRevision + 1,
+    );
+  }
+
+  void openStoredConfig(StoredGenerationConfig stored) {
+    final config = stored.toConfig();
+    final issues = _buildValidationIssues(config);
+    state = EditorState(
+      config: config,
+      storedConfigId: stored.id,
       isDirty: false,
       validationIssues: issues,
       configRevision: state.configRevision + 1,
@@ -289,8 +304,8 @@ class EditorNotifier extends StateNotifier<EditorState> {
 
   Future<void> saveToRepository(GenerationConfigRepository repo) async {
     if (state.config == null) return;
-    await repo.save(state.config!);
-    state = state.copyWith(isDirty: false);
+    final savedId = await repo.save(state.config!, id: state.storedConfigId);
+    state = state.copyWith(isDirty: false, storedConfigId: savedId);
   }
 
   // ---------- helpers ----------
@@ -299,6 +314,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
     final issues = _buildValidationIssues(config);
     state = EditorState(
       config: config,
+      storedConfigId: state.storedConfigId,
       selectedNode: clearSel ? null : (selectedNode ?? state.selectedNode),
       isDirty: true,
       validationIssues: issues,

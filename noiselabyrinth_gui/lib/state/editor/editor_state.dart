@@ -12,6 +12,7 @@ class EditorValidationIssue {
 class EditorState {
   const EditorState({
     this.config,
+    this.storedConfigId,
     this.selectedNode,
     this.isDirty = false,
     this.validationIssues = const [],
@@ -19,6 +20,7 @@ class EditorState {
   });
 
   final GenerationConfig? config;
+  final int? storedConfigId;
   final EditorNode? selectedNode;
   final bool isDirty;
   final List<EditorValidationIssue> validationIssues;
@@ -28,6 +30,8 @@ class EditorState {
 
   EditorState copyWith({
     GenerationConfig? config,
+    int? storedConfigId,
+    bool clearStoredConfigId = false,
     EditorNode? selectedNode,
     bool clearSelection = false,
     bool? isDirty,
@@ -36,6 +40,7 @@ class EditorState {
   }) {
     return EditorState(
       config: config ?? this.config,
+      storedConfigId: clearStoredConfigId ? null : (storedConfigId ?? this.storedConfigId),
       selectedNode: clearSelection ? null : (selectedNode ?? this.selectedNode),
       isDirty: isDirty ?? this.isDirty,
       validationIssues: validationIssues ?? this.validationIssues,

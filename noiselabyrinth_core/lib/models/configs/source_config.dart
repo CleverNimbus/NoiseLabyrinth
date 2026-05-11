@@ -70,6 +70,7 @@ class NoiseConfig {
   NoiseColor color;
 
   /// Frequency band limits applied to band-limited noise generation.
+  /// Ignored for other noise colors.
   BandConfig band;
 
   Map<String, dynamic> toJson() {

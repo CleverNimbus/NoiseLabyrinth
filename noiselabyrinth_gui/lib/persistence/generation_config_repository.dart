@@ -7,7 +7,8 @@ abstract class GenerationConfigRepository {
   List<GenerationConfig> getAllConfigs();
   List<String> getAllTags();
   List<GenerationConfig> getConfigsByTag(String tag);
-  Future<int> save(GenerationConfig config);
+  Future<int> save(GenerationConfig config, {int? id});
+  Future<void> delete(int id);
   Future<void> saveAll(Iterable<GenerationConfig> configs);
   Future<void> seedIfEmpty(Iterable<GenerationConfig> configs);
 }
@@ -59,18 +60,22 @@ class SembastGenerationConfigRepository implements GenerationConfigRepository {
   }
 
   @override
-  Future<int> save(GenerationConfig config) async {
-    final stored = StoredGenerationConfig.fromConfig(config);
+  Future<int> save(GenerationConfig config, {int? id}) async {
+    final stored = StoredGenerationConfig.fromConfig(config, id: id);
     final json = stored.toJson();
 
-    // If id exists, update; otherwise, add as new
     if (stored.id != null) {
-      await _store.record(stored.id!).update(_database, json);
+      await _store.record(stored.id!).put(_database, json);
       return stored.id!;
-    } else {
-      final key = await _store.add(_database, json);
-      return key;
     }
+
+    final key = await _store.add(_database, json);
+    return key;
+  }
+
+  @override
+  Future<void> delete(int id) async {
+    await _store.record(id).delete(_database);
   }
 
   @override

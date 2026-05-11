@@ -13,6 +13,7 @@ const _previewMaxSeconds = 45;
 const _segmentSeconds = 4;
 const _minAheadSegments = 1;
 const _maxAheadSegments = 4;
+const _bufferRemainingFractionToRefill = 0.05;
 
 final previewControllerProvider = StateNotifierProvider<PreviewController, PreviewState>((ref) {
   final controller = PreviewController();
@@ -211,13 +212,40 @@ class PreviewController extends StateNotifier<PreviewState> {
       if (player == null) {
         return;
       }
-      final currentIndex = player.state.playlist.index;
-      final queuedAhead = _enqueuedSegments - (currentIndex + 1);
-      if (queuedAhead < _maxAheadSegments) {
+      if (_hasRoomForAnotherSegment(player)) {
         return;
       }
       await Future<void>.delayed(const Duration(milliseconds: 120));
     }
+  }
+
+  bool _hasRoomForAnotherSegment(Player player) {
+    final currentIndex = player.state.playlist.index;
+    final queuedAhead = _enqueuedSegments - (currentIndex + 1);
+    if (queuedAhead < _maxAheadSegments) {
+      return true;
+    }
+
+    final remainingFraction = _currentSegmentRemainingFraction(player);
+    final bufferedSegments = queuedAhead + remainingFraction;
+    return bufferedSegments <= _maxAheadSegments + _bufferRemainingFractionToRefill;
+  }
+
+  double _currentSegmentRemainingFraction(Player player) {
+    final currentIndex = player.state.playlist.index;
+    if (currentIndex < 0) {
+      return 0;
+    }
+
+    final duration = player.state.duration;
+    if (duration <= Duration.zero) {
+      return 1;
+    }
+
+    final position = player.state.position;
+    final durationMicros = duration.inMicroseconds;
+    final remainingMicros = math.max(0, durationMicros - position.inMicroseconds);
+    return remainingMicros / durationMicros;
   }
 
   Future<void> _enqueueSegment(int session, Uint8List pcmBytes, int sampleRate, int samplesPerChannel) async {

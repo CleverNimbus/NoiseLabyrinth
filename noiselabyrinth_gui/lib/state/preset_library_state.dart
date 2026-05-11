@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
 import 'package:noiselabyrinth_gui/persistence/generation_config_repository.dart';
+import 'package:noiselabyrinth_gui/persistence/stored_generation_config.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
 
 final presetLibraryProvider = StateNotifierProvider<PresetLibraryNotifier, PresetLibraryState>((ref) {
@@ -11,14 +12,18 @@ final presetLibraryProvider = StateNotifierProvider<PresetLibraryNotifier, Prese
 });
 
 class PresetLibraryState {
-  const PresetLibraryState({this.presets = const <GenerationConfig>[], this.tags = const <String>[], this.selectedTag});
+  const PresetLibraryState({
+    this.presets = const <StoredGenerationConfig>[],
+    this.tags = const <String>[],
+    this.selectedTag,
+  });
 
-  final List<GenerationConfig> presets;
+  final List<StoredGenerationConfig> presets;
   final List<String> tags;
   final String? selectedTag;
 
   PresetLibraryState copyWith({
-    List<GenerationConfig>? presets,
+    List<StoredGenerationConfig>? presets,
     List<String>? tags,
     String? selectedTag,
     bool clearSelectedTag = false,
@@ -48,13 +53,24 @@ class PresetLibraryNotifier extends StateNotifier<PresetLibraryState> {
     await reload();
   }
 
+  Future<void> delete(int id) async {
+    await _repository.delete(id);
+    await reload();
+  }
+
   Future<void> reload() async {
     final tags = _repository.getAllTags();
     var selectedTag = state.selectedTag;
     if (selectedTag != null && !tags.contains(selectedTag)) {
       selectedTag = null;
     }
-    final presets = selectedTag == null ? _repository.getAllConfigs() : _repository.getConfigsByTag(selectedTag);
+    final normalizedTag = selectedTag?.trim().toLowerCase();
+    final allStored = _repository.getAllStored();
+    final presets = normalizedTag == null
+        ? allStored
+        : allStored
+              .where((item) => item.tags.any((tag) => tag.trim().toLowerCase() == normalizedTag))
+              .toList(growable: false);
     state = PresetLibraryState(presets: presets, tags: tags, selectedTag: selectedTag);
   }
 

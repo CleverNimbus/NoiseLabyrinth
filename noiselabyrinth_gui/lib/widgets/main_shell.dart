@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
+import 'package:noiselabyrinth_gui/persistence/stored_generation_config.dart';
 import 'package:noiselabyrinth_gui/state/app_persisted_state.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
 import 'package:noiselabyrinth_gui/widgets/app_header.dart';
@@ -13,10 +13,8 @@ import 'package:noiselabyrinth_gui/widgets/wellcome_panel.dart';
 class MainShell extends ConsumerWidget {
   const MainShell({super.key});
 
-  void _onPresetOpen(WidgetRef ref, GenerationConfig config) {
-    // Open config in editor
-    ref.read(editorNotifierProvider.notifier).openConfig(config);
-    // Switch to Create/Advanced tab (index 2)
+  void _onPresetOpen(WidgetRef ref, StoredGenerationConfig stored) {
+    ref.read(editorNotifierProvider.notifier).openStoredConfig(stored);
     ref.read(appPersistedProvider.notifier).setFooter(2);
   }
 

@@ -33,25 +33,26 @@ class RenderInspector extends ConsumerWidget {
             ),
           ],
         ),
-        InspectorSection(
-          title: 'AUDIO QUALITY',
-          children: [
-            LabeledDropdown<int>(
-              label: 'Sample Rate',
-              value: render.sampleRate,
-              items: const [22050, 44100, 48000, 96000],
-              itemLabel: (v) => '$v Hz',
-              onChanged: (v) => update(render..sampleRate = v),
-            ),
-            LabeledIntField(
-              label: 'Bit Rate (kbps)',
-              value: render.bitRate,
-              min: 64,
-              max: 320,
-              onChanged: (v) => update(render..bitRate = v),
-            ),
-          ],
-        ),
+        if (render.format == RenderFormat.mp3)
+          InspectorSection(
+            title: 'AUDIO QUALITY',
+            children: [
+              LabeledDropdown<int>(
+                label: 'Sample Rate',
+                value: render.sampleRate,
+                items: const [22050, 44100, 48000, 96000],
+                itemLabel: (v) => '$v Hz',
+                onChanged: (v) => update(render..sampleRate = v),
+              ),
+              LabeledIntField(
+                label: 'Bit Rate (kbps)',
+                value: render.bitRate,
+                min: 64,
+                max: 320,
+                onChanged: (v) => update(render..bitRate = v),
+              ),
+            ],
+          ),
         InspectorSection(
           title: 'PROCESSING',
           children: [

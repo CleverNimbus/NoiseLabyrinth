@@ -44,16 +44,26 @@ class _InMemoryGenerationConfigRepository implements GenerationConfigRepository 
   }
 
   @override
-  Future<int> save(GenerationConfig config) async {
-    final index = _items.indexWhere((item) => item.name == config.metadata.name);
-    final stored = StoredGenerationConfig.fromConfig(config);
+  Future<int> save(GenerationConfig config, {int? id}) async {
+    final index = id == null
+        ? _items.indexWhere((item) => item.name == config.metadata.name)
+        : _items.indexWhere((item) => item.id == id);
+    final stored = StoredGenerationConfig.fromConfig(
+      config,
+      id: id ?? (index == -1 ? _items.length + 1 : _items[index].id),
+    );
     if (index == -1) {
       _items.add(stored);
-      return _items.length;
+      return stored.id ?? _items.length;
     }
 
     _items[index] = stored;
-    return index + 1;
+    return stored.id ?? (index + 1);
+  }
+
+  @override
+  Future<void> delete(int id) async {
+    _items.removeWhere((item) => item.id == id);
   }
 
   @override
