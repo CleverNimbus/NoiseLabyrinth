@@ -22,9 +22,7 @@
   "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "rewrap.autoWrap.enabled": true,
   "[dart]": {
-    "editor.defaultFormatter": "Dart-Code.dart-code",
-    "formatter.page_width": 120
+    "editor.defaultFormatter": "Dart-Code.dart-code"
   }
 }

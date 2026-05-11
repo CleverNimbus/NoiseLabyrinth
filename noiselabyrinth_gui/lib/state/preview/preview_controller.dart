@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
@@ -134,12 +135,16 @@ class PreviewController extends StateNotifier<PreviewState> {
         return;
       }
 
+      // Pre-calculate normalization gain in a background isolate to avoid blocking the UI.
+      // If normalization is disabled, this returns 1.0 immediately.
+      final normalizationGain = await compute(_calculateNormalizationGain, config);
+
       final segmentSamplesTarget = sampleRate * _segmentSeconds;
       final segmentPcmBytes = BytesBuilder(copy: false);
       var segmentSamples = 0;
       var producedSamples = 0;
 
-      await for (final chunk in Renderer.renderPcmChunks(config)) {
+      await for (final chunk in Renderer.renderPcmChunks(config, normalizationGain: normalizationGain)) {
         if (session != _sessionId) {
           return;
         }
@@ -294,4 +299,10 @@ class PreviewController extends StateNotifier<PreviewState> {
 
     return bytes;
   }
+}
+
+/// Top-level function to calculate normalization gain in a background isolate.
+/// This avoids blocking the UI thread during normalization analysis.
+double _calculateNormalizationGain(GenerationConfig config) {
+  return Renderer.resolveNormalizationGain(config);
 }

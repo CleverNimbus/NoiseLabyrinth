@@ -30,7 +30,7 @@
       "**/*.iml": true,
       "**/*.lock": true,
       "**/*plugins-dependencies": true,
-      "**/build": true,
+      "**/build": false,
       "**/coverage": true,
     },
     "search.exclude": {

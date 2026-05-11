@@ -34,12 +34,14 @@ class Renderer {
     return stereo;
   }
 
-  /// Renders stereo float PCM as an async chunk stream.
+  /// Renders stereo float PCM as an async chunk stream with pre-calculated normalization gain.
   ///
   /// Each yielded [StereoSamples] covers one engine block worth of samples.
   /// Normalization and DC blocking are applied incrementally per chunk.
-  static Stream<StereoSamples> renderPcmChunks(GenerationConfig config) async* {
-    final normalizationGain = _resolveNormalizationGain(config);
+  /// The [normalizationGain] must be calculated separately (typically in an isolate)
+  /// to avoid blocking the main thread during preview.
+  static Stream<StereoSamples> renderPcmChunks(GenerationConfig config, {double? normalizationGain}) async* {
+    final gain = normalizationGain ?? resolveNormalizationGain(config);
     final ctx = _buildContext(config);
     final blockSize = ctx.engine.blockSize;
     var renderedSamples = 0;
@@ -57,8 +59,8 @@ class Renderer {
       final right = Float32List(copyCount);
 
       for (var i = 0; i < copyCount; i++) {
-        var l = ctx.engine.masterLeftBuffer[i] * normalizationGain;
-        var r = ctx.engine.masterRightBuffer[i] * normalizationGain;
+        var l = ctx.engine.masterLeftBuffer[i] * gain;
+        var r = ctx.engine.masterRightBuffer[i] * gain;
 
         if (config.render.dcBlockerEnabled) {
           final nextLeft = l - previousLeftInput + 0.995 * previousLeftOutput;
@@ -94,7 +96,10 @@ class Renderer {
     return _RenderContext(engine: engine, totalSamples: totalSamples);
   }
 
-  static double _resolveNormalizationGain(GenerationConfig config) {
+  /// Calculate normalization gain for a config.
+  /// This performs a full analysis pass and may be expensive for long durations.
+  /// Consider running in an isolate if called from the main thread.
+  static double resolveNormalizationGain(GenerationConfig config) {
     final normalization = config.mix.normalization;
     if (!normalization.enabled) {
       return 1;
