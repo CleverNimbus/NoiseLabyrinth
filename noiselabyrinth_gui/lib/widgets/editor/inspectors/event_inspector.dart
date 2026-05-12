@@ -12,14 +12,24 @@ class EventInspector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final editorState = ref.watch(editorNotifierProvider);
+    final notifier = ref.read(editorNotifierProvider.notifier);
     void update(EventConfig e) => ref.read(editorNotifierProvider.notifier).updateEvent(layer.id, e);
+    final isPreviewEnabled = editorState.isEventPreviewEnabled(layer.id, event.id);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         InspectorSection(
           title: 'EVENT',
-          children: [LabeledTextField(label: 'ID', value: event.id, onChanged: (v) => update(event..id = v))],
+          children: [
+            LabeledTextField(label: 'ID', value: event.id, onChanged: (v) => update(event..id = v)),
+            LabeledSwitch(
+              label: 'In Preview',
+              value: isPreviewEnabled,
+              onChanged: (_) => notifier.toggleEventPreviewEnabled(layer.id, event.id),
+            ),
+          ],
         ),
         InspectorSection(
           title: 'TRIGGER',

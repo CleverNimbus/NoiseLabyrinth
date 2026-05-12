@@ -11,6 +11,7 @@ class LayerInspector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final editorState = ref.watch(editorNotifierProvider);
     final notifier = ref.read(editorNotifierProvider.notifier);
 
     void commit(LayerConfig updated) => notifier.updateLayer(updated);
@@ -57,6 +58,8 @@ class LayerInspector extends ConsumerWidget {
                   subtitle: proc.type.name,
                   icon: Icons.auto_fix_high_outlined,
                   onTap: () => notifier.selectNode(ProcessorNode(layer, proc)),
+                  isPreviewEnabled: editorState.isProcessorPreviewEnabled(layer.id, proc.id),
+                  onTogglePreview: () => notifier.toggleProcessorPreviewEnabled(layer.id, proc.id),
                 ),
             const SizedBox(height: 4),
             TextButton.icon(
@@ -78,6 +81,8 @@ class LayerInspector extends ConsumerWidget {
                   subtitle: mod.type.name,
                   icon: Icons.timeline_outlined,
                   onTap: () => notifier.selectNode(ModulationNode(layer, mod)),
+                  isPreviewEnabled: editorState.isModulationPreviewEnabled(layer.id, mod.id),
+                  onTogglePreview: () => notifier.toggleModulationPreviewEnabled(layer.id, mod.id),
                 ),
             const SizedBox(height: 4),
             TextButton.icon(
@@ -99,6 +104,8 @@ class LayerInspector extends ConsumerWidget {
                   subtitle: event.trigger.type.name,
                   icon: Icons.flash_on_outlined,
                   onTap: () => notifier.selectNode(EventNode(layer, event)),
+                  isPreviewEnabled: editorState.isEventPreviewEnabled(layer.id, event.id),
+                  onTogglePreview: () => notifier.toggleEventPreviewEnabled(layer.id, event.id),
                 ),
             const SizedBox(height: 4),
             TextButton.icon(
@@ -114,12 +121,21 @@ class LayerInspector extends ConsumerWidget {
 }
 
 class _NavCard extends StatelessWidget {
-  const _NavCard({required this.label, required this.subtitle, required this.icon, required this.onTap});
+  const _NavCard({
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+    required this.isPreviewEnabled,
+    required this.onTogglePreview,
+  });
 
   final String label;
   final String subtitle;
   final IconData icon;
   final VoidCallback onTap;
+  final bool isPreviewEnabled;
+  final VoidCallback onTogglePreview;
 
   @override
   Widget build(BuildContext context) {
@@ -136,9 +152,26 @@ class _NavCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: 8),
-              Expanded(child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
+              Opacity(
+                opacity: isPreviewEnabled ? 1.0 : 0.45,
+                child: Row(
+                  children: [
+                    Icon(icon, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 8),
+                    Text(label, style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Tooltip(
+                message: isPreviewEnabled ? 'Disable in Preview' : 'Enable in Preview',
+                child: IconButton(
+                  icon: Icon(isPreviewEnabled ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 14),
+                  onPressed: onTogglePreview,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
               Text(
                 subtitle,
                 style: Theme.of(

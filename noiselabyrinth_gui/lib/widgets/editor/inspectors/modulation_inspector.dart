@@ -13,7 +13,10 @@ class ModulationInspector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final editorState = ref.watch(editorNotifierProvider);
+    final notifier = ref.read(editorNotifierProvider.notifier);
     void update(ModulationConfig m) => ref.read(editorNotifierProvider.notifier).updateModulation(layer.id, m);
+    final isPreviewEnabled = editorState.isModulationPreviewEnabled(layer.id, modulation.id);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -22,6 +25,11 @@ class ModulationInspector extends ConsumerWidget {
           title: 'MODULATION',
           children: [
             LabeledTextField(label: 'ID', value: modulation.id, onChanged: (v) => update(modulation..id = v)),
+            LabeledSwitch(
+              label: 'In Preview',
+              value: isPreviewEnabled,
+              onChanged: (_) => notifier.toggleModulationPreviewEnabled(layer.id, modulation.id),
+            ),
             LabeledDropdown<ModulationType>(
               label: 'Type',
               value: modulation.type,
@@ -366,11 +374,7 @@ class _BurstSection extends StatelessWidget {
 // ── Targets ──────────────────────────────
 
 class _TargetsSection extends StatelessWidget {
-  const _TargetsSection({
-    required this.modulation,
-    required this.onUpdate,
-    required this.layer,
-  });
+  const _TargetsSection({required this.modulation, required this.onUpdate, required this.layer});
   final ModulationConfig modulation;
   final ValueChanged<ModulationConfig> onUpdate;
   final LayerConfig layer;

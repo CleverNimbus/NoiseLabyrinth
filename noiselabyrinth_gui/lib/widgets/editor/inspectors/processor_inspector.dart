@@ -12,7 +12,10 @@ class ProcessorInspector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final editorState = ref.watch(editorNotifierProvider);
+    final notifier = ref.read(editorNotifierProvider.notifier);
     void update(ProcessorConfig p) => ref.read(editorNotifierProvider.notifier).updateProcessor(layer.id, p);
+    final isPreviewEnabled = editorState.isProcessorPreviewEnabled(layer.id, processor.id);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -21,6 +24,11 @@ class ProcessorInspector extends ConsumerWidget {
           title: 'PROCESSOR',
           children: [
             LabeledTextField(label: 'ID', value: processor.id, onChanged: (v) => update(processor..id = v)),
+            LabeledSwitch(
+              label: 'In Preview',
+              value: isPreviewEnabled,
+              onChanged: (_) => notifier.toggleProcessorPreviewEnabled(layer.id, processor.id),
+            ),
             LabeledDropdown<ProcessorType>(
               label: 'Type',
               value: processor.type,
