@@ -8,15 +8,10 @@ import 'package:media_kit/media_kit.dart';
 import 'package:noiselabyrinth_core/noiselabyrinth_core.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_state.dart';
-
-const _previewMaxSeconds = 45;
-const _segmentSeconds = 4;
-const _minAheadSegments = 1;
-const _maxAheadSegments = 4;
-const _bufferRemainingFractionToRefill = 0.05;
+import 'package:noiselabyrinth_gui/state/preview/preview_settings_state.dart';
 
 final previewControllerProvider = StateNotifierProvider<PreviewController, PreviewState>((ref) {
-  final controller = PreviewController();
+  final controller = PreviewController(ref);
   ref.listen<EditorState>(editorNotifierProvider, (_, next) {
     controller.onEditorStateChanged(next);
   });
@@ -53,8 +48,9 @@ class PreviewState {
 }
 
 class PreviewController extends StateNotifier<PreviewState> {
-  PreviewController() : super(const PreviewState.idle());
+  PreviewController(this._ref) : super(const PreviewState.idle());
 
+  final Ref _ref;
   Player? _player;
   StreamSubscription<bool>? _completedSubscription;
   int _sessionId = 0;
@@ -98,7 +94,8 @@ class PreviewController extends StateNotifier<PreviewState> {
       }
     });
 
-    unawaited(_produceAndQueue(session, snapshot));
+    final settings = _ref.read(previewSettingsProvider);
+    unawaited(_produceAndQueue(session, snapshot, settings));
   }
 
   Future<void> stop() async {
@@ -128,11 +125,11 @@ class PreviewController extends StateNotifier<PreviewState> {
     super.dispose();
   }
 
-  Future<void> _produceAndQueue(int session, GenerationConfig config) async {
+  Future<void> _produceAndQueue(int session, GenerationConfig config, PreviewSettings settings) async {
     try {
       final sampleRate = config.render.sampleRate;
       final totalFromConfig = sampleRate * config.render.durationMinutes * 60;
-      final previewMaxSamples = sampleRate * _previewMaxSeconds;
+      final previewMaxSamples = sampleRate * settings.previewMaxSeconds;
       final totalSamples = math.min(totalFromConfig, previewMaxSamples);
       if (totalSamples <= 0) {
         state = const PreviewState.idle();
@@ -143,7 +140,7 @@ class PreviewController extends StateNotifier<PreviewState> {
       // If normalization is disabled, this returns 1.0 immediately.
       final normalizationGain = await compute(_calculateNormalizationGain, config);
 
-      final segmentSamplesTarget = sampleRate * _segmentSeconds;
+      final segmentSamplesTarget = sampleRate * settings.segmentSeconds;
       final segmentPcmBytes = BytesBuilder(copy: false);
       var segmentSamples = 0;
       var producedSamples = 0;
@@ -178,11 +175,11 @@ class PreviewController extends StateNotifier<PreviewState> {
           chunkOffset += toCopy;
 
           if (segmentSamples >= segmentSamplesTarget) {
-            await _waitUntilQueueNeedsMore(session);
+            await _waitUntilQueueNeedsMore(session, settings);
             if (session != _sessionId) {
               return;
             }
-            await _enqueueSegment(session, segmentPcmBytes.takeBytes(), sampleRate, segmentSamples);
+            await _enqueueSegment(session, segmentPcmBytes.takeBytes(), sampleRate, segmentSamples, settings);
             segmentSamples = 0;
           }
         }
@@ -191,9 +188,15 @@ class PreviewController extends StateNotifier<PreviewState> {
       }
 
       if (segmentSamples > 0 && session == _sessionId) {
-        await _waitUntilQueueNeedsMore(session);
+        await _waitUntilQueueNeedsMore(session, settings);
         if (session == _sessionId) {
-          await _enqueueSegment(session, segmentPcmBytes.takeBytes(), config.render.sampleRate, segmentSamples);
+          await _enqueueSegment(
+            session,
+            segmentPcmBytes.takeBytes(),
+            config.render.sampleRate,
+            segmentSamples,
+            settings,
+          );
         }
       }
 
@@ -209,29 +212,29 @@ class PreviewController extends StateNotifier<PreviewState> {
     }
   }
 
-  Future<void> _waitUntilQueueNeedsMore(int session) async {
+  Future<void> _waitUntilQueueNeedsMore(int session, PreviewSettings settings) async {
     while (session == _sessionId) {
       final player = _player;
       if (player == null) {
         return;
       }
-      if (_hasRoomForAnotherSegment(player)) {
+      if (_hasRoomForAnotherSegment(player, settings)) {
         return;
       }
       await Future<void>.delayed(const Duration(milliseconds: 120));
     }
   }
 
-  bool _hasRoomForAnotherSegment(Player player) {
+  bool _hasRoomForAnotherSegment(Player player, PreviewSettings settings) {
     final currentIndex = player.state.playlist.index;
     final queuedAhead = _enqueuedSegments - (currentIndex + 1);
-    if (queuedAhead < _maxAheadSegments) {
+    if (queuedAhead < settings.maxAheadSegments) {
       return true;
     }
 
     final remainingFraction = _currentSegmentRemainingFraction(player);
     final bufferedSegments = queuedAhead + remainingFraction;
-    return bufferedSegments <= _maxAheadSegments + _bufferRemainingFractionToRefill;
+    return bufferedSegments <= settings.maxAheadSegments + settings.bufferRemainingFractionToRefill;
   }
 
   double _currentSegmentRemainingFraction(Player player) {
@@ -251,7 +254,13 @@ class PreviewController extends StateNotifier<PreviewState> {
     return remainingMicros / durationMicros;
   }
 
-  Future<void> _enqueueSegment(int session, Uint8List pcmBytes, int sampleRate, int samplesPerChannel) async {
+  Future<void> _enqueueSegment(
+    int session,
+    Uint8List pcmBytes,
+    int sampleRate,
+    int samplesPerChannel,
+    PreviewSettings settings,
+  ) async {
     if (session != _sessionId) {
       return;
     }
@@ -283,7 +292,7 @@ class PreviewController extends StateNotifier<PreviewState> {
 
     final currentIndex = player.state.playlist.index;
     final queuedAhead = _enqueuedSegments - (currentIndex + 1);
-    if (queuedAhead <= _minAheadSegments && !_producerDone) {
+    if (queuedAhead <= settings.minAheadSegments && !_producerDone) {
       // Producer loop continues naturally; this branch exists to document low-buffer intent.
     }
   }

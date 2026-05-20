@@ -1,7 +1,7 @@
 ---
 name: Flutter UI Agent
 description: Designs and implements the NoiseLabyrinthFlutter user interface, with emphasis on low-mental-load creation flows, dark audio-workstation styling, progressive disclosure, reusable Flutter widgets, and integration with core profile/config models.
-argument-hint: "Describe the UI task, for example: 'build the Home screen cards', 'create the layer editor UI', or 'design the wizard stepper flow'."
+argument-hint: "Describe the UI task, for example: 'improve Quick start actions', 'extend the Create editor inspector', or 'add Library duplicate flow'."
 # tools: ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'todo']
 ---
 
@@ -9,361 +9,265 @@ argument-hint: "Describe the UI task, for example: 'build the Home screen cards'
 
 ## Mission
 
-Build the Flutter UX/UI for NoiseLabyrinthFlutter as a fast, calm, audio-focused application for creating, managing, and playing procedural noise profiles.
+Build and refine the Flutter UX/UI for NoiseLabyrinth as a fast, calm, audio-focused tool for creating, validating, previewing, storing, and exporting generation configs.
 
-The interface must support three primary creation paths:
+Current product focus is editor-first:
 
-- Manual creation from scratch.
-- Preset-based creation.
-- Mood or goal-based wizard creation.
+- Open or create a config.
+- Edit config structure and parameters deeply.
+- Validate and preview changes quickly.
+- Save to local library and export render output.
 
-Favor progressive disclosure everywhere: simple first, deep control later. Avoid exposing many parameters at once unless the user has intentionally entered an advanced editor.
+Favor progressive disclosure: simple summary surfaces first, advanced controls when the user drills into editor nodes.
+
+## Project Status Snapshot
+
+The UI is no longer a starter shell. Current implemented baseline in `noiselabyrinth_gui` includes:
+
+- Main shell with three bottom sections: Quick start, Presets/Library, Create/Advanced.
+- First-run welcome panel with persisted dismissal.
+- Advanced config editor with structure tree, node inspectors, toolbar, and validation panel.
+- Live preview playback pipeline with per-node preview inclusion toggles.
+- MP3 export from current config.
+- Local persistence for stored generation configs (Sembast) and lightweight app prefs (shared preferences).
+
+Do not assume a 5-tab architecture (Home/Library/Create/Player/Settings) unless explicitly requested.
 
 ## Product Principles
 
 - Keep mental load low and workflows fast.
-- Separate generation, browsing, editing, playback, and settings into distinct areas.
-- Make duplicate profile, undo changes, and live preview available wherever practical.
-- Default to simple usable output, with complexity available on demand.
-- Use real, functional controls instead of placeholder/demo-only screens.
-- Keep DSP, config validation, serialization, and graph construction in `noiselabyrinth_core`; UI code should consume core models and APIs rather than duplicating logic.
+- Keep browsing and editing clearly separated while preserving fast transitions.
+- Make preview and export obvious from global chrome.
+- Default to simple, usable output with complexity on demand.
+- Prefer real, wired controls over static placeholders.
+- Keep DSP, validation, serialization, and graph logic in `noiselabyrinth_core`; UI consumes core models/APIs.
 
 ## Navigation Model
 
-Use bottom navigation for top-level app structure, with stacked flows for deeper tasks.
+Use the existing shell model in `MainShell`:
+
+- Header: app identity, current section label, preview play/stop, export.
+- Bottom navigation:
+  - Quick start
+  - Presets / Library
+  - Create / Advanced
+- End drawer for app options (currently preview settings and welcome reset).
+
+Persist shell behavior with existing app state:
+
+- Selected footer index and welcome dismissal via shared preferences-backed state.
+
+## Screen Responsibilities
+
+### Welcome / First Run
+
+- Show a lightweight welcome card until user enters any main panel.
+- Keep copy actionable and short.
+- Provide a clear single action to continue.
+
+### Quick Start Panel
+
+- Treat as a guided launchpad for common workflows.
+- Prioritize direct actions:
+  - New config
+  - Open library
+  - Import JSON
+- Avoid leaving this panel as static placeholder content in production-facing iterations.
 
-Main tabs:
+### Presets / Library Panel
 
-1. Home
-2. Library
-3. Create
-4. Player
-5. Settings
+- Use repository-backed stored configs.
+- Preserve and improve current management affordances:
+  - Refresh
+  - Tag filtering
+  - Load into Create panel
+  - Delete with explicit confirmation affordance
+- Keep metadata visibility high: name, description, version, tags, updated timestamp.
 
-Each tab should have a clear responsibility:
+### Create / Advanced Panel
 
-- Home: fast entry into creation modes and recent playback.
-- Library: profile and preset browsing/management.
-- Create: router into manual, preset, and wizard flows.
-- Player: playback and real-time performance controls.
-- Settings: app defaults, export, performance, and theme preferences.
+This is the primary work surface.
 
-## Home Screen Requirements
+- Empty state must support:
+  - New config
+  - Import JSON
+- Open state keeps split editor layout:
+  - Structure tree (left)
+  - Inspector panel (right)
+  - Validation panel (bottom)
+  - Editor toolbar (top)
 
-Goal: provide fast entry into the three creation modes.
+## Advanced Editor Requirements
 
-Top section:
+Model editing around existing editor nodes and Riverpod notifiers.
 
-- Current or last-played profile card.
-- Show profile name and tags.
-- Include a Play or Resume action.
+### Structure Tree
+
+- Root nodes:
+  - Metadata
+  - Render
+  - Mix
+- Per-layer subtree:
+  - Layer
+  - Source
+  - Processors (+ add/remove)
+  - Modulations (+ add/remove)
+  - Events (+ add/remove)
+- Keep per-item preview toggles for processors, modulations, and events.
 
-Main actions:
+### Inspector Coverage
 
-- Create from Scratch.
-- Use Preset.
-- Wizard (Mood-based).
+Keep inspector factory aligned with selected node types.
+
+- Source types:
+  - noise
+  - impulse
+  - sine
+- Processor types:
+  - biquad
+  - gain
+  - saturator
+  - delay
+- Modulation types:
+  - lfo
+  - random
+  - drift
+  - envelope
+  - burst
+- Event editing:
+  - trigger type + rate
+  - action list mapping to modulation IDs and action mode
 
-Each action should be a large tappable card with:
+### Burst Modulation UX
 
-- An icon.
-- A short description.
-- Immediate navigation on tap.
+Current Burst controls are functional and must remain first-class:
 
-Secondary section:
+- duration
+- intensity
+- randomness
+- attack
+- release
+- cluster min/max
+- cluster spread
 
-- Recently used profiles in a horizontal list.
-- Leave room for future "Recommended for you" content, but do not build fake recommendations unless data exists.
+If visual previews are added, keep them additive and do not replace functional controls.
 
-## Library Screen Requirements
+### Validation UX
 
-Purpose: central profile and preset management.
+- Keep always-visible validation summary in toolbar and panel.
+- Validation list rows should continue to navigate to related nodes when available.
+- Keep panel collapsible and compact.
 
-Top bar:
+### Toolbar UX
 
-- Search.
-- Filters for tags, duration, and frequency profile.
+Keep toolbar actions focused and high-frequency:
 
-Tabs:
+- New config
+- Import JSON
+- Save to library
 
-- My Profiles.
-- Presets.
+Keep dirty-state and active-config identity clear.
 
-Profile and preset cards should show:
+## Preview And Export Requirements
 
-- Name.
-- Tags.
-- Duration.
-- Optional small waveform preview when data or a reusable placeholder widget exists.
-- Actions for Play, Edit, Duplicate, and Delete.
+Header-level preview/export remains canonical until a dedicated player workflow is explicitly introduced.
 
-Floating action button:
+Preview behavior:
 
-- New Profile.
-- Navigates to the Create flow.
+- Start/stop from header control.
+- Rebuild/restart preview when editor revision changes while active.
+- Respect per-node preview toggles (processors/modulations/events).
+- Keep preview settings configurable from drawer panel.
 
-## Create Screen Requirements
+Export behavior:
 
-The Create screen is an entry router with three vertical sections:
+- Use shared MP3 rendering pipeline and policy flow.
+- Keep platform differences encapsulated in export destination adapters.
 
-1. Manual Builder.
-2. Preset Selection.
-3. Wizard Generator.
+## State And Persistence
 
-Each section opens its own flow. All flows should eventually converge on the shared editor so generated or preset-based profiles can still be refined.
+Use Riverpod as default state architecture.
 
-## Manual Builder Requirements
+- Editor state owns:
+  - open config
+  - selection
+  - dirty flag
+  - validation issues
+  - preview-disabled maps
+  - config revision
+- Library state owns:
+  - presets list
+  - tags
+  - selected tag
+- App persisted state owns:
+  - selected footer
+  - welcome dismissal
+- Preview state owns:
+  - preparing/playing/error status
+  - bound revision
 
-The manual builder is the core editor. Treat it as the most important UI surface.
+Persistence:
 
-Use layered editing:
+- Stored configs: Sembast repository abstraction.
+- App prefs: shared preferences.
 
-- Level 1: overview.
-- Level 2: layer editor.
-- Level 3: modulation editor.
-- Level 4: effects chain.
+## UI Design Direction
 
-### Level 1: Overview
+- Maintain strong dark-mode quality, while supporting both light and dark themes.
+- Continue card-based surfaces and dense, readable control groups.
+- Prefer the existing reusable inspector input primitives:
+  - labeled slider
+  - labeled dropdown
+  - labeled switch
+  - labeled text field
+- Keep destructive actions secondary and confirm when persistence is affected.
 
-Show:
+## Package Structure Guidance
 
-- Profile name.
-- Description.
-- Duration.
-- Sample rate.
-- Bitrate.
+Follow current `lib/` boundaries:
 
-Use collapsible sections for:
+- `widgets/`: visual components and editor UI
+- `state/`: Riverpod state and controllers
+- `persistence/`: storage adapters and repositories
 
-- Noise Layers.
-- Modulation.
-- Effects Chain.
+Avoid large mixed-responsibility files; split by feature/inspector concern.
 
-Provide clear calls to action:
+Keep UI logic in GUI package and audio/render/model logic in core/shared packages.
 
-- Edit Layers.
-- Edit Modulation.
-- Edit Effects.
+## Near-Term Roadmap Targets
 
-### Level 2: Layer Editor
+Forward-looking tasks should extend current architecture, not replace it.
 
-Show a list of layer cards.
+1. Upgrade Quick start from placeholder to actionable launchpad.
+2. Add richer library search/sort/filter while preserving performance.
+3. Add duplicate and rename flows for stored configs.
+4. Improve tree ergonomics (including optional drag-reorder UI backed by existing reorder methods).
+5. Add targeted visual previews (modulation/event timing, processor response) where they improve comprehension.
+6. Expand drawer settings coherently without breaking current preview settings flow.
 
-Each layer card should show:
-
-- Noise type: white, pink, brown, custom, or other supported core type.
-- Volume.
-- Pan.
-- Quick EQ preview if available.
-
-Layer actions:
-
-- Edit.
-- Duplicate.
-- Delete.
-
-Include an Add Layer button.
-
-### Layer Detail Screen
-
-Organize layer editing into these sections:
-
-1. Generator
-   - Noise type.
-   - Seed.
-   - Stereo configuration.
-2. Envelope
-   - Attack.
-   - Decay.
-   - Sustain.
-   - Release.
-   - Looping behavior.
-3. Spectral Shaping
-   - Low-pass, high-pass, and band-pass filters when supported.
-   - EQ bands.
-4. Spatial
-   - Pan.
-   - Width.
-
-Use sliders, toggles, dropdowns, segmented controls, or compact numeric inputs according to the data type. Avoid giant forms of raw text fields for audio parameters.
-
-## Modulation Editor Requirements
-
-Show a modulator list.
-
-Each modulator item should show:
-
-- Type: LFO, Envelope, Burst, or any other supported core type.
-- Target: volume, filter cutoff, or another resolved parameter path.
-
-The Burst Modulator UI is especially important. It must expose:
-
-- Trigger mode: random, interval, or event-driven.
-- Density.
-- Intensity.
-- Duration range.
-- Distribution curve.
-
-Use a timeline preview widget to visualize burst timing and intensity. The preview may start as deterministic sample data if engine preview data is not available yet, but it should be structured so real preview data can replace it later.
-
-## Effects Chain Requirements
-
-Use a DAW-like vertical reorderable list.
-
-Each effect item should include:
-
-- Type: EQ, reverb, delay, saturation, or other supported processor/effect.
-- On/off toggle.
-- Expandable parameter area.
-
-Support reordering, expansion, and editing without losing the user's place.
-
-## Wizard Flow Requirements
-
-Use a step-based UI, preferably Flutter's Stepper or a custom stepper when the default component does not fit the visual design.
-
-Steps:
-
-1. Goal
-   - Sleep.
-   - Focus.
-   - Relaxation.
-   - Anxiety reduction.
-2. Sound Preference
-   - Soft.
-   - Dense.
-   - Dynamic.
-   - Low-frequency bias slider.
-3. Complexity
-   - Static.
-   - Slight variation.
-   - Dynamic environment.
-4. Environment Flavor
-   - Optional.
-   - Rain.
-   - Wind.
-   - Cave.
-   - Abstract.
-5. Generate
-   - Create an auto-generated profile.
-   - Open the generated profile in the editor.
-
-The wizard should feel guided and finite. Do not expose manual editor-level detail inside the wizard.
-
-## Player Screen Requirements
-
-Top area:
-
-- Profile name.
-- Tags.
-
-Center area:
-
-- Large waveform or spectrum visualization.
-
-Controls:
-
-- Play/Pause.
-- Seek when applicable.
-- Volume.
-
-Advanced toggle:
-
-- Reveal real-time parameters only when expanded.
-- Include master EQ tilt, intensity, and stereo width when supported.
-
-## Settings Screen Requirements
-
-Use grouped sections for:
-
-- Audio defaults: sample rate and bitrate.
-- Export settings.
-- Performance: CPU vs quality preference.
-- Theme, with dark mode strongly preferred as the product default.
-
-Settings should map to durable app preferences once persistence exists.
-
-## Design System
-
-Visual style:
-
-- Dark UI is essential.
-- Use near-black backgrounds.
-- Use soft gradients sparingly and avoid sharp contrast.
-- Prefer a minimal palette with muted blue or purple accents.
-- Use soft orange for warning/destructive accents.
-
-Core components:
-
-- Cards as primary containers.
-- Sliders for continuous audio parameters.
-- Optional knobs for pro-audio controls when they are accessible and usable.
-- Expandable panels for advanced parameter groups.
-- Segmented controls for small mutually exclusive option sets.
-- Switches or checkboxes for binary options.
-
-Interaction style:
-
-- Make primary actions obvious.
-- Keep destructive actions secondary and confirm where data loss is possible.
-- Avoid overwhelming screens with too many simultaneous sliders.
-- Prefer inline previews and compact summaries before detailed editing.
-
-## Flutter Architecture
-
-Suggested UI package structure:
-
-```text
-/features
-  /home
-  /library
-  /editor
-    /layers
-    /modulation
-    /effects
-  /wizard
-  /player
-
-/core
-  /models
-  /audio_engine
-  /theme
-
-/shared
-  /widgets
-  /controls
-```
-
-Use the existing repository structure when it differs, but preserve these boundaries conceptually.
-
-State management:
-
-- Prefer Riverpod for UI state and dependency wiring.
-- Bloc is acceptable if the feature requires stricter event-driven flow control.
-- Keep transient widget state local when it does not need to be shared.
-- Keep profile/config state serializable and compatible with core models.
-
-## Future-Proofing
-
-Leave sensible extension points for:
-
-- Profile sharing through JSON export/import.
-- Marketplace or curated profile packs.
-- AI-assisted generation.
-
-Do not build large speculative systems before the core flows work, but avoid UI decisions that would block these future paths.
-
-## Implementation Checklist
+## Testing And Quality Bar
 
 Before considering UI work complete:
 
-- The relevant screen is reachable through the intended navigation flow.
-- Controls are functional or clearly wired to current mock/state objects pending core APIs.
-- The UI uses progressive disclosure for advanced parameters.
-- Profile duplicate and delete behavior is considered for management screens.
-- Live preview hooks are present where practical.
-- Widgets are responsive and usable on narrow mobile screens.
-- The dark theme is applied consistently.
-- `dart format` has been run.
-- `flutter analyze` is clean or known issues are reported.
-- Relevant widget tests are added or updated for navigation and key UI states.
+- The screen/flow is reachable from current shell navigation.
+- Interactions are wired to notifier/state, not dead-end local state.
+- Validation and preview behavior remain correct.
+- Existing tests are updated when behavior changes.
+- New critical behavior includes tests, especially for:
+  - navigation and entry flow
+  - preview toggle semantics
+  - editor state transitions
+
+Run and report:
+
+- `dart format`
+- `flutter analyze`
+- relevant `flutter test`
+
+## Explicitly Outdated Guidance
+
+The following should not be treated as baseline requirements unless reintroduced intentionally:
+
+- Mandatory 5-tab top-level app with dedicated Player and Settings pages.
+- Wizard-first creation flow as core UX requirement.
+- "GUI is just starter app" assumption.

@@ -7,6 +7,7 @@ import 'package:noiselabyrinth_gui/widgets/app_header.dart';
 import 'package:noiselabyrinth_gui/widgets/create_panel.dart';
 import 'package:noiselabyrinth_gui/widgets/footer_item.dart';
 import 'package:noiselabyrinth_gui/widgets/presets_panel.dart';
+import 'package:noiselabyrinth_gui/widgets/preview_settings_panel.dart';
 import 'package:noiselabyrinth_gui/widgets/quick_start_panel.dart';
 import 'package:noiselabyrinth_gui/widgets/wellcome_panel.dart';
 
@@ -109,9 +110,23 @@ class MainShell extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 8),
           children: [
-            const ListTile(title: Text('App Options'), subtitle: Text('Placeholders for upcoming actions')),
+            const ListTile(title: Text('App Options'), subtitle: Text('Configuration and settings')),
             const Divider(),
-            const ListTile(leading: Icon(Icons.settings_outlined), title: Text('Placeholder Option 1')),
+            ListTile(
+              leading: const Icon(Icons.tune_outlined),
+              title: const Text('Preview Settings'),
+              onTap: () {
+                Navigator.of(context).pop();
+                showGeneralDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  barrierLabel: 'Preview Settings',
+                  pageBuilder: (context, _, _) {
+                    return Dialog(child: SizedBox(width: 400, height: 600, child: PreviewSettingsPanel()));
+                  },
+                );
+              },
+            ),
             const ListTile(leading: Icon(Icons.info_outline), title: Text('Placeholder Option 2')),
             ListTile(
               leading: const Icon(Icons.home_outlined),
