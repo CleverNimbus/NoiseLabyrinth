@@ -110,6 +110,10 @@ class MainShell extends ConsumerWidget {
   }
 
   Widget _buildDrawer(BuildContext context, WidgetRef ref) {
+    final appState = ref.watch(appPersistedProvider);
+    final appNotifier = ref.read(appPersistedProvider.notifier);
+    final zoomPercent = (appState.zoomFactor * 100).round();
+
     return Drawer(
       child: SafeArea(
         child: ListView(
@@ -132,7 +136,48 @@ class MainShell extends ConsumerWidget {
                 );
               },
             ),
-            const ListTile(leading: Icon(Icons.info_outline), title: Text('Placeholder Option 2')),
+            ListTile(
+              leading: const Icon(Icons.zoom_in_outlined),
+              title: const Text('Zoom'),
+              subtitle: Text('$zoomPercent% (Ctrl+- / Ctrl++ / Ctrl+0)'),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Zoom out',
+                    onPressed: appState.zoomFactor > AppPersistedNotifier.minZoom ? () => appNotifier.zoomOut() : null,
+                    icon: const Icon(Icons.remove),
+                  ),
+                  Expanded(
+                    child: Slider(
+                      value: appState.zoomFactor,
+                      min: AppPersistedNotifier.minZoom,
+                      max: AppPersistedNotifier.maxZoom,
+                      divisions:
+                          ((AppPersistedNotifier.maxZoom - AppPersistedNotifier.minZoom) /
+                                  AppPersistedNotifier.zoomStep)
+                              .round(),
+                      label: '$zoomPercent%',
+                      onChanged: (value) => appNotifier.setZoom(value),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Zoom in',
+                    onPressed: appState.zoomFactor < AppPersistedNotifier.maxZoom ? () => appNotifier.zoomIn() : null,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: TextButton(onPressed: () => appNotifier.resetZoom(), child: const Text('Reset to 100%')),
+              ),
+            ),
             ListTile(
               leading: const Icon(Icons.home_outlined),
               title: const Text('Show Welcome Again'),

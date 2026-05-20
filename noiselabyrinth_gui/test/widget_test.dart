@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noiselabyrinth_core/models/configs/generation_config.dart';
@@ -102,5 +103,48 @@ void main() {
 
     expect(find.text('Welcome'), findsNothing);
     expect(find.byType(QuickStartPanel), findsOneWidget);
+  });
+
+  testWidgets('keeps full viewport while logical MediaQuery follows zoom', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final repo = _InMemoryGenerationConfigRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs), repositoryProvider.overrideWithValue(repo)],
+        child: const MyApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    final zoomViewportFinder = find.byWidgetPredicate(
+      (widget) => widget is OverflowBox && widget.alignment == Alignment.topLeft,
+    );
+    expect(zoomViewportFinder, findsOneWidget);
+
+    final mediaInZoomWrapper = find.descendant(
+      of: zoomViewportFinder,
+      matching: find.byWidgetPredicate((widget) => widget is MediaQuery),
+    );
+    expect(mediaInZoomWrapper, findsWidgets);
+
+    final firstMedia = tester.widgetList<MediaQuery>(mediaInZoomWrapper).first;
+    final firstWindow = tester.binding.renderView.size;
+    expect(firstMedia.data.size.width, closeTo(firstWindow.width, 0.01));
+    expect(firstMedia.data.size.height, closeTo(firstWindow.height, 0.01));
+    expect(tester.getSize(zoomViewportFinder).width, closeTo(firstWindow.width, 0.01));
+    expect(tester.getSize(zoomViewportFinder).height, closeTo(firstWindow.height, 0.01));
+
+    final notifier = ProviderScope.containerOf(tester.element(find.byType(MyApp))).read(appPersistedProvider.notifier);
+    await notifier.setZoom(1.5);
+    await tester.pumpAndSettle();
+
+    final secondMedia = tester.widgetList<MediaQuery>(mediaInZoomWrapper).first;
+    final secondWindow = tester.binding.renderView.size;
+    expect(secondMedia.data.size.width, closeTo(secondWindow.width / 1.5, 0.01));
+    expect(secondMedia.data.size.height, closeTo(secondWindow.height / 1.5, 0.01));
+    expect(tester.getSize(zoomViewportFinder).width, closeTo(secondWindow.width, 0.01));
+    expect(tester.getSize(zoomViewportFinder).height, closeTo(secondWindow.height, 0.01));
   });
 }
