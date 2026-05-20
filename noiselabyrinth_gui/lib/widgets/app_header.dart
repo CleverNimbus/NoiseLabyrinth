@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noiselabyrinth_gui/state/editor/editor_providers.dart';
 import 'package:noiselabyrinth_gui/state/export/export_controller.dart';
 import 'package:noiselabyrinth_gui/state/preview/preview_controller.dart';
+import 'package:noiselabyrinth_gui/widgets/layer_preview_configuration_dialog.dart';
 
 class AppHeader extends ConsumerWidget {
-  const AppHeader({required this.section, super.key});
+  const AppHeader({required this.section, required this.isCreatePanel, super.key});
 
   final String section;
+  final bool isCreatePanel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,6 +22,7 @@ class AppHeader extends ConsumerWidget {
     final canPlay = hasConfig && !isActive;
     final canStop = isActive;
     final canExport = (canPlay || canStop) && !isExporting;
+    final showLayerPreviewButton = isCreatePanel && isActive;
 
     return Container(
       height: 58,
@@ -77,6 +80,14 @@ class AppHeader extends ConsumerWidget {
             tooltip: canStop ? 'Stop preview' : 'Play preview',
             icon: Icon(canStop ? Icons.stop : Icons.play_arrow),
           ),
+          if (showLayerPreviewButton)
+            IconButton(
+              onPressed: () {
+                showDialog<void>(context: context, builder: (context) => const LayerPreviewConfigurationDialog());
+              },
+              tooltip: 'Layer preview configuration',
+              icon: const Icon(Icons.account_tree_outlined),
+            ),
           IconButton(
             onPressed: canExport
                 ? () async {

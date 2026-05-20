@@ -35,7 +35,7 @@ class MainShell extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            AppHeader(section: section),
+            AppHeader(section: section, isCreatePanel: appState.selectedFooter == 2),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
@@ -79,7 +79,12 @@ class MainShell extends ConsumerWidget {
             Expanded(
               child: IconButton(
                 tooltip: _footerItems[i].label,
-                onPressed: () => ref.read(appPersistedProvider.notifier).setFooter(i),
+                onPressed: () {
+                  if (i != 2) {
+                    ref.read(editorNotifierProvider.notifier).resetLayerPreviewSelection();
+                  }
+                  ref.read(appPersistedProvider.notifier).setFooter(i);
+                },
                 icon: Icon(
                   _footerItems[i].icon,
                   color: appState.selectedFooter == i

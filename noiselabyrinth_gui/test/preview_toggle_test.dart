@@ -37,9 +37,12 @@ void main() {
       expect(notifier.state.configRevision, initialRevision + 3);
     });
 
-    test('cleans up preview-disabled ids when entities are removed', () {
+    test('defaults new layers and items to selected preview state', () {
       final notifier = EditorNotifier()..newConfig();
       final layerId = notifier.state.config!.layers.first.id;
+
+      expect(notifier.state.isLayerPreviewEnabled(layerId), isTrue);
+      expect(notifier.state.isSourcePreviewEnabled(layerId), isTrue);
 
       notifier
         ..addProcessor(layerId)
@@ -51,19 +54,21 @@ void main() {
       final modulationId = layer.modulations.first.id;
       final eventId = layer.events.first.id;
 
-      notifier
-        ..toggleProcessorPreviewEnabled(layerId, processorId)
-        ..toggleModulationPreviewEnabled(layerId, modulationId)
-        ..toggleEventPreviewEnabled(layerId, eventId);
+      expect(notifier.state.isProcessorPreviewEnabled(layerId, processorId), isTrue);
+      expect(notifier.state.isModulationPreviewEnabled(layerId, modulationId), isTrue);
+      expect(notifier.state.isEventPreviewEnabled(layerId, eventId), isTrue);
+    });
 
-      notifier
-        ..removeProcessor(layerId, processorId)
-        ..removeModulation(layerId, modulationId)
-        ..removeEvent(layerId, eventId);
+    test('resets the session selection when requested', () {
+      final notifier = EditorNotifier()..newConfig();
+      final layerId = notifier.state.config!.layers.first.id;
 
-      expect(notifier.state.previewDisabledProcessorsByLayer[layerId], isNull);
-      expect(notifier.state.previewDisabledModulationsByLayer[layerId], isNull);
-      expect(notifier.state.previewDisabledEventsByLayer[layerId], isNull);
+      notifier.toggleLayerPreviewEnabled(layerId);
+      expect(notifier.state.isLayerPreviewEnabled(layerId), isFalse);
+
+      notifier.resetLayerPreviewSelection();
+      expect(notifier.state.isLayerPreviewEnabled(layerId), isTrue);
+      expect(notifier.state.isSourcePreviewEnabled(layerId), isTrue);
     });
   });
 
@@ -72,8 +77,8 @@ void main() {
       final config = _buildConfig();
       final state = EditorState(
         config: config,
-        previewDisabledProcessorsByLayer: {
-          'layer_1': {'proc_1'},
+        previewLayerSelections: {
+          'layer_1': const LayerPreviewSelection(disabledProcessorIds: {'proc_1'}),
         },
       );
 
@@ -88,8 +93,8 @@ void main() {
       final config = _buildConfig();
       final state = EditorState(
         config: config,
-        previewDisabledModulationsByLayer: {
-          'layer_1': {'mod_1'},
+        previewLayerSelections: {
+          'layer_1': const LayerPreviewSelection(disabledModulationIds: {'mod_1'}),
         },
       );
 
@@ -104,8 +109,8 @@ void main() {
       final config = _buildConfig();
       final state = EditorState(
         config: config,
-        previewDisabledEventsByLayer: {
-          'layer_1': {'event_1'},
+        previewLayerSelections: {
+          'layer_1': const LayerPreviewSelection(disabledEventIds: {'event_1'}),
         },
       );
 
@@ -113,6 +118,18 @@ void main() {
 
       expect(snapshot.layers.first.events, isEmpty);
       expect(config.layers.first.events, hasLength(1));
+    });
+
+    test('drops a layer when its branch is not selected', () {
+      final config = _buildConfig();
+      final state = EditorState(
+        config: config,
+        previewLayerSelections: {'layer_1': const LayerPreviewSelection(layerEnabled: false)},
+      );
+
+      final snapshot = buildPreviewConfigSnapshot(state);
+
+      expect(snapshot.layers, isEmpty);
     });
   });
 }

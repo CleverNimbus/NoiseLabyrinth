@@ -348,26 +348,27 @@ GenerationConfig buildPreviewConfigSnapshot(EditorState editorState) {
   }
 
   final snapshot = GenerationConfig.fromJson(config.toJson());
-  final disabledProcessorsByLayer = editorState.previewDisabledProcessorsByLayer;
-  final disabledModulationsByLayer = editorState.previewDisabledModulationsByLayer;
-  final disabledEventsByLayer = editorState.previewDisabledEventsByLayer;
+  final selectedLayers = <LayerConfig>[];
 
   for (final layer in snapshot.layers) {
-    final disabledProcessorIds = disabledProcessorsByLayer[layer.id] ?? const <String>{};
-    if (disabledProcessorIds.isNotEmpty) {
+    final selection = editorState.selectionForLayer(layer.id);
+    if (!selection.layerEnabled || !selection.sourceEnabled) {
+      continue;
+    }
+
+    if (selection.disabledProcessorIds.isNotEmpty) {
       layer.processors = [
         for (final processor in layer.processors)
-          if (!disabledProcessorIds.contains(processor.id)) processor,
+          if (selection.isProcessorEnabled(processor.id)) processor,
       ];
     }
 
     final allowedTargetPaths = ModulationTargetCatalog.pathsForLayer(layer);
 
-    final disabledModulationIds = disabledModulationsByLayer[layer.id] ?? const <String>{};
-    if (disabledModulationIds.isNotEmpty) {
+    if (selection.disabledModulationIds.isNotEmpty) {
       layer.modulations = [
         for (final modulation in layer.modulations)
-          if (!disabledModulationIds.contains(modulation.id)) modulation,
+          if (selection.isModulationEnabled(modulation.id)) modulation,
       ];
     }
 
@@ -382,11 +383,10 @@ GenerationConfig buildPreviewConfigSnapshot(EditorState editorState) {
 
     final activeModulationIds = layer.modulations.map((modulation) => modulation.id).toSet();
 
-    final disabledEventIds = disabledEventsByLayer[layer.id] ?? const <String>{};
-    if (disabledEventIds.isNotEmpty) {
+    if (selection.disabledEventIds.isNotEmpty) {
       layer.events = [
         for (final event in layer.events)
-          if (!disabledEventIds.contains(event.id)) event,
+          if (selection.isEventEnabled(event.id)) event,
       ];
     }
 
@@ -400,7 +400,11 @@ GenerationConfig buildPreviewConfigSnapshot(EditorState editorState) {
           return event..actions = actions;
         }(),
     ].where((event) => event.actions.isNotEmpty).toList(growable: false);
+
+    selectedLayers.add(layer);
   }
+
+  snapshot.layers = selectedLayers;
 
   return snapshot;
 }
